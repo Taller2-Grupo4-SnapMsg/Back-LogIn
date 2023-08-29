@@ -1,10 +1,13 @@
+#controler.py
+
 """
 This is the controller layer of the REST API for the login backend.
 """
 
+import random
+import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import random
 
 app = FastAPI()
 
@@ -27,19 +30,40 @@ def get_random(limit: int):
     :param limit: The limit of the random number.
     :return: Random number and limit.
     """
-    rn: int = random.randint(0, limit)
-    return {'random': rn, 'limit': limit}
+    randomNumber: int = random.randint(0, limit)
+    return {'random': randomNumber, 'limit': limit}
 
 # Mock database to store user information
 mock_db = {}
 
 # Pydantic model for user registration
+# pylint: disable=too-few-public-methods
 class UserRegistration(BaseModel):
+    """
+    Represents user registration data.
+
+    This class defines the structure of user registration data,
+    including the email and password fields.
+
+    Attributes:
+        email (str): The email address of the user.
+        password (str): The user's chosen password.
+    """
     email: str
     password: str
 
 # Pydantic model for updating user information
+# pylint: disable=too-few-public-methods
 class UpdateUser(BaseModel):
+    """
+    Represents user update data.
+
+    This class defines the structure of user update data,
+    including the password field.
+
+    Attributes:
+        password (str): The user's newly chosen password.
+    """
     password: str
 
 # Route to handle user registration
