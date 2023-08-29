@@ -5,7 +5,6 @@ This is the controller layer of the REST API for the login backend.
 """
 
 import random
-import uvicorn
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -30,8 +29,8 @@ def get_random(limit: int):
     :param limit: The limit of the random number.
     :return: Random number and limit.
     """
-    randomNumber: int = random.randint(0, limit)
-    return {'random': randomNumber, 'limit': limit}
+    random_number: int = random.randint(0, limit)
+    return {'random': random_number, 'limit': limit}
 
 # Mock database to store user information
 mock_db = {}
