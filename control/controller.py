@@ -111,3 +111,12 @@ def update_user(email: str, update_info: UpdateUser):
         raise HTTPException(status_code=404, detail="User not found")
     user["password"] = update_info.password
     return {"message": "User information updated"}
+
+@app.get("/ping")
+def ping():
+    """
+    This function is a test function that mocks a ping.
+
+    :return: Status code with a JSON message.
+    """
+    return {"message": "pong"}
