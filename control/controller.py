@@ -6,7 +6,10 @@ This is the controller layer of the REST API for the login backend.
 
 import random
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from service.user import User
+from service.user import update_user as update_user_service
+from service.user import get_user as get_user_service
+from service.errors import UserAlreadyRegistered, UserNotFound
 
 app = FastAPI()
 
@@ -34,56 +37,23 @@ def get_random(limit: int):
     return {"random": random_number, "limit": limit}
 
 
-# Mock database to store user information
-mock_db = {}
-
-
-# Pydantic model for user registration
-# pylint: disable=too-few-public-methods
-class UserRegistration(BaseModel):
-    """
-    Represents user registration data.
-
-    This class defines the structure of user registration data,
-    including the email and password fields.
-
-    Attributes:
-        email (str): The email address of the user.
-        password (str): The user's chosen password.
-    """
-
-    email: str
-    password: str
-
-
-# Pydantic model for updating user information
-# pylint: disable=too-few-public-methods
-class UpdateUser(BaseModel):
-    """
-    Represents user update data.
-
-    This class defines the structure of user update data,
-    including the password field.
-
-    Attributes:
-        password (str): The user's newly chosen password.
-    """
-
-    password: str
-
-
 # Route to handle user registration
 @app.post("/register/")
-def register(user: UserRegistration):
+def register(user: User):
     """
     This function is a test function that mocks user registration.
 
     :param user: The user to register.
     :return: Status code with a JSON message.
     """
-    if user.email in mock_db:
-        raise HTTPException(status_code=400, detail="User already registered")
-    mock_db[user.email] = {"email": user.email, "password": user.password}
+    print("This is the user email:")
+    print(user.email)
+    print("This is the user password:")
+    print(user.password)
+    try:
+        user.save()
+    except UserAlreadyRegistered as error:
+        raise HTTPException(status_code=409, detail=str(error)) from error
     return {"message": "Registration successful"}
 
 
@@ -96,15 +66,16 @@ def get_user(email: str):
     :param email: The email of the user to get.
     :return: User details or a 404 response.
     """
-    user = mock_db.get(email)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
+    try:
+        user = get_user_service(email)
+    except UserNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
     return user
 
 
 # Route to update user information
 @app.put("/users/{email}/")
-def update_user(email: str, update_info: UpdateUser):
+def update_user(email: str, new_password: str):
     """
     This function is a test function that mocks updating user information.
 
@@ -112,10 +83,10 @@ def update_user(email: str, update_info: UpdateUser):
     :param update_info: New user information.
     :return: Status code with a JSON message.
     """
-    user = mock_db.get(email)
-    if user is None:
-        raise HTTPException(status_code=404, detail="User not found")
-    user["password"] = update_info.password
+    try:
+        update_user_service(email, new_password)
+    except UserNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
     return {"message": "User information updated"}
 
 
