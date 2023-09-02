@@ -6,17 +6,18 @@ This is the controller layer of the REST API for the login backend.
 
 import random
 from fastapi import FastAPI, HTTPException
+
+# Para permitir pegarle a la API desde localhost:
+from fastapi.middleware.cors import CORSMiddleware
 from service.user import User
 from service.user import update_user as update_user_service
 from service.user import get_user as get_user_service
 from service.errors import UserAlreadyRegistered, UserNotFound
 
-# Para permitir pegarle a la API desde localhost:
-from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Para permitir pegarle a la API desde localhost:
+# Para permitir pegarle a la API desde localhost: (PREGUNTAR)
 origins = ["*"]
 
 app.add_middleware(
