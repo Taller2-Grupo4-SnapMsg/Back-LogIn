@@ -11,7 +11,21 @@ from service.user import update_user as update_user_service
 from service.user import get_user as get_user_service
 from service.errors import UserAlreadyRegistered, UserNotFound
 
+# Para permitir pegarle a la API desde localhost:
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
+
+# Para permitir pegarle a la API desde localhost:
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/hello_world/")
