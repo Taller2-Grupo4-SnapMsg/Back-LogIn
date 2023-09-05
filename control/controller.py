@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from service.user import User
 from service.user import update_user as update_user_service
 from service.user import get_user as get_user_service
-from service.errors import UserAlreadyRegistered, UserNotFound
+from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
 
 
 app = FastAPI()
@@ -70,6 +70,24 @@ def register(user: User):
     except UserAlreadyRegistered as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
     return {"message": "Registration successful"}
+
+
+# Route to handle user login
+@app.post("/login/")
+def login(user: User):
+    """
+    This function is a test function that mocks user login.
+
+    :param user: The user to login.
+    :return: Status code with a JSON message.
+    """
+    try:
+        user.login()
+    except UserNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    except PasswordDoesntMatch as error:
+        raise HTTPException(status_code=401, detail=str(error)) from error
+    return {"message": "Login successful"}
 
 
 # Route to get user details

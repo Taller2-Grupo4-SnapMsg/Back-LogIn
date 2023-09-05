@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from repository.user_repository import register
 from repository.user_repository import update_user as update_user_repo
 from repository.user_repository import get_user as get_user_repo
-from service.errors import UserAlreadyRegistered, UserNotFound
+from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
 
 
 # Pydantic model for users
@@ -28,6 +28,18 @@ class User(BaseModel):
             register(self.email, self.password)
         except KeyError as error:
             raise UserAlreadyRegistered() from error
+
+    def login(self):
+        """
+        This function is used to login the user.
+        """
+        try:
+            repo_user = get_user_repo(self.email)  # esto devuelve un usuario
+            if repo_user["password"] != self.password:
+                raise PasswordDoesntMatch()
+        except KeyError as error:
+            raise UserNotFound() from error
+        return {"message": "Login successful"}
 
 
 # end class User

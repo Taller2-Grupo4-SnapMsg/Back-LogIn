@@ -21,3 +21,12 @@ class UserNotFound(Exception):
 
     def __init__(self):
         super().__init__("User not found")
+
+
+class PasswordDoesntMatch(Exception):
+    """
+    Exception raised when the password doesn't match.
+    """
+
+    def __init__(self):
+        super().__init__("Password doesn't match")
