@@ -4,14 +4,15 @@
 This is the controller layer of the REST API for the login backend.
 """
 
-import random
 from fastapi import FastAPI, HTTPException
 
 # Para permitir pegarle a la API desde localhost:
 from fastapi.middleware.cors import CORSMiddleware
 from service.user import User
-from service.user import update_user as update_user_service
-from service.user import get_user as get_user_service
+from service.user import change_password as change_password_service
+from service.user import get_user_email as get_user_service
+from service.user import try_login
+from service.user import remove_user_email
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
 
 
@@ -28,30 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/hello_world/")
-def central_function():
-    """
-    This function is a test function.
-
-    :return: Hello world.
-    """
-    return {"message": "Hello World"}
-
-
-@app.get("/random/{limit}")
-def get_random(limit: int):
-    """
-    This function is a test function that receives a parameter and returns
-    a random number between 0 and the number given.
-
-    :param limit: The limit of the random number.
-    :return: Random number and limit.
-    """
-    random_number: int = random.randint(0, limit)
-    return {"random": random_number, "limit": limit}
-
-
 # Route to handle user registration
 @app.post("/register/")
 def register(user: User):
@@ -61,10 +38,6 @@ def register(user: User):
     :param user: The user to register.
     :return: Status code with a JSON message.
     """
-    print("This is the user email:")
-    print(user.email)
-    print("This is the user password:")
-    print(user.password)
     try:
         user.save()
     except UserAlreadyRegistered as error:
@@ -74,7 +47,7 @@ def register(user: User):
 
 # Route to handle user login
 @app.post("/login/")
-def login(user: User):
+def login(email: str, password: str):
     """
     This function is a test function that mocks user login.
 
@@ -82,7 +55,7 @@ def login(user: User):
     :return: Status code with a JSON message.
     """
     try:
-        user.login()
+        try_login(email, password)
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except PasswordDoesntMatch as error:
@@ -108,7 +81,7 @@ def get_user(email: str):
 
 # Route to update user information
 @app.put("/users/{email}/")
-def update_user(email: str, new_password: str):
+def change_password(email: str, new_password: str):
     """
     This function is a test function that mocks updating user information.
 
@@ -117,10 +90,25 @@ def update_user(email: str, new_password: str):
     :return: Status code with a JSON message.
     """
     try:
-        update_user_service(email, new_password)
+        change_password_service(email, new_password)
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return {"message": "User information updated"}
+
+
+@app.delete("/users/{email}/")
+def delete_user(email: str):
+    """
+    This function is a test function that mocks deleting a user.
+
+    :param email: The email of the user to delete.
+    :return: Status code with a JSON message.
+    """
+    try:
+        remove_user_email(email)
+    except UserNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return {"message": "User deleted"}
 
 
 @app.get("/ping")
