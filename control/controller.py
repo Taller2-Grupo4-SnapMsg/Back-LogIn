@@ -29,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Route to handle user registration
 @app.post("/register/")
 def register(user: User):
