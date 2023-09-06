@@ -36,7 +36,7 @@ class User(BaseModel):
                 "surname": self.surname,
                 "date_of_birth": self.date_of_birth,
                 "bio": self.bio,
-            } # Thanks pylint
+            }  # Thanks pylint
             register_user(self.email, self.password, self.nickname, data)
         except KeyError as error:
             raise UserAlreadyRegistered() from error
@@ -60,6 +60,9 @@ class User(BaseModel):
 def try_login(email: str, password: str):
     """
     This function is used to login the user.
+
+    :param email: The email of the user to login.
+    :param password: The password of the user to login.
     """
     try:
         repo_user = get_user_repo(email)  # esto devuelve un usuario
