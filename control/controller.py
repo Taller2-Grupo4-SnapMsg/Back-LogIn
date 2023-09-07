@@ -5,6 +5,7 @@ This is the controller layer of the REST API for the login backend.
 """
 
 from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
 
 # Para permitir pegarle a la API desde localhost:
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,21 +31,24 @@ app.add_middleware(
 )
 
 
-# Route to handle user registration
-@app.post("/register/")
-def register(email: str, password: str, name: str, last_name: str, nickname: str):
-    """
-    This function is a test function that mocks user registration.
+# Define a Pydantic model for the request body
+class UserRegistration(BaseModel):
+    password: str
+    email: str
+    name: str
+    last_name: str
+    nickname: str
 
-    :param user: The user to register.
-    :return: Status code with a JSON message.
-    """
+# Create a POST route
+@app.post("/register")
+async def register_user(user_data: UserRegistration):
+    print("Received POST request:", user_data)
     user = User()
-    user.set_email(email)
-    user.set_password(password)
-    user.set_name(name)
-    user.set_surname(last_name)
-    user.set_nickname(nickname)
+    user.set_email(user_data.email)
+    user.set_password(user_data.password)
+    user.set_name(user_data.name)
+    user.set_surname(user_data.last_name)
+    user.set_nickname(user_data.nickname)
     user.set_bio("")
     user.set_date_of_birth("")
 
