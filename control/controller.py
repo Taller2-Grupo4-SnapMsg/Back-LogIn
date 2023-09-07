@@ -75,6 +75,7 @@ class UserLogIn(BaseModel):
     email: str
     password: str
 
+
 # Route to handle user login
 @app.post("/login/")
 def login(user_data: UserLogIn):
