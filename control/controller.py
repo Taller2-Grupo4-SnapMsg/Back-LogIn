@@ -67,9 +67,17 @@ async def register_user(user_data: UserRegistration):
     return {"message": "Registration successful"}
 
 
+class UserLogIn(BaseModel):
+    """
+    This class is a Pydantic model for the request body.
+    """
+
+    email: str
+    password: str
+
 # Route to handle user login
 @app.post("/login/")
-def login(email: str, password: str):
+def login(user_data: UserLogIn):
     """
     This function is a test function that mocks user login.
 
@@ -77,7 +85,7 @@ def login(email: str, password: str):
     :return: Status code with a JSON message.
     """
     try:
-        try_login(email, password)
+        try_login(user_data.email, user_data.password)
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except PasswordDoesntMatch as error:
