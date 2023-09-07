@@ -26,6 +26,48 @@ class User(BaseModel):
     date_of_birth: str
     bio: str
 
+    def set_email(self, email):
+        """
+        This function is used to set the user's email.
+        """
+        self.email = email
+
+    def set_password(self, password):
+        """
+        This function is used to set the user's password.
+        """
+        self.password = password
+
+    def set_name(self, name):
+        """
+        This function is used to set the user's name.
+        """
+        self.name = name
+
+    def set_surname(self, surname):
+        """
+        This function is used to set the user's surname.
+        """
+        self.surname = surname
+
+    def set_nickname(self, nickname):
+        """
+        This function is used to set the user's nickname.
+        """
+        self.nickname = nickname
+
+    def set_date_of_birth(self, date_of_birth):
+        """
+        This function is used to set the user's date of birth.
+        """
+        self.date_of_birth = date_of_birth
+
+    def set_bio(self, bio):
+        """
+        This function is used to set the user's bio.
+        """
+        self.bio = bio
+
     def save(self):
         """
         This function is used to save the user to the database.

@@ -29,6 +29,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Route to handle user registration
 @app.post("/register/")
 def register(email: str, password: str, name: str, last_name: str, nickname: str):
@@ -38,7 +39,14 @@ def register(email: str, password: str, name: str, last_name: str, nickname: str
     :param user: The user to register.
     :return: Status code with a JSON message.
     """
-    user = User(email, password, name, last_name, nickname)
+    user = User()
+    user.set_email(email)
+    user.set_password(password)
+    user.set_name(name)
+    user.set_surname(last_name)
+    user.set_nickname(nickname)
+    user.set_bio("")
+    user.set_date_of_birth("")
 
     try:
         user.save()
