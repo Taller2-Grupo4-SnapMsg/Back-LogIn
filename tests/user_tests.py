@@ -57,6 +57,29 @@ def test_user_login():
     remove_user_email(EMAIL)  # Que pasa si un test falla y esto no se ejecuta??
 
 
+def test_user_can_login_after_register():
+    """
+    This function tests that the user is registered and can login.
+    """
+    remove_test_user_from_db()
+
+    user = User(
+        email="prueba",
+        password="prueba",
+        name="Real_name",
+        surname="Real_surname",
+        nickname=NICKNAME,
+        date_of_birth="Real_date_of_birth",
+        bio="Real_bio",
+    )
+
+    user.save()
+
+    assert try_login("prueba", "prueba") == {"message": "Login successful"}
+
+    remove_user_email("prueba")
+
+
 # This can't be tested without the database
 # def test_user_get_nickname():
 #     """
