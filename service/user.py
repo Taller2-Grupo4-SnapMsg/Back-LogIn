@@ -18,13 +18,13 @@ class User(BaseModel):
     This class is used to represent a user.
     """
 
-    email: str
-    password: str
-    name: str
-    surname: str
-    nickname: str
-    date_of_birth: str
-    bio: str
+    email: str = ""
+    password: str = ""
+    name: str = ""
+    surname: str = ""
+    nickname: str = ""
+    date_of_birth: str = ""
+    bio: str = ""
 
     def set_email(self, email):
         """
