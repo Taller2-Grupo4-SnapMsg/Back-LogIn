@@ -32,8 +32,8 @@ jobs:
     - name: Check Coverage
       run: |
         COVERAGE_THRESHOLD="80"
-        COVERAGE=$(coverage report -m | grep -oP '\d+%')
-        if [[ "$COVERAGE" < "$COVERAGE_THRESHOLD" ]]; then
+        LAST_COVERAGE=$(coverage report -m | grep -oP '\d+%' | tail -n 1)
+        if [[ "$LAST_COVERAGE" < "$COVERAGE_THRESHOLD" ]]; then
           echo "Code coverage is less than $COVERAGE_THRESHOLD%"
           exit 1
         fi
