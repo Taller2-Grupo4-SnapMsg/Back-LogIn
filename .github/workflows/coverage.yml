@@ -1,0 +1,39 @@
+name: Code Coverage Check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.9
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Run Tests with Coverage
+      run: |
+        coverage run -m pytest tests/user_tests.py
+
+    - name: Generate Coverage Report
+      run: |
+        coverage report -m
+
+    - name: Check Coverage
+      run: |
+        COVERAGE_THRESHOLD="80"
+        LAST_COVERAGE=$(coverage report -m | grep -oP '\d+%' | tail -n 1)
+        if [[ "$LAST_COVERAGE" < "$COVERAGE_THRESHOLD" ]]; then
+          echo "Code coverage is less than $COVERAGE_THRESHOLD%"
+          exit 1
+        fi

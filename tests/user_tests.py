@@ -11,6 +11,8 @@ from service.user import remove_user_email
 from service.user import get_user_email
 from service.user import try_login
 from service.errors import UserNotFound
+from service.errors import UserAlreadyRegistered
+from service.errors import PasswordDoesntMatch
 
 EMAIL = "real_email@gmail.com"
 NICKNAME = "real_nickname"
@@ -124,3 +126,61 @@ def test_remove_user():
     with pytest.raises(UserNotFound) as error:
         get_user_email(EMAIL)
     assert str(error.value) == "User not found"
+
+
+def test_user_already_registered():
+    """
+    This function tests the exception of user already registered.
+    """
+
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserAlreadyRegistered) as error:
+        save_test_user_to_db()
+    assert str(error.value) == "User already registered"
+
+    remove_user_email(EMAIL)
+
+
+def test_wrong_password():
+    """
+    This function tests the exception of wrong password.
+    """
+
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(PasswordDoesntMatch) as error:
+        try_login(EMAIL, "wrong_password")
+    assert str(error.value) == "Password doesn't match"
+
+    remove_user_email(EMAIL)
+
+
+def test_setters_work():
+    """
+    This function tests the setters.
+    """
+
+    remove_test_user_from_db()
+
+    user = User()
+
+    user.set_email(EMAIL)
+    user.set_password(PASSWORD)
+    user.set_name("Real_name")
+    user.set_surname("Real_surname")
+    user.set_nickname(NICKNAME)
+    user.set_date_of_birth("Real_date_of_birth")
+    user.set_bio("Real_bio")
+
+    assert user.email == EMAIL
+    assert user.password == PASSWORD
+    assert user.name == "Real_name"
+    assert user.surname == "Real_surname"
+    assert user.nickname == NICKNAME
+    assert user.date_of_birth == "Real_date_of_birth"
+    assert user.bio == "Real_bio"
