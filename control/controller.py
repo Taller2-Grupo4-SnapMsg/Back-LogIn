@@ -14,6 +14,8 @@ from service.user import change_password as change_password_service
 from service.user import get_user_email as get_user_service
 from service.user import try_login
 from service.user import remove_user_email
+from service.user import get_all_users as get_all_users_service
+from service.user import get_user_nickname
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
 
 
@@ -95,7 +97,7 @@ def login(user_data: UserLogIn):
 
 
 # Route to get user details
-@app.get("/users/{email}/")
+@app.get("/users/{email}")
 def get_user(email: str):
     """
     This function is a test function that mocks retrieving a user.
@@ -105,6 +107,22 @@ def get_user(email: str):
     """
     try:
         user = get_user_service(email)
+    except UserNotFound as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    return user
+
+
+# Route to get user by username
+@app.get("/users/{username}")
+def get_user_by_username(username: str):
+    """
+    This function retrieves an user.
+
+    :param username: The username of the user to get.
+    :return: User details or a 404 response.
+    """
+    try:
+        user = get_user_nickname(username)
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return user
@@ -127,7 +145,7 @@ def change_password(email: str, new_password: str):
     return {"message": "User information updated"}
 
 
-@app.delete("/users/{email}/")
+@app.delete("/users/{email}")
 def delete_user(email: str):
     """
     This function is a test function that mocks deleting a user.
@@ -140,6 +158,17 @@ def delete_user(email: str):
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     return {"message": "User deleted"}
+
+
+@app.get("/users/")
+def get_all_users():
+    """
+    This function is a test function that mocks retrieving all users.
+
+    :return: Status code with a JSON message.
+    """
+    get_all_users_service()
+    return {"message": "All users retrieved"}
 
 
 @app.get("/ping")

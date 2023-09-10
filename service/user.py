@@ -9,6 +9,8 @@ from repository.user_repository import register_user
 from repository.user_repository import update_user as update_user_repo
 from repository.user_repository import get_user_email as get_user_repo
 from repository.user_repository import remove_user
+from repository.user_repository import get_user_collection
+from repository.user_repository import get_user_nickname as get_user_nickname_repo
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
 
 
@@ -149,7 +151,7 @@ def get_user_nickname(nickname: str):
     :return: The user's information.
     """
     try:
-        return get_user_repo(nickname)
+        return get_user_nickname_repo(nickname)
     except KeyError as error:
         raise UserNotFound() from error
 
@@ -178,3 +180,10 @@ def remove_user_nickname(nickname: str):
         remove_user(user["email"])
     except KeyError as error:
         raise UserNotFound() from error
+
+
+def get_all_users():
+    """
+    This function is used to retrieve all users from the database.
+    """
+    return get_user_collection()

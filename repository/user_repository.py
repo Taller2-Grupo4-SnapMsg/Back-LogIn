@@ -4,7 +4,14 @@
 This module is for the repository layer of the REST API for the login backend.
 """
 
+import requests
+from repository.errors import DatabaseTimeout
+
 mock_db = {}  # Mock database, in reality this would be a real database.
+TIMEOUT = 60
+GET_USERS_URL = "https://bdd-users-api.onrender.com/users"
+GET_USER_BY_NICK_URL = "https://bdd-users-api.onrender.com/get_user_by_username"
+REGISTER_USER_URL = "https://bdd-users-api.onrender.com/register_new_user"
 
 
 def register_user(
@@ -14,14 +21,12 @@ def register_user(
     data: dict,
 ):
     """
-    This function is a test function that mocks user registration.
+    This function that adds a user to the database.
 
     :param user: The user to register.
     :return: Status code with a JSON message.
     """
-    if email in mock_db:
-        raise KeyError()
-    mock_db[email] = {
+    payload = {
         "email": email,
         "password": password,
         "name": data["name"],
@@ -30,6 +35,11 @@ def register_user(
         "date_of_birth": data["date_of_birth"],
         "bio": data["bio"],
     }
+    try:
+        requests.post(REGISTER_USER_URL, json=payload, timeout=TIMEOUT)
+    except requests.exceptions.Timeout as error:
+        raise DatabaseTimeout from error
+
     return {"message": "Registration successful"}
 
 
@@ -49,14 +59,20 @@ def get_user_email(email: str):
 # when we have a real database with primary keys.
 def get_user_nickname(nickname: str):
     """
-    This function is a test function that mocks retrieving a user.
+    This function retrieves an user by nickname.
 
     :param nickname: The nickname of the user to retrieve.
     :return: The user's information.
     """
-    if nickname not in mock_db:
-        raise KeyError()
-    return mock_db[nickname]
+    try:
+        response = requests.get(
+            GET_USER_BY_NICK_URL, params={"username": nickname}, timeout=TIMEOUT
+        )
+        if response.status_code == 200:
+            return response.json()
+    except requests.exceptions.Timeout as error:
+        raise DatabaseTimeout from error
+    return None
 
 
 def update_user(email: str, new_password: str):
@@ -84,3 +100,21 @@ def remove_user(email: str):
         raise KeyError()
     del mock_db[email]
     return {"message": "Delete successful"}
+
+
+def get_user_collection():
+    """
+    This is a test for calling the data base API
+    """
+    timeout = 10
+    try:
+        response = requests.get(GET_USERS_URL, timeout=timeout)
+        if response.status_code == 200:
+            data = response.json()
+            print(data)
+        else:
+            print(f"Failed to retrieve data. Status code: {response.status_code}")
+    except requests.exceptions.Timeout:
+        print("The request timed out. Please try again later.")
+    except requests.exceptions.RequestException as error:
+        print(f"An error occurred: {error}")
