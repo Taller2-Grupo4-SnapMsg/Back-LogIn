@@ -21,7 +21,6 @@ from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMa
 
 app = FastAPI()
 
-# Para permitir pegarle a la API desde localhost: (PREGUNTAR)
 origins = ["*"]
 
 app.add_middleware(
