@@ -37,6 +37,8 @@ def register_user(
     }
     try:
         requests.post(REGISTER_USER_URL, json=payload, timeout=TIMEOUT)
+        # if response.status_code != 200:
+        #     raise requests.exceptions.RequestException()
     except requests.exceptions.Timeout as error:
         raise DatabaseTimeout from error
 
@@ -68,11 +70,11 @@ def get_user_nickname(nickname: str):
         response = requests.get(
             GET_USER_BY_NICK_URL, params={"username": nickname}, timeout=TIMEOUT
         )
-        if response.status_code == 200:
-            return response.json()
+        if response is None:
+            raise KeyError()
     except requests.exceptions.Timeout as error:
         raise DatabaseTimeout from error
-    return None
+    return response.json()
 
 
 def update_user(email: str, new_password: str):
