@@ -51,7 +51,6 @@ async def register_user(user_data: UserRegistration):
     """
     This function is the endpoint for user registration.
     """
-    print("Received POST request:", user_data)
     user = User()
     user.set_email(user_data.email)
     user.set_password(user_data.password)
