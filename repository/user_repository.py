@@ -5,6 +5,7 @@ This module is for the repository layer of the REST API for the login backend.
 """
 
 import requests
+from fastapi import HTTPException
 from repository.errors import DatabaseTimeout
 
 mock_db = {}  # Mock database, in reality this would be a real database.
@@ -26,17 +27,26 @@ def register_user(
     :param user: The user to register.
     :return: Status code with a JSON message.
     """
+
+    headerss = {"accept": "application/json", "Content-Type": "application/json"}
+
     payload = {
-        "email": email,
-        "password": password,
-        "name": data["name"],
+        "username": nickname,
         "surname": data["surname"],
-        "nickname": nickname,
+        "name": data["name"],
+        "password": password,
+        "email": email,
         "date_of_birth": data["date_of_birth"],
-        "bio": data["bio"],
     }
+
     try:
-        requests.post(REGISTER_USER_URL, json=payload, timeout=TIMEOUT)
+        response = requests.post(
+            REGISTER_USER_URL, json=payload, headers=headerss, timeout=TIMEOUT
+        )
+        if response.status_code != 200:
+            raise HTTPException(
+                status_code=response.status_code, detail=response.json()["detail"]
+            )
     except requests.exceptions.Timeout as error:
         raise DatabaseTimeout from error
 
@@ -68,11 +78,11 @@ def get_user_nickname(nickname: str):
         response = requests.get(
             GET_USER_BY_NICK_URL, params={"username": nickname}, timeout=TIMEOUT
         )
-        if response.status_code == 200:
-            return response.json()
+        if response is None:
+            raise KeyError()
     except requests.exceptions.Timeout as error:
         raise DatabaseTimeout from error
-    return None
+    return response.json()
 
 
 def update_user(email: str, new_password: str):

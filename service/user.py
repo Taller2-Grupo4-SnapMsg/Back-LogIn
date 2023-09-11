@@ -12,6 +12,7 @@ from repository.user_repository import remove_user
 from repository.user_repository import get_user_collection
 from repository.user_repository import get_user_nickname as get_user_nickname_repo
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
+import requests
 
 
 # Pydantic model for users
@@ -82,7 +83,9 @@ class User(BaseModel):
                 "bio": self.bio,
             }  # Thanks pylint
             register_user(self.email, self.password, self.nickname, data)
-        except KeyError as error:
+        except requests.RequestException as error:
+            # if we had more errors we could do this and then default to a generic error:
+            # if (error.response.detail) == "User already registered":
             raise UserAlreadyRegistered() from error
 
     def login(self):
