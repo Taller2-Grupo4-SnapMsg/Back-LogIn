@@ -9,6 +9,7 @@ from pydantic import BaseModel
 # Para permitir pegarle a la API desde localhost:
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
+from fastapi import Depends
 from service.user import User
 from service.user import change_password as change_password_service
 from service.user import get_user_email as get_user_service
@@ -18,8 +19,10 @@ from service.user import get_all_users as get_all_users_service
 from service.user import get_user_nickname
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
 
+from .auth import AuthHandler
 
 app = FastAPI()
+auth_handler = AuthHandler()
 
 origins = ["*"]
 
@@ -46,11 +49,25 @@ class UserRegistration(BaseModel):
 
 
 # Create a POST route
-@app.post("/register")
+@app.post("/register", status_code=201)
 async def register_user(user_data: UserRegistration):
     """
     This function is the endpoint for user registration.
     """
+
+    '''
+    if any(x['email'] == user_data.email for x in users):
+        raise HTTPException(status_code=400, detail='Email is taken')
+    
+    hashed_password = auth_handler.get_password_hash(user_data.password)
+    users.append({
+        'username': user_data.email,
+        'password': hashed_password,
+        ...
+    }) 
+    '''
+
+
     user = User()
     user.set_email(user_data.email)
     user.set_password(user_data.password)
@@ -85,6 +102,20 @@ def login(user_data: UserLogIn):
     :param user: The user to login.
     :return: Status code with a JSON message.
     """
+
+    '''
+    user = None
+    for x in users:
+        if x['email'] == user_data.email:
+            user = x
+            break
+    
+    if ((user is None) or (not auth_handler.verify_password(user_data.password, user['password'])):
+        raise httpexception(status_code=401, details='Invalid email and/or password')
+
+    token = auth_handler.encode_token(user['email'])
+    return { 'token': token }
+    '''
     try:
         try_login(user_data.email, user_data.password)
     except UserNotFound as error:
@@ -93,6 +124,9 @@ def login(user_data: UserLogIn):
         raise HTTPException(status_code=401, detail=str(error)) from error
     return {"message": "Login successful"}
 
+@app.get('/protected')
+def protected(useremail=Depends(auth_handler.auth_wrapper)):
+    return { 'email': useremail}
 
 # Route to get user details
 @app.get("/users/{email}")
