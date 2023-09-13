@@ -85,7 +85,7 @@ class User(BaseModel):
             print("El email del usuario es: " + self.email)
             print("El pass del usuario es: " + self.password)
             print("El nick del usuario es: " + self.nickname)
-            
+
             register_user(self.email, self.password, self.nickname, data)
         except HTTPException as error:
             # if we had more errors we could do this and then default to a generic error:
@@ -111,6 +111,7 @@ def try_login(email: str, password: str):
         raise UserNotFound() from error
     return {"message": "Login successful"}
 
+
 def get_user_password(email: str):
     """
     This function is used to login the user.
@@ -126,6 +127,7 @@ def get_user_password(email: str):
         return repo_user["password"]
     except KeyError as error:
         raise UserNotFound() from error
+
 
 def change_password(email: str, new_password: str):
     """

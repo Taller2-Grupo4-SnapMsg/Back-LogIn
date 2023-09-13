@@ -5,7 +5,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  Coverage-Check:
     runs-on: ubuntu-latest
 
     steps:

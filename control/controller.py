@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 from fastapi import Depends
+from auth import AuthHandler
 from service.user import User
 from service.user import change_password as change_password_service
 from service.user import get_user_email as get_user_service
@@ -18,8 +19,6 @@ from service.user import remove_user_email
 from service.user import get_all_users as get_all_users_service
 from service.user import get_user_nickname
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
-
-from .auth import AuthHandler
 
 app = FastAPI()
 auth_handler = AuthHandler()
@@ -60,7 +59,7 @@ async def register_user(user_data: UserRegistration):
     hashed_password = auth_handler.get_password_hash(user_data.password)
     user.set_password(hashed_password)
 
-    user.set_email(user_data.email)    
+    user.set_email(user_data.email)
     user.set_name(user_data.name)
     user.set_surname(user_data.last_name)
     user.set_nickname(user_data.nickname)
@@ -70,10 +69,9 @@ async def register_user(user_data: UserRegistration):
     try:
         user.save()
         token = auth_handler.encode_token(user_data.email)
-        return {"message": "Registration successful", 'token': token }
+        return {"message": "Registration successful", "token": token}
     except UserAlreadyRegistered as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    
 
 
 class UserLogIn(BaseModel):
@@ -94,40 +92,29 @@ def login(user_data: UserLogIn):
     :param user: The user to login.
     :return: Status code with a JSON message.
     """
-
-    '''
-    user = None
-    for x in users:
-        if x['email'] == user_data.email:
-            user = x
-            break
-    
-    if ((user is None) or (not auth_handler.verify_password(user_data.password, user['password'])):
-        raise httpexception(status_code=401, details='Invalid email and/or password')
-
-    token = auth_handler.encode_token(user['email'])
-    return { 'token': token }
-    '''
-    
-    try:  
+    try:
         # try_login(user_data.email, hash_password)
         hash_password = get_user_password(user_data.email)
         if auth_handler.verify_password(user_data.password, hash_password):
-        # Passwords match, proceed with login
+            # Passwords match, proceed with login
             print("Authenticated. Generating token...")
             token = auth_handler.encode_token(user_data.email)
             print("Token created")
-    
+
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except PasswordDoesntMatch as error:
         raise HTTPException(status_code=401, detail=str(error)) from error
-    return {"message": "Login successful",
-            'token': token }
+    return {"message": "Login successful", "token": token}
 
-@app.get('/protected')
+
+@app.get("/protected")
 def protected(useremail=Depends(auth_handler.auth_wrapper)):
-    return { 'email': useremail}
+    """
+    Wrapper for protected routes.
+    """
+    return {"email": useremail}
+
 
 # Route to get user details
 @app.get("/users/{email}")

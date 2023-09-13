@@ -139,4 +139,3 @@ def get_user_collection():
         print(f"An error occurred: {error}")
 
     return response.json()
-

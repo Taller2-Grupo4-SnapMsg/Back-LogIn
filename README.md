@@ -12,6 +12,10 @@ Instalate pytest:
 `pip install -U pytest`
 y haces:
 `pytest /tests/user_tests.py`
+## Para el black:
+`pip install black`
+
+`black *`
 ## Para correr el coverage:
 `pip install coverage`
 
