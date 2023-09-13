@@ -13,7 +13,7 @@ from fastapi import Depends
 from service.user import User
 from service.user import change_password as change_password_service
 from service.user import get_user_email as get_user_service
-from service.user import try_login
+from service.user import get_user_password
 from service.user import remove_user_email
 from service.user import get_all_users as get_all_users_service
 from service.user import get_user_nickname
@@ -55,22 +55,12 @@ async def register_user(user_data: UserRegistration):
     This function is the endpoint for user registration.
     """
 
-    '''
-    if any(x['email'] == user_data.email for x in users):
-        raise HTTPException(status_code=400, detail='Email is taken')
-    
-    hashed_password = auth_handler.get_password_hash(user_data.password)
-    users.append({
-        'username': user_data.email,
-        'password': hashed_password,
-        ...
-    }) 
-    '''
-
-
     user = User()
-    user.set_email(user_data.email)
-    user.set_password(user_data.password)
+
+    hashed_password = auth_handler.get_password_hash(user_data.password)
+    user.set_password(hashed_password)
+
+    user.set_email(user_data.email)    
     user.set_name(user_data.name)
     user.set_surname(user_data.last_name)
     user.set_nickname(user_data.nickname)
@@ -78,10 +68,17 @@ async def register_user(user_data: UserRegistration):
     user.set_date_of_birth("")
 
     try:
+        print("El email del user es: " + user.email)
+
         user.save()
+        print("Volvi de guardar el usuario")
+
+        token = auth_handler.encode_token(user_data.email)
+        print("El token es " + token)
     except UserAlreadyRegistered as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    return {"message": "Registration successful"}
+    return {"message": "Registration successful",
+            'token': token }
 
 
 class UserLogIn(BaseModel):
@@ -116,13 +113,26 @@ def login(user_data: UserLogIn):
     token = auth_handler.encode_token(user['email'])
     return { 'token': token }
     '''
-    try:
-        try_login(user_data.email, user_data.password)
+    
+    # Retrieve the stored hash from the database based on the user's email
+    stored_hashed_password = ...  # Retrieve the hash from your database
+    try:  
+        # try_login(user_data.email, hash_password)
+        print("trying to log in...")
+        hash_password = get_user_password(user_data.email)
+        print("hash_password: " + hash_password)
+        if auth_handler.verify_password(user_data.password, hash_password):
+        # Passwords match, proceed with login
+            print("Authenticated. Generating token...")
+            token = auth_handler.encode_token(user_data.email)
+            print("token: " + token)
+    
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
     except PasswordDoesntMatch as error:
         raise HTTPException(status_code=401, detail=str(error)) from error
-    return {"message": "Login successful"}
+    return {"message": "Login successful",
+            'token': token }
 
 @app.get('/protected')
 def protected(useremail=Depends(auth_handler.auth_wrapper)):

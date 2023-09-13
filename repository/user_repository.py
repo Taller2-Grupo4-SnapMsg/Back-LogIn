@@ -40,6 +40,9 @@ def register_user(
     }
 
     try:
+        print("Primero intento mostrar todo lo que hay en la tabla: ")
+        get_user_collection()
+        
         response = requests.post(
             REGISTER_USER_URL, json=payload, headers=headerss, timeout=TIMEOUT
         )

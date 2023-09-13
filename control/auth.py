@@ -21,9 +21,16 @@ class AuthHandler():
     secret = 'SO_SECRET'
 
     def get_password_hash(self, password):
-        return self.pwd_context(password)
+        '''
+        get a new hash from the password
+        '''
+        
+        return self.pwd_context.hash(password)
     
     def verify_password(self, plain_password, hashed_password):
+        '''
+        check if the password and the hashed password given match
+        '''
         return self.pwd_context.verify(plain_password, hashed_password)
     
     def encode_token(self, user_email):
