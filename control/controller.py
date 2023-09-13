@@ -196,12 +196,11 @@ def delete_user(email: str):
 @app.get("/users/")
 def get_all_users():
     """
-    This function is a test function that mocks retrieving all users.
+    This function is an auxiliary function that returns all the users in the db
 
-    :return: Status code with a JSON message.
+    :return: JSON of all users.
     """
-    get_all_users_service()
-    return {"message": "All users retrieved"}
+    return get_all_users_service()
 
 
 @app.get("/ping")

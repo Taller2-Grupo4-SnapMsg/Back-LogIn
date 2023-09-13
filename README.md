@@ -12,3 +12,12 @@ Instalate pytest:
 `pip install -U pytest`
 y haces:
 `pytest /tests/user_tests.py`
+## Para correr el coverage:
+`pip install coverage`
+
+`coverage run -m pytest /tests/user_tests.py`
+
+`coverage report -m`
+
+Si te esta fallando un test en particular, podes probar con:
+`pytest tests/user_tests -k "nombre_test"`

@@ -5,6 +5,7 @@ This module is for the service layer of the REST API for the login backend.
 """
 
 from pydantic import BaseModel
+from fastapi import HTTPException
 from repository.user_repository import register_user
 from repository.user_repository import update_user as update_user_repo
 from repository.user_repository import get_user_email as get_user_repo
@@ -12,7 +13,6 @@ from repository.user_repository import remove_user
 from repository.user_repository import get_user_collection
 from repository.user_repository import get_user_nickname as get_user_nickname_repo
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
-import requests
 
 
 # Pydantic model for users
@@ -87,22 +87,10 @@ class User(BaseModel):
             print("El nick del usuario es: " + self.nickname)
             
             register_user(self.email, self.password, self.nickname, data)
-        except requests.RequestException as error:
+        except HTTPException as error:
             # if we had more errors we could do this and then default to a generic error:
             # if (error.response.detail) == "User already registered":
             raise UserAlreadyRegistered() from error
-
-    def login(self):
-        """
-        This function is used to login the user.
-        """
-        try:
-            repo_user = get_user_repo(self.email)  # esto devuelve un usuario
-            if repo_user["password"] != self.password:
-                raise PasswordDoesntMatch()
-        except KeyError as error:
-            raise UserNotFound() from error
-        return {"message": "Login successful"}
 
 
 # end class User
