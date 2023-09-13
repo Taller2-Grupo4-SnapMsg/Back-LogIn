@@ -68,17 +68,12 @@ async def register_user(user_data: UserRegistration):
     user.set_date_of_birth("")
 
     try:
-        print("El email del user es: " + user.email)
-
         user.save()
-        print("Volvi de guardar el usuario")
-
         token = auth_handler.encode_token(user_data.email)
-        print("El token es " + token)
+        return {"message": "Registration successful", 'token': token }
     except UserAlreadyRegistered as error:
         raise HTTPException(status_code=409, detail=str(error)) from error
-    return {"message": "Registration successful",
-            'token': token }
+    
 
 
 class UserLogIn(BaseModel):
@@ -91,7 +86,7 @@ class UserLogIn(BaseModel):
 
 
 # Route to handle user login
-@app.post("/login/")
+@app.post("/login/", status_code=200)
 def login(user_data: UserLogIn):
     """
     This function is a test function that mocks user login.
@@ -114,18 +109,14 @@ def login(user_data: UserLogIn):
     return { 'token': token }
     '''
     
-    # Retrieve the stored hash from the database based on the user's email
-    stored_hashed_password = ...  # Retrieve the hash from your database
     try:  
         # try_login(user_data.email, hash_password)
-        print("trying to log in...")
         hash_password = get_user_password(user_data.email)
-        print("hash_password: " + hash_password)
         if auth_handler.verify_password(user_data.password, hash_password):
         # Passwords match, proceed with login
             print("Authenticated. Generating token...")
             token = auth_handler.encode_token(user_data.email)
-            print("token: " + token)
+            print("Token created")
     
     except UserNotFound as error:
         raise HTTPException(status_code=404, detail=str(error)) from error

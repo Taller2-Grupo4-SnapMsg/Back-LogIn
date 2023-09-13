@@ -12,6 +12,8 @@ mock_db = {}  # Mock database, in reality this would be a real database.
 TIMEOUT = 60
 GET_USERS_URL = "https://bdd-users-api.onrender.com/users"
 GET_USER_BY_NICK_URL = "https://bdd-users-api.onrender.com/get_user_by_username"
+GET_USER_BY_MAIL_URL = "https://bdd-users-api.onrender.com/get_user_by_mail"
+DELETE_USER_BY_MAIL_URL = "https://bdd-users-api.onrender.com/delete_user_by_mail"
 REGISTER_USER_URL = "https://bdd-users-api.onrender.com/register_new_user"
 
 
@@ -28,7 +30,7 @@ def register_user(
     :return: Status code with a JSON message.
     """
 
-    headerss = {"accept": "application/json", "Content-Type": "application/json"}
+    headers_request = {"accept": "application/json", "Content-Type": "application/json"}
 
     payload = {
         "username": nickname,
@@ -40,11 +42,8 @@ def register_user(
     }
 
     try:
-        print("Primero intento mostrar todo lo que hay en la tabla: ")
-        get_user_collection()
-        
         response = requests.post(
-            REGISTER_USER_URL, json=payload, headers=headerss, timeout=TIMEOUT
+            REGISTER_USER_URL, json=payload, headers=headers_request, timeout=TIMEOUT
         )
         if response.status_code != 200:
             raise HTTPException(
@@ -58,18 +57,25 @@ def register_user(
 
 def get_user_email(email: str):
     """
-    This function is a test function that mocks retrieving a user.
+    This function retrieves a user.
 
     :param email: The email of the user to retrieve.
     :return: The user's information.
     """
-    if email not in mock_db:
-        raise KeyError()
-    return mock_db[email]
+
+    try:
+        response = requests.get(
+            GET_USER_BY_MAIL_URL, params={"mail": email}, timeout=TIMEOUT
+        )
+        if (
+            response.status_code != 200
+        ):  # TO do: add more error handling so the exceptions are clear.
+            raise KeyError()
+    except requests.exceptions.Timeout as error:
+        raise DatabaseTimeout from error
+    return response.json()
 
 
-# This function won't work with our mocked dictionary, we need to change it later.
-# when we have a real database with primary keys.
 def get_user_nickname(nickname: str):
     """
     This function retrieves an user by nickname.
@@ -81,7 +87,7 @@ def get_user_nickname(nickname: str):
         response = requests.get(
             GET_USER_BY_NICK_URL, params={"username": nickname}, timeout=TIMEOUT
         )
-        if response is None:
+        if response.status_code != 200:
             raise KeyError()
     except requests.exceptions.Timeout as error:
         raise DatabaseTimeout from error
@@ -109,9 +115,14 @@ def remove_user(email: str):
     :param email: The email used to identify the user.
     :return: Status code with a JSON message.
     """
-    if email not in mock_db:
-        raise KeyError()
-    del mock_db[email]
+    try:
+        response = requests.delete(
+            DELETE_USER_BY_MAIL_URL, params={"mail": email}, timeout=TIMEOUT
+        )
+        if response.status_code != 200:
+            raise KeyError()
+    except requests.exceptions.Timeout as error:
+        raise DatabaseTimeout from error
     return {"message": "Delete successful"}
 
 
@@ -122,12 +133,8 @@ def get_user_collection():
     timeout = 10
     try:
         response = requests.get(GET_USERS_URL, timeout=timeout)
-        if response.status_code == 200:
-            data = response.json()
-            print(data)
-        else:
-            print(f"Failed to retrieve data. Status code: {response.status_code}")
     except requests.exceptions.Timeout:
         print("The request timed out. Please try again later.")
     except requests.exceptions.RequestException as error:
         print(f"An error occurred: {error}")
+    return response.json()
