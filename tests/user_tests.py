@@ -10,6 +10,7 @@ from service.user import User
 from service.user import remove_user_email
 from service.user import get_user_email
 from service.user import try_login
+from service.user import get_user_nickname
 from service.errors import UserNotFound
 from service.errors import UserAlreadyRegistered
 from service.errors import PasswordDoesntMatch
@@ -46,19 +47,6 @@ def save_test_user_to_db():
     user.save()
 
 
-def test_user_login():
-    """
-    This function tests the user login.
-    """
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    assert try_login(EMAIL, PASSWORD) == {"message": "Login successful"}
-
-    remove_user_email(EMAIL)  # Que pasa si un test falla y esto no se ejecuta??
-
-
 def test_user_can_login_after_register():
     """
     This function tests that the user is registered and can login.
@@ -82,20 +70,34 @@ def test_user_can_login_after_register():
     remove_user_email("prueba")
 
 
-# This can't be tested without the database
-# def test_user_get_nickname():
-#     """
-#     This function tests the user get by nickname.
-#     """
-#     remove_test_user_from_db()
+def test_user_get_nickname():
+    """
+    This function tests the user get by nickname.
+    """
+    remove_test_user_from_db()
 
-#     save_test_user_to_db()
+    save_test_user_to_db()
 
-#     repo_user = get_user_nickname(NICKNAME)
+    repo_user = get_user_nickname(NICKNAME)
 
-#     assert repo_user["nickname"] == NICKNAME
+    assert repo_user["username"] == NICKNAME
 
-#     remove_user_email(EMAIL)
+    remove_user_email(EMAIL)
+
+
+def test_user_get_nickname_wrong_nick():
+    """
+    This function tries to get the user but the nick doesn't exist
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        get_user_nickname("wrong_nick")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
 
 
 def test_user_get_email():
@@ -184,3 +186,61 @@ def test_setters_work():
     assert user.nickname == NICKNAME
     assert user.date_of_birth == "Real_date_of_birth"
     assert user.bio == "Real_bio"
+
+
+def test_user_login():
+    """
+    This function tests the user login.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    assert try_login(EMAIL, PASSWORD) == {"message": "Login successful"}
+
+    remove_user_email(EMAIL)
+
+
+def test_user_login_wrong_password():
+    """
+    This function tests the exception password doesn't match
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(PasswordDoesntMatch) as error:
+        try_login(EMAIL, "wrong_password")
+    assert str(error.value) == "Password doesn't match"
+
+    remove_user_email(EMAIL)
+
+
+def test_user_login_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        try_login("wrong_email", PASSWORD)
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+
+
+def test_user_remove_by_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        remove_user_email("wrong_email")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
