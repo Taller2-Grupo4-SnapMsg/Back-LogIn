@@ -137,4 +137,6 @@ def get_user_collection():
         print("The request timed out. Please try again later.")
     except requests.exceptions.RequestException as error:
         print(f"An error occurred: {error}")
+
     return response.json()
+
