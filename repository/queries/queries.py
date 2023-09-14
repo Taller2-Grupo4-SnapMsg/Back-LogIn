@@ -17,10 +17,7 @@ def get_user_by_username(session, username):
     """
     Searches for a user by its username.
     """
-    # Por que first? deberia ser unico.
-    # Pruebo sacando first a ver si se rompe todo
-    # .first() al final
-    return session.query(User).filter(User.username == username)
+    return session.query(User).filter(User.username == username).first()
 
 
 def get_user_by_mail(session, mail):

@@ -25,7 +25,7 @@ def remove_test_user_from_db():
     This function removes the test user from the database.
     """
     try:
-        remove_user_email("real_email@gmail.com")
+        remove_user_email(EMAIL)
     except UserNotFound:
         return
 
@@ -54,8 +54,8 @@ def test_user_can_login_after_register():
     remove_test_user_from_db()
 
     user = User(
-        email="prueba",
-        password="prueba",
+        email=EMAIL,
+        password=PASSWORD,
         name="Real_name",
         surname="Real_surname",
         nickname=NICKNAME,
@@ -65,9 +65,9 @@ def test_user_can_login_after_register():
 
     user.save()
 
-    assert try_login("prueba", "prueba") == {"message": "Login successful"}
+    assert try_login(EMAIL, PASSWORD) == {"message": "Login successful"}
 
-    remove_user_email("prueba")
+    remove_user_email(EMAIL)
 
 
 def test_user_get_nickname():
@@ -80,7 +80,7 @@ def test_user_get_nickname():
 
     repo_user = get_user_nickname(NICKNAME)
 
-    assert repo_user["username"] == NICKNAME
+    assert repo_user.username == NICKNAME
 
     remove_user_email(EMAIL)
 
@@ -110,7 +110,7 @@ def test_user_get_email():
 
     repo_user = get_user_email(EMAIL)
 
-    assert repo_user["email"] == EMAIL
+    assert repo_user.email == EMAIL
 
     remove_user_email(EMAIL)
 
