@@ -10,7 +10,6 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 from fastapi import Depends
-from auth import AuthHandler
 from service.user import User
 from service.user import change_password as change_password_service
 from service.user import get_user_email as get_user_service
@@ -19,6 +18,7 @@ from service.user import remove_user_email
 from service.user import get_all_users as get_all_users_service
 from service.user import get_user_nickname
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
+from control.auth import AuthHandler
 
 app = FastAPI()
 auth_handler = AuthHandler()

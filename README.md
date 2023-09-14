@@ -25,3 +25,8 @@ y haces:
 
 Si te esta fallando un test en particular, podes probar con:
 `pytest tests/user_tests -k "nombre_test"`
+
+## Si te esta molestando pylint...
+Probablemente sea por la variable de entorno PYTHONPATH, deberias hacer:
+`export PYTHONPATH=.$PYTHONPATH`
+y ahi te deberia andar el pre-commit...
