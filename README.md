@@ -30,3 +30,23 @@ Si te esta fallando un test en particular, podes probar con:
 Probablemente sea por la variable de entorno PYTHONPATH, deberias hacer:
 `export PYTHONPATH=.$PYTHONPATH`
 y ahi te deberia andar el pre-commit...
+
+## Para correr alembic, la herramienta de migraciones...
+Si tu $PYTHONPATH es ".", te vas a tener que parar en la carpeta root (backLogin)
+y hacer:
+`alembic -c repository/alembic.ini <comando>`
+
+Por ejemplo:
+`alembic -c repository/alembic.ini current` para ver la version actual de la base de datos.
+
+## Para correr los tests con tu base de datos local...
+Primero tenes que crear la base de datos en tu local, por ejemplo:
+test-back-users
+y despues, exportar la variable de entorno DB_URI con el siguiente formato:
+export DB_URI=postgresql://usuario:contraseña@localhost:puerto/test-back-users$DB_URI
+Una vez hagas eso, ya podes correr los tests normalemente.
+
+## Si te queres conectar a la base de datos de elephantSQL...
+Tenes que exportar la variable de entorno DB_URI asi:
+export DB_URI=postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl$DB_URI
+
