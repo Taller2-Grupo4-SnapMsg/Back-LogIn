@@ -3,7 +3,7 @@
 """
 This module is for the repository layer of the REST API for the login backend.
 """
-
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from repository.tables.users import Base
@@ -13,11 +13,10 @@ from repository.queries.queries import get_user_by_username as get_user_by_usern
 from repository.queries.queries import create_user as create_user_db
 from repository.queries.queries import get_all_users as get_all_users_db
 from repository.queries.queries import delete_user as delete_user_db
+from repository.queries.queries import update_user_password as update_user_password_db
 
 # We connect to the database using the ORM defined in tables.py
-engine = create_engine(
-    "postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl"
-)
+engine = create_engine(os.environ.get("DB_URI"))
 
 # Create the tables in the database
 Base.metadata.create_all(engine)
@@ -26,15 +25,6 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 TIMEOUT = 60
-GET_USERS_URL = "https://bdd-users-api.onrender.com/users"
-GET_USER_BY_NICK_URL = "https://bdd-users-api.onrender.com/get_user_by_username"
-GET_USER_BY_MAIL_URL = "https://bdd-users-api.onrender.com/get_user_by_mail"
-DELETE_USER_BY_MAIL_URL = "https://bdd-users-api.onrender.com/delete_user_by_mail"
-REGISTER_USER_URL = "https://bdd-users-api.onrender.com/register_new_user"
-
-# TODO: Put an env variable for local and production database.
-# TODO: delete mock_db
-mock_db = {}
 
 
 def register_user(
@@ -82,7 +72,7 @@ def get_user_nickname(nickname: str):
     return user
 
 
-def update_user(email: str, new_password: str):
+def update_user_password(email: str, new_password: str):
     """
     This function is a test function that mocks updating a user.
 
@@ -90,10 +80,10 @@ def update_user(email: str, new_password: str):
     :param user: The user's new information.
     :return: Status code with a JSON message.
     """
-    if email not in mock_db:
+    user = get_user_by_mail_db(session, email)
+    if user is None:
         raise KeyError()
-    mock_db[email]["password"] = new_password
-    return {"message": "Update successful"}
+    update_user_password_db(session, user.id, new_password)
 
 
 def remove_user(email: str):

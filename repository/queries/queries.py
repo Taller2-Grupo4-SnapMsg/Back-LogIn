@@ -56,7 +56,7 @@ def create_user(session, email, password, username, data):
         return None
 
 
-def update_user(session, user_id, new_data):
+def update_user_password(session, user_id, new_password):
     """
     Changes the information of the user with new_data
     :param: session: the session to use
@@ -66,8 +66,7 @@ def update_user(session, user_id, new_data):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        for key, value in new_data.items():
-            setattr(user, key, value)
+        setattr(user, "password", new_password)
         session.commit()
         return user
     return None
@@ -88,7 +87,7 @@ def delete_user(session, user_id):
     return False
 
 
-# TODO: maybe delete this?
+# to do: maybe delete this?
 def get_id_by_username(session, username):
     """
     Queries the database for the id of the user with the given username.
