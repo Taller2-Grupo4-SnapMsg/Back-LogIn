@@ -106,7 +106,7 @@ def login(user_data: UserLogIn):
             print("Authenticated. Generating token...")
             token = auth_handler.encode_token(user_data.email)
             print("Token created")
-        return {"message": "Login successful", "token": token}
+            return {"message": "Login successful", "token": token}
 
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
