@@ -20,6 +20,10 @@ from service.user import get_user_nickname
 from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
 from control.auth import AuthHandler
 
+USER_ALREADY_REGISTERED = 409
+USER_NOT_FOUND = 404
+PASSWORD_DOESNT_MATCH = 401
+
 app = FastAPI()
 auth_handler = AuthHandler()
 
@@ -71,7 +75,7 @@ async def register_user(user_data: UserRegistration):
         token = auth_handler.encode_token(user_data.email)
         return {"message": "Registration successful", "token": token}
     except UserAlreadyRegistered as error:
-        raise HTTPException(status_code=409, detail=str(error)) from error
+        raise HTTPException(status_code=USER_ALREADY_REGISTERED, detail=str(error)) from error
 
 
 class UserLogIn(BaseModel):
@@ -100,12 +104,12 @@ def login(user_data: UserLogIn):
             print("Authenticated. Generating token...")
             token = auth_handler.encode_token(user_data.email)
             print("Token created")
+        return {"message": "Login successful", "token": token}
 
     except UserNotFound as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     except PasswordDoesntMatch as error:
-        raise HTTPException(status_code=401, detail=str(error)) from error
-    return {"message": "Login successful", "token": token}
+        raise HTTPException(status_code=PASSWORD_DOESNT_MATCH, detail=str(error)) from error
 
 
 @app.get("/protected")
@@ -128,7 +132,7 @@ def get_user(email: str):
     try:
         user = get_user_service(email)
     except UserNotFound as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return user
 
 
@@ -144,7 +148,7 @@ def get_user_by_username(username: str):
     try:
         user = get_user_nickname(username)
     except UserNotFound as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return user
 
 
@@ -161,7 +165,7 @@ def change_password(email: str, new_password: str):
     try:
         change_password_service(email, new_password)
     except UserNotFound as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
 
 
@@ -176,7 +180,7 @@ def delete_user(email: str):
     try:
         remove_user_email(email)
     except UserNotFound as error:
-        raise HTTPException(status_code=404, detail=str(error)) from error
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User deleted"}
 
 
