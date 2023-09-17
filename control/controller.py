@@ -75,7 +75,9 @@ async def register_user(user_data: UserRegistration):
         token = auth_handler.encode_token(user_data.email)
         return {"message": "Registration successful", "token": token}
     except UserAlreadyRegistered as error:
-        raise HTTPException(status_code=USER_ALREADY_REGISTERED, detail=str(error)) from error
+        raise HTTPException(
+            status_code=USER_ALREADY_REGISTERED, detail=str(error)
+        ) from error
 
 
 class UserLogIn(BaseModel):
@@ -109,7 +111,9 @@ def login(user_data: UserLogIn):
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     except PasswordDoesntMatch as error:
-        raise HTTPException(status_code=PASSWORD_DOESNT_MATCH, detail=str(error)) from error
+        raise HTTPException(
+            status_code=PASSWORD_DOESNT_MATCH, detail=str(error)
+        ) from error
 
 
 @app.get("/protected")
