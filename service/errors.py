@@ -5,13 +5,22 @@ This module is for exceptions that may be raised by the service layer.
 """
 
 
-class UserAlreadyRegistered(Exception):
+class UsernameAlreadyRegistered(Exception):
     """
-    Exception raised when a user is already registered.
+    Exception raised when the user is already registered.
     """
 
     def __init__(self):
-        super().__init__("User already registered")
+        super().__init__("Username already registered")
+
+
+class EmailAlreadyRegistered(Exception):
+    """
+    Exception raised when the email is already registered.
+    """
+
+    def __init__(self):
+        super().__init__("Email already registered")
 
 
 class UserNotFound(Exception):

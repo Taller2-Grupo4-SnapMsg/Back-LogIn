@@ -12,7 +12,7 @@ from service.user import get_user_email
 from service.user import try_login
 from service.user import get_user_nickname
 from service.errors import UserNotFound
-from service.errors import UserAlreadyRegistered
+from service.errors import EmailAlreadyRegistered
 from service.errors import PasswordDoesntMatch
 
 EMAIL = "real_email@gmail.com"
@@ -130,18 +130,18 @@ def test_remove_user():
     assert str(error.value) == "User not found"
 
 
-def test_user_already_registered():
+def test_user_already_registered_email():
     """
-    This function tests the exception of user already registered.
+    This function tests the exception of user already registered (email).
     """
 
     remove_test_user_from_db()
 
     save_test_user_to_db()
 
-    with pytest.raises(UserAlreadyRegistered) as error:
+    with pytest.raises(EmailAlreadyRegistered) as error:
         save_test_user_to_db()
-    assert str(error.value) == "User already registered"
+    assert str(error.value) == "Email already registered"
 
     remove_user_email(EMAIL)
 

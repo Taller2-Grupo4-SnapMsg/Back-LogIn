@@ -17,7 +17,8 @@ from service.user import get_user_password
 from service.user import remove_user_email
 from service.user import get_all_users as get_all_users_service
 from service.user import get_user_nickname
-from service.errors import UserAlreadyRegistered, UserNotFound, PasswordDoesntMatch
+from service.errors import UserNotFound, PasswordDoesntMatch
+from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from control.auth import AuthHandler
 
 USER_ALREADY_REGISTERED = 409
@@ -73,11 +74,15 @@ async def register_user(user_data: UserRegistration):
     try:
         user.save()
         token = auth_handler.encode_token(user_data.email)
-        return {"message": "Registration successful", "token": token}
-    except UserAlreadyRegistered as error:
+    except UsernameAlreadyRegistered as error:
         raise HTTPException(
             status_code=USER_ALREADY_REGISTERED, detail=str(error)
         ) from error
+    except EmailAlreadyRegistered as error:
+        raise HTTPException(
+            status_code=USER_ALREADY_REGISTERED, detail=str(error)
+        ) from error
+    return {"message": "Registration successful", "token": token}
 
 
 class UserLogIn(BaseModel):
@@ -103,17 +108,18 @@ def login(user_data: UserLogIn):
         hash_password = get_user_password(user_data.email)
         if auth_handler.verify_password(user_data.password, hash_password):
             # Passwords match, proceed with login
-            print("Authenticated. Generating token...")
             token = auth_handler.encode_token(user_data.email)
-            print("Token created")
             return {"message": "Login successful", "token": token}
-
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     except PasswordDoesntMatch as error:
         raise HTTPException(
             status_code=PASSWORD_DOESNT_MATCH, detail=str(error)
         ) from error
+    # Excepcion token?
+    return {
+        "message": "Login unsuccessful, something went wrong, but we don't know what it is"
+    }
 
 
 @app.get("/protected")

@@ -7,7 +7,6 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from repository.tables.users import Base
-from repository.errors import DuplicatedPrimaryKey
 from repository.queries.queries import get_user_by_mail as get_user_by_mail_db
 from repository.queries.queries import get_user_by_username as get_user_by_username_db
 from repository.queries.queries import create_user as create_user_db
@@ -40,9 +39,8 @@ def register_user(
     :return: confirmation JSON message.
     """
 
-    user = create_user_db(session, email, password, nickname, data)
-    if user is None:
-        raise DuplicatedPrimaryKey()
+    create_user_db(session, email, password, nickname, data)
+
     return {"message": "Registration successful"}
 
 

@@ -16,5 +16,7 @@ COPY . .
 # Expose the port that the FastAPI application will run on
 EXPOSE 8000
 
+ENV DB_URI="postgresql://admin:admin123@localhost:5432/test-back-users"
+
 # Command to run the FastAPI application
 CMD ["uvicorn", "control.controller:app", "--host", "0.0.0.0", "--port", "8000"]

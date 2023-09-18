@@ -4,6 +4,7 @@ Module dedicated to the queries that the repository might need.
 """
 from sqlalchemy.exc import IntegrityError
 from repository.tables.users import User
+from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 
 
 def get_user_by_id(session, user_id):
@@ -51,9 +52,12 @@ def create_user(session, email, password, username, data):
         session.add(user)
         session.commit()
         return user
-    except IntegrityError:
+    except IntegrityError as error:
         session.rollback()
-        return None
+        if "username" in str(error.orig):
+            raise UsernameAlreadyExists() from error
+        # if it's not the username, it's the email, there is no other unique fields
+        raise EmailAlreadyExists() from error
 
 
 def update_user_password(session, user_id, new_password):

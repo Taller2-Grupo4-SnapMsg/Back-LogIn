@@ -14,10 +14,19 @@ class DatabaseTimeout(Exception):
         super().__init__("Database timeout")
 
 
-class DuplicatedPrimaryKey(Exception):
+class UsernameAlreadyExists(Exception):
     """
     Exception raised when registering an user fails.
     """
 
     def __init__(self):
-        super().__init__("Duplicated primary key")
+        super().__init__("Username already exists")
+
+
+class EmailAlreadyExists(Exception):
+    """
+    Exception raised when registering an user fails.
+    """
+
+    def __init__(self):
+        super().__init__("Email already exists")
