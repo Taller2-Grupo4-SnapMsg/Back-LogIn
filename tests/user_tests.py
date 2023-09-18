@@ -148,6 +148,7 @@ def test_user_already_registered_email():
     )
 
     user.save()
+    user.nickname = "nickname_no_repe1"
     with pytest.raises(EmailAlreadyRegistered) as error:
         user.save()
     assert str(error.value) == "Email already registered"
