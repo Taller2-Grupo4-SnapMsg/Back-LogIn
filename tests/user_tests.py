@@ -12,7 +12,7 @@ from service.user import get_user_email
 from service.user import try_login
 from service.user import get_user_nickname
 from service.errors import UserNotFound
-from service.errors import EmailAlreadyRegistered
+from service.errors import EmailAlreadyRegistered, UsernameAlreadyRegistered
 from service.errors import PasswordDoesntMatch
 
 EMAIL = "real_email@gmail.com"
@@ -173,9 +173,10 @@ def test_user_already_registered_username():
     )
 
     user.save()
-    with pytest.raises(EmailAlreadyRegistered) as error:
+    user.email = "email_no_repe1"
+    with pytest.raises(UsernameAlreadyRegistered) as error:
         user.save()
-    assert str(error.value) == "Email already registered"
+    assert str(error.value) == "Username already registered"
 
     remove_user_email("email_no_repe")
 
