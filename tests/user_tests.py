@@ -137,13 +137,47 @@ def test_user_already_registered_email():
 
     remove_test_user_from_db()
 
-    save_test_user_to_db()
+    user = User(
+        email="email_repe",
+        password=PASSWORD,
+        name="Real_name",
+        surname="Real_surname",
+        nickname="nick_no_repe",
+        date_of_birth="Real_date_of_birth",
+        bio="Real_bio",
+    )
 
+    user.save()
     with pytest.raises(EmailAlreadyRegistered) as error:
-        save_test_user_to_db()
+        user.save()
     assert str(error.value) == "Email already registered"
 
-    remove_user_email(EMAIL)
+    remove_user_email("email_repe")
+
+
+def test_user_already_registered_username():
+    """
+    This function tests the exception of user already registered (username).
+    """
+
+    remove_test_user_from_db()
+
+    user = User(
+        email="email_no_repe",
+        password=PASSWORD,
+        name="Real_name",
+        surname="Real_surname",
+        nickname="nickname_repe",
+        date_of_birth="Real_date_of_birth",
+        bio="Real_bio",
+    )
+
+    user.save()
+    with pytest.raises(EmailAlreadyRegistered) as error:
+        user.save()
+    assert str(error.value) == "Email already registered"
+
+    remove_user_email("email_no_repe")
 
 
 def test_wrong_password():
