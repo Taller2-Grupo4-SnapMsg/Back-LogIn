@@ -47,6 +47,11 @@ def create_user(session, email, password, username, data):
         password=password,
         email=email,
         date_of_birth=data["date_of_birth"],
+        snaps=data["snaps"],
+        followers=data["followers"],
+        following=data["following"],
+        avatar=data["avatar"],
+        bio=data["bio"],
     )
     try:
         session.add(user)

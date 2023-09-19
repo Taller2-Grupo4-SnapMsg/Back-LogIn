@@ -15,7 +15,6 @@ from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 
-
 # Pydantic model for users
 class User(BaseModel):
     """
@@ -29,6 +28,10 @@ class User(BaseModel):
     nickname: str = ""
     date_of_birth: str = ""
     bio: str = ""
+    following: int = 0
+    followers: int = 0
+    snaps: int = 0
+    avatar: str = ""
 
     def set_email(self, email):
         """
@@ -72,6 +75,32 @@ class User(BaseModel):
         """
         self.bio = bio
 
+    def set_following(self, following): 
+        """
+        This function is used to set the user's following.
+        """
+        self.following = following
+
+
+    def set_followers(self, followers):
+        """
+        This function is used to set the user's followers.
+        """
+        self.followers = followers
+        
+    def set_snaps(self, snaps):
+        """
+        This function is used to set the user's snaps.
+        """
+        self.snaps = snaps
+        
+    def set_avatar(self, avatar):
+        """
+        This function is used to set the user's profile picture.
+        """
+        self.avatar = avatar
+        
+
     def save(self):
         """
         This function is used to save the user to the database.
@@ -82,6 +111,10 @@ class User(BaseModel):
                 "surname": self.surname,
                 "date_of_birth": self.date_of_birth,
                 "bio": self.bio,
+                "following": self.following,
+                "followers": self.followers,
+                "snaps": self.snaps,
+                "avatar": self.avatar,
             }  # Thanks pylint
             register_user(self.email, self.password, self.nickname, data)
         except UsernameAlreadyExists as error:
