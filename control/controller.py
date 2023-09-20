@@ -131,10 +131,10 @@ def protected(useremail=Depends(auth_handler.auth_wrapper)):
 
 
 # Route to get user details
-@app.get("/users/{email}")
+@app.get("/users/email/{email}")
 def get_user(email: str):
     """
-    This function is a test function that mocks retrieving a user.
+    This function is a function that retrieves an user by mail.
 
     :param email: The email of the user to get.
     :return: User details or a 404 response.
@@ -147,10 +147,10 @@ def get_user(email: str):
 
 
 # Route to get user by username
-@app.get("/users/{username}")
+@app.get("/users/username/{username}")
 def get_user_by_username(username: str):
     """
-    This function retrieves an user.
+    This function retrieves an user by username.
 
     :param username: The username of the user to get.
     :return: User details or a 404 response.

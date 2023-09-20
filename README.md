@@ -127,6 +127,7 @@ Entonces, hasta aca, si haces:
 `.`
 
 `docker ps` te tiene que aparecer: (si lo hiciste con el docker-compose)
+
 (los dos procesos de arriba)
 
 Una vez hagas eso, ya podes correr los tests normalemente.
