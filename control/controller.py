@@ -19,8 +19,18 @@ from service.user import get_all_users as get_all_users_service
 from service.user import get_user_username
 from service.user import make_admin as make_admin_service
 from service.user import remove_admin_status as remove_admin_service
+from service.user import create_follow as create_follow_service
+from service.user import (
+    get_all_following_relations as get_all_following_relations_service,
+)
+from service.user import get_all_followers
+from service.user import get_all_following
+from service.user import get_followers_count as get_followers_count_service
+from service.user import get_following_count as get_following_count_service
+from service.user import remove_follow as remove_follow_service
 from service.errors import UserNotFound, PasswordDoesntMatch
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
+from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
 from control.auth import AuthHandler
 
 USER_ALREADY_REGISTERED = 409
@@ -126,6 +136,139 @@ def login(user_data: UserLogIn):
     return {
         "message": "Login unsuccessful, something went wrong, but we don't know what it is"
     }
+
+
+@app.post("/login_admin/", status_code=200)
+def login_admin(user_data: UserLogIn):
+    """
+    This function is for back-office log in.
+
+    :param user: The user to login.
+    :return: Status code with a JSON message.
+    """
+    try:
+        # try_login(user_data.email, hash_password)
+        user = get_user_service(user_data.email)
+        if not user.admin:
+            raise HTTPException(status_code=400, detail="User is not an admin")
+        if auth_handler.verify_password(user_data.password, user.password):
+            # Passwords match, proceed with login
+            token = auth_handler.encode_token(user_data.email)
+            return {"message": "Login successful", "token": token}
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    except PasswordDoesntMatch as error:
+        raise HTTPException(
+            status_code=PASSWORD_DOESNT_MATCH, detail=str(error)
+        ) from error
+    # Excepcion token?
+    return {
+        "message": "Login unsuccessful, something went wrong, but we don't know what it is"
+    }
+
+
+class FollowUsernames(BaseModel):
+    """
+    This class is a Pydantic model for the request body.
+    """
+
+    username_follower: str
+    username_following: str
+
+
+@app.post("/follow")
+def create_follow(follow_usernames: FollowUsernames):
+    """
+    This function creates a following relation between the given users.
+
+    :param username_follower: Email of the user that will follow.
+    :param username_following: Email of the user that is going to be followed.
+    :return: Status code with a JSON message.
+    """
+    try:
+        create_follow_service(
+            follow_usernames.username_follower, follow_usernames.username_following
+        )
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    except UserCantFollowItself as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    except FollowingRelationAlreadyExists as error:
+        raise HTTPException(status_code=400, detail=str(error)) from error
+    return {"message": "Follow successful"}
+
+
+@app.get("/follow/{username}")
+def get_followers(username: str):
+    """
+    This function returns the users a username is followed by.
+
+    :param username: Username of the user to get the followers of.
+    :return: Status code with a JSON message.
+    """
+    try:
+        return get_all_followers(username)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+
+
+@app.get("/following/{username}")
+def get_following(username: str):
+    """
+    This function returns the users a username is following.
+
+    :param username: Username of the user to get the following of.
+    :return: Status code with a JSON message.
+    """
+    try:
+        return get_all_following(username)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+
+
+@app.get("/follow/{username}/count")
+def get_followers_count(username: str):
+    """
+    This function returns the number of followers of a username.
+
+    :param username: Username of the user to get the followers count of.
+    :return: Status code with a JSON message.
+    """
+    try:
+        return get_followers_count_service(username)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+
+
+@app.get("/following/{username}/count")
+def get_following_count(username: str):
+    """
+    This function returns the number of users a username is following.
+
+    :param username: Username of the user to get the following count of.
+    :return: Status code with a JSON message.
+    """
+    try:
+        return get_following_count_service(username)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+
+
+@app.delete("/unfollow")
+def unfollow(unfollow_usernames: FollowUsernames):
+    """
+    This function deletes a following relation between the given users.
+
+    :param username_follower: Username of the user that will unfollow.
+    :param username_following: Username of the user that is going to be unfollowed.
+    :return: Status code with a JSON message.
+    """
+    try:
+        return remove_follow_service(
+            unfollow_usernames.username_follower, unfollow_usernames.username_following
+        )
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
 @app.get("/protected")
@@ -240,6 +383,16 @@ def get_all_users():
     :return: JSON of all users.
     """
     return get_all_users_service()
+
+
+@app.get("/following")
+def get_all_following_relations():
+    """
+    This function is an auxiliary function that returns all the users in the db
+
+    :return: JSON of all users.
+    """
+    return get_all_following_relations_service()
 
 
 @app.get("/ping")

@@ -30,3 +30,12 @@ class EmailAlreadyExists(Exception):
 
     def __init__(self):
         super().__init__("Email already exists")
+
+
+class RelationAlreadyExists(Exception):
+    """
+    Exception raised when creating a relation fails.
+    """
+
+    def __init__(self):
+        super().__init__("Relation already exists")

@@ -88,7 +88,7 @@ services:
     image: dpage/pgadmin4:7.5
     container_name: pg_admin_taller2
     depends_on:
-      - postgres
+      - postgres # No se inicializa hasta que ya esta la bdd
     environment:
       # Si queres ver la base de datos con un gestor, esto te 
       # levanta un pg admin, para entrar tenes que usar estas
@@ -105,7 +105,7 @@ services:
       dockerfile: Dockerfile
     container_name: fastapi_app_container
     depends_on:
-      - postgres
+      - postgres # No se inicializa hasta que ya esta la bdd
     # Este volumen es el que hace que si haces cambios se actualice cuando
     # des de baja el container y lo subas.
     volumes:
@@ -193,6 +193,8 @@ Para el coverage:
 `coverage run -m pytest tests/user_tests.py`
 
 `coverage report -m`
+
+**Si, para probar cambios tenes que dar de baja el docker y volverlo a correr, la alternativa es bajarte todo local, pero estas por tu cuenta.**
 
 ## Si estas teniendo problemas... estos son los que me pasaron a mi y como los solucione:
 

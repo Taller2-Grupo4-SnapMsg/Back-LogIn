@@ -12,9 +12,20 @@ from repository.user_repository import get_user_collection
 from repository.user_repository import get_user_username as get_user_username_repo
 from repository.user_repository import make_admin as make_admin_repo
 from repository.user_repository import remove_admin_status as remove_admin_repo
+from repository.user_repository import create_follow as create_follow_repo
+from repository.user_repository import get_followers as get_followers_db
+from repository.user_repository import get_following as get_following_db
+from repository.user_repository import (
+    get_following_relations as get_following_relations_db,
+)
+from repository.user_repository import get_following_count as get_following_count_db
+from repository.user_repository import get_followers_count as get_followers_count_db
+from repository.user_repository import remove_follow as remove_follow_db
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
+from repository.errors import RelationAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
+from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
 
 
 # Pydantic model for users
@@ -230,5 +241,83 @@ def remove_admin_status(email: str):
     """
     try:
         remove_admin_repo(email)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def create_follow(username: str, username_to_follow: str):
+    """
+    This function is used to create a follow relationship.
+    """
+    if username == username_to_follow:
+        raise UserCantFollowItself()
+    try:
+        create_follow_repo(username, username_to_follow)
+    except KeyError as error:
+        raise UserNotFound() from error
+    except RelationAlreadyExists as error:
+        raise FollowingRelationAlreadyExists() from error
+
+
+def get_all_followers(username: str):
+    """
+    This function is used to retrieve all username's followers from the database.
+    """
+    try:
+        user = get_user_username(username)
+        return get_followers_db(user.id)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def get_all_following(username: str):
+    """
+    This function is used to retrieve all users following  username from the database.
+    """
+    try:
+        user = get_user_username(username)
+        return get_following_db(user.id)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def get_all_following_relations():
+    """
+    This function is used to retrieve all follow relations from the database.
+    """
+    return get_following_relations_db()
+
+
+def get_following_count(username: str):
+    """
+    This function is used to get username's following count from database.
+    """
+    try:
+        user = get_user_username(username)
+        return get_following_count_db(user.id)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def get_followers_count(username: str):
+    """
+    This function is used to get username's followers count from database.
+    """
+    try:
+        user = get_user_username(username)
+        return get_followers_count_db(user.id)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def remove_follow(username: str, username_to_unfollow: str):
+    """
+    This function is used to remove a follow relationship.
+    """
+    try:
+        user = get_user_username(username)
+        user_to_unfollow = get_user_username(username_to_unfollow)
+        remove_follow_db(user.id, user_to_unfollow.id)
+        return {"message": "Unfollow successful"}
     except KeyError as error:
         raise UserNotFound() from error
