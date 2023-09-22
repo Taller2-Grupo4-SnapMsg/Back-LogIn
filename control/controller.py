@@ -367,7 +367,7 @@ def get_user_by_username(username: str):
 
 
 # Route to update user information
-@app.put("/users/{email}/")
+@app.put("/users/{email}/password")
 def change_password(email: str, new_password: str):
     """
     This function is a test function that mocks updating user information.

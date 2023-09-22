@@ -16,6 +16,7 @@ COPY . .
 # Expose the port that the FastAPI application will run on
 EXPOSE 8000
 
+# This one always should be production data base, since it's the one the "onrender" picks up.
 ENV DB_URI="postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl"
 
 # Command to run the FastAPI application
