@@ -1,10 +1,9 @@
 # pylint: skip-file
+"""Se creo la tabla de following y se modificaron los atriburos de usuarios.
 
-"""Se agregaron atributos que faltaban en la tabla de usuarios, y se creo una nueva tabla following.
-
-Revision ID: 819f765107fa
-Revises: 7c60f6777ce4
-Create Date: 2023-09-21 12:48:59.895972
+Revision ID: 362ef26c0d9f
+Revises: 
+Create Date: 2023-09-22 19:48:33.635411
 
 """
 from typing import Sequence, Union
@@ -14,8 +13,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "819f765107fa"
-down_revision: Union[str, None] = "7c60f6777ce4"
+revision: str = "362ef26c0d9f"
+down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

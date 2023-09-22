@@ -113,6 +113,7 @@ services:
     environment:
       #El fast api se va a conectar automaticamente al la bdd local:
       DB_URI: postgresql://admin:admin123@postgres:5432/test-back-users
+      # Si queres conectarte local a la bdd posta, tenes que modificar ese link.
     ports:
       - "8000:8000"
 ```
@@ -216,6 +217,8 @@ Y despues hacer:
 ```bash
 alembic -c repository/alembic.ini upgrade head
 ```
+
+Si no, tenes que cambiar el link en el docker-compose para usar el FASTAPI como localhost conectado a la bdd de elephant.
 
 ## Si no sabes usar PgAdmin...
 La primera vez que entres vas a tener que "agregar un server" estableciendo una coneccion con nuestro postgres. Para eso preguntale a Alejo(?)

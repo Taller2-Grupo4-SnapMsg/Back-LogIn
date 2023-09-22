@@ -39,6 +39,6 @@ services:
     volumes:
       - .:/app
     environment:
-      DB_URI: postgresql://admin:admin123@postgres:5432/test-back-users  # Use the appropriate DB URI here
+      DB_URI: postgresql://admin:admin123@postgres:5432/test-back-users # Use the appropriate DB URI here
     ports:
       - "8000:8000"
