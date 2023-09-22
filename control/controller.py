@@ -65,6 +65,57 @@ class UserRegistration(BaseModel):
     date_of_birth: str
 
 
+class UserResponse(BaseModel):
+    """
+    This class is a Pydantic model for the response body.
+    """
+
+    email: str
+    name: str
+    last_name: str
+    username: str
+    date_of_birth: str
+    bio: str
+    avatar: str
+
+    # I disable it since it's a pydantic configuration
+    # pylint: disable=too-few-public-methods
+    class Config:
+        """
+        This is a pydantic configuration so I can cast
+        orm_objects into pydantic models.
+        """
+
+        orm_mode = True
+        from_attributes = True
+
+
+def generate_response(user):
+    """
+    This function casts the orm_object into a pydantic model.
+    (from data base object to json)
+    """
+    return UserResponse(
+        email=user.email,
+        name=user.name,
+        last_name=user.surname,
+        username=user.username,
+        date_of_birth=str(user.date_of_birth),
+        bio=user.bio,
+        avatar=user.avatar,
+    )
+
+
+def generate_response_list(users):
+    """
+    This function casts the list of users into a list of pydantic models.
+    """
+    response = []
+    for user in users:
+        response.append(generate_response(user))
+    return response
+
+
 # Create a POST route
 @app.post("/register", status_code=201)
 def register_user(user_data: UserRegistration):
@@ -207,7 +258,8 @@ def get_followers(username: str):
     :return: Status code with a JSON message.
     """
     try:
-        return get_all_followers(username)
+        user_list = get_all_followers(username)
+        return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -221,7 +273,8 @@ def get_following(username: str):
     :return: Status code with a JSON message.
     """
     try:
-        return get_all_following(username)
+        user_list = get_all_following(username)
+        return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -280,7 +333,7 @@ def protected(useremail=Depends(auth_handler.auth_wrapper)):
 
 
 # Route to get user details
-@app.get("/users/email/{email}")
+@app.get("/users/email/{email}", response_model=UserResponse)
 def get_user(email: str):
     """
     This function is a function that retrieves an user by mail.
@@ -290,6 +343,7 @@ def get_user(email: str):
     """
     try:
         user = get_user_service(email)
+        user = generate_response(user)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return user
@@ -306,6 +360,7 @@ def get_user_by_username(username: str):
     """
     try:
         user = get_user_username(username)
+        user = generate_response(user)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return user
@@ -382,7 +437,8 @@ def get_all_users():
 
     :return: JSON of all users.
     """
-    return get_all_users_service()
+    user_list = get_all_users_service()
+    return generate_response_list(user_list)
 
 
 @app.get("/following")
