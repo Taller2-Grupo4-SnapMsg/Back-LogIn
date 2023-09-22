@@ -47,6 +47,9 @@ def create_user(session, email, password, username, data):
         password=password,
         email=email,
         date_of_birth=data["date_of_birth"],
+        bio=data["bio"],
+        avatar=data["avatar"],
+        admin=False,
     )
     try:
         session.add(user)
@@ -97,6 +100,18 @@ def get_id_by_username(session, username):
     Queries the database for the id of the user with the given username.
     """
     return session.query(User).filter(User.username == username).first().id
+
+
+def update_user_admin(session, user_id, new_admin_status):
+    """
+    Changes the admin status of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "admin", new_admin_status)
+        session.commit()
+        return user
+    return None
 
 
 def get_all_users(session):

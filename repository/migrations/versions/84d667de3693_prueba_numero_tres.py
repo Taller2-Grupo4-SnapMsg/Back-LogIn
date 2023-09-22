@@ -1,9 +1,10 @@
 # pylint: skip-file
-"""Initial migration
 
-Revision ID: 82ccb801ce64
-Revises: 
-Create Date: 2023-09-12 15:22:53.875893
+"""Prueba numero tres
+
+Revision ID: 84d667de3693
+Revises: d19b7c9f55fe
+Create Date: 2023-09-21 12:04:16.948765
 
 """
 from typing import Sequence, Union
@@ -13,8 +14,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "82ccb801ce64"
-down_revision: Union[str, None] = None
+revision: str = "84d667de3693"
+down_revision: Union[str, None] = "d19b7c9f55fe"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

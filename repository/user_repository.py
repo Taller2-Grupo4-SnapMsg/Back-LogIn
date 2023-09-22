@@ -13,6 +13,7 @@ from repository.queries.queries import create_user as create_user_db
 from repository.queries.queries import get_all_users as get_all_users_db
 from repository.queries.queries import delete_user as delete_user_db
 from repository.queries.queries import update_user_password as update_user_password_db
+from repository.queries.queries import update_user_admin as update_user_admin_db
 
 # We connect to the database using the ORM defined in tables.py
 engine = create_engine(os.environ.get("DB_URI"))
@@ -29,7 +30,7 @@ TIMEOUT = 60
 def register_user(
     email: str,
     password: str,
-    nickname: str,
+    username: str,
     data: dict,
 ):
     """
@@ -39,7 +40,7 @@ def register_user(
     :return: confirmation JSON message.
     """
 
-    create_user_db(session, email, password, nickname, data)
+    create_user_db(session, email, password, username, data)
 
     return {"message": "Registration successful"}
 
@@ -57,14 +58,14 @@ def get_user_email(email: str):
     return user
 
 
-def get_user_nickname(nickname: str):
+def get_user_username(username: str):
     """
-    This function retrieves an user by nickname.
+    This function retrieves an user by username.
 
-    :param nickname: The nickname of the user to retrieve.
+    :param username: The username of the user to retrieve.
     :return: The user's information.
     """
-    user = get_user_by_username_db(session, nickname)
+    user = get_user_by_username_db(session, username)
     if user is None:
         raise KeyError()
     return user
@@ -94,6 +95,30 @@ def remove_user(email: str):
     if user is None:
         raise KeyError()
     delete_user_db(session, user.id)
+
+
+def make_admin(email: str):
+    """
+    This is used for making a user admin.
+
+    :param email: The email used to identify the user.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_admin_db(session, user.id, True)
+
+
+def remove_admin_status(email: str):
+    """
+    This is used for removing a user's admin status.
+
+    :param email: The email used to identify the user.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_admin_db(session, user.id, False)
 
 
 def get_user_collection():

@@ -3,20 +3,22 @@
 """
 This module is for the service layer of the REST API for the login backend.
 """
-
 from pydantic import BaseModel
 from repository.user_repository import register_user
 from repository.user_repository import update_user_password as update_user_password_repo
 from repository.user_repository import get_user_email as get_user_repo
 from repository.user_repository import remove_user
 from repository.user_repository import get_user_collection
-from repository.user_repository import get_user_nickname as get_user_nickname_repo
+from repository.user_repository import get_user_username as get_user_username_repo
+from repository.user_repository import make_admin as make_admin_repo
+from repository.user_repository import remove_admin_status as remove_admin_repo
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 
 
 # Pydantic model for users
+# pylint: disable=too-many-instance-attributes
 class User(BaseModel):
     """
     This class is used to represent a user.
@@ -26,9 +28,11 @@ class User(BaseModel):
     password: str = ""
     name: str = ""
     surname: str = ""
-    nickname: str = ""
+    username: str = ""
     date_of_birth: str = ""
     bio: str = ""
+    avatar: str = ""
+    admin: bool = False
 
     def set_email(self, email):
         """
@@ -54,11 +58,11 @@ class User(BaseModel):
         """
         self.surname = surname
 
-    def set_nickname(self, nickname):
+    def set_username(self, username):
         """
-        This function is used to set the user's nickname.
+        This function is used to set the user's username.
         """
-        self.nickname = nickname
+        self.username = username
 
     def set_date_of_birth(self, date_of_birth):
         """
@@ -72,18 +76,32 @@ class User(BaseModel):
         """
         self.bio = bio
 
+    def set_avatar(self, avatar):
+        """
+        This function is used to set the user's avatar.
+        """
+        self.avatar = avatar
+
+    def set_admin(self, admin):
+        """
+        This function is used to set the user's admin.
+        """
+        self.admin = admin
+
     def save(self):
         """
         This function is used to save the user to the database.
         """
         try:
+            # self.date_of_birth = datetime.datetime.strptime(self.date_of_birth)
             data = {
                 "name": self.name,
                 "surname": self.surname,
                 "date_of_birth": self.date_of_birth,
                 "bio": self.bio,
+                "avatar": self.avatar,
             }  # Thanks pylint
-            register_user(self.email, self.password, self.nickname, data)
+            register_user(self.email, self.password, self.username, data)
         except UsernameAlreadyExists as error:
             # if we had more errors we could do this and then default to a generic error:
             # if (error.response.detail) == "User already registered":
@@ -119,7 +137,6 @@ def get_user_password(email: str):
     :param password: The password of the user to login.
     """
     try:
-        # ROMPE ACA - NO ENCUENTRA AL USUARIO
         repo_user = get_user_repo(email)  # esto devuelve un usuario
         return repo_user.password
     except KeyError as error:
@@ -152,7 +169,7 @@ def get_user_email(email: str):
         raise UserNotFound() from error
 
 
-def get_user_nickname(nickname: str):
+def get_user_username(username: str):
     """
     This function is used to retrieve the user from the database.
 
@@ -160,7 +177,7 @@ def get_user_nickname(nickname: str):
     :return: The user's information.
     """
     try:
-        return get_user_nickname_repo(nickname)
+        return get_user_username_repo(username)
     except KeyError as error:
         raise UserNotFound() from error
 
@@ -177,14 +194,14 @@ def remove_user_email(email: str):
         raise UserNotFound() from error
 
 
-def remove_user_nickname(nickname: str):
+def remove_user_username(username: str):
     """
     This function is used to remove the user from the database.
 
-    :param nickname: The nickname of the user to remove.
+    :param username: The username of the user to remove.
     """
     try:
-        user = get_user_nickname(nickname)
+        user = get_user_username(username)
         remove_user(user.email)
     except KeyError as error:
         raise UserNotFound() from error
@@ -195,3 +212,23 @@ def get_all_users():
     This function is used to retrieve all users from the database.
     """
     return get_user_collection()
+
+
+def make_admin(email: str):
+    """
+    This function is used to make a user admin.
+    """
+    try:
+        make_admin_repo(email)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def remove_admin_status(email: str):
+    """
+    This function is used to remove admin status from a user.
+    """
+    try:
+        remove_admin_repo(email)
+    except KeyError as error:
+        raise UserNotFound() from error

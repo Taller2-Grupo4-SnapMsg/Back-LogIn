@@ -6,17 +6,19 @@ This is the test module.
 import pytest
 from service.user import User
 
-# from service.user import get_user_nickname
+# from service.user import get_user_username
 from service.user import remove_user_email
 from service.user import get_user_email
 from service.user import try_login
-from service.user import get_user_nickname
+from service.user import get_user_username
+from service.user import make_admin
+from service.user import remove_admin_status
 from service.errors import UserNotFound
 from service.errors import EmailAlreadyRegistered, UsernameAlreadyRegistered
 from service.errors import PasswordDoesntMatch
 
 EMAIL = "real_email@gmail.com"
-NICKNAME = "real_nickname"
+USERNAME = "real_username"
 PASSWORD = "Real_password123"
 
 
@@ -39,9 +41,11 @@ def save_test_user_to_db():
         password=PASSWORD,
         name="Real_name",
         surname="Real_surname",
-        nickname=NICKNAME,
-        date_of_birth="Real_date_of_birth",
+        username=USERNAME,
+        date_of_birth="666 6 6",
         bio="Real_bio",
+        admin=False,
+        avatar="image.png",
     )
 
     user.save()
@@ -58,8 +62,8 @@ def test_user_can_login_after_register():
         password=PASSWORD,
         name="Real_name",
         surname="Real_surname",
-        nickname=NICKNAME,
-        date_of_birth="Real_date_of_birth",
+        username=USERNAME,
+        date_of_birth="666 6 6",
         bio="Real_bio",
     )
 
@@ -70,22 +74,22 @@ def test_user_can_login_after_register():
     remove_user_email(EMAIL)
 
 
-def test_user_get_nickname():
+def test_user_get_username():
     """
-    This function tests the user get by nickname.
+    This function tests the user get by username.
     """
     remove_test_user_from_db()
 
     save_test_user_to_db()
 
-    repo_user = get_user_nickname(NICKNAME)
+    repo_user = get_user_username(USERNAME)
 
-    assert repo_user.username == NICKNAME
+    assert repo_user.username == USERNAME
 
     remove_user_email(EMAIL)
 
 
-def test_user_get_nickname_wrong_nick():
+def test_user_get_username_wrong_nick():
     """
     This function tries to get the user but the nick doesn't exist
     """
@@ -94,7 +98,7 @@ def test_user_get_nickname_wrong_nick():
     save_test_user_to_db()
 
     with pytest.raises(UserNotFound) as error:
-        get_user_nickname("wrong_nick")
+        get_user_username("wrong_nick")
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
@@ -142,13 +146,15 @@ def test_user_already_registered_email():
         password=PASSWORD,
         name="Real_name",
         surname="Real_surname",
-        nickname="nick_no_repe",
-        date_of_birth="Real_date_of_birth",
+        username="nick_no_repe",
+        date_of_birth="666 6 6",
         bio="Real_bio",
+        admin=False,
+        avatar="image.png",
     )
 
     user.save()
-    user.nickname = "nickname_no_repe1"
+    user.username = "username_no_repe1"
     with pytest.raises(EmailAlreadyRegistered) as error:
         user.save()
     assert str(error.value) == "Email already registered"
@@ -168,9 +174,11 @@ def test_user_already_registered_username():
         password=PASSWORD,
         name="Real_name",
         surname="Real_surname",
-        nickname="nickname_repe",
-        date_of_birth="Real_date_of_birth",
+        username="username_repe",
+        date_of_birth="666 6 6",
         bio="Real_bio",
+        admin=False,
+        avatar="image.png",
     )
 
     user.save()
@@ -211,17 +219,21 @@ def test_setters_work():
     user.set_password(PASSWORD)
     user.set_name("Real_name")
     user.set_surname("Real_surname")
-    user.set_nickname(NICKNAME)
-    user.set_date_of_birth("Real_date_of_birth")
+    user.set_username(USERNAME)
+    user.set_date_of_birth("666 6 6")
     user.set_bio("Real_bio")
+    user.set_avatar("image.png")
+    user.set_admin(True)
 
     assert user.email == EMAIL
     assert user.password == PASSWORD
     assert user.name == "Real_name"
     assert user.surname == "Real_surname"
-    assert user.nickname == NICKNAME
-    assert user.date_of_birth == "Real_date_of_birth"
+    assert user.username == USERNAME
+    assert user.date_of_birth == "666 6 6"
     assert user.bio == "Real_bio"
+    assert user.avatar == "image.png"
+    assert user.admin is True
 
 
 def test_user_login():
@@ -278,5 +290,41 @@ def test_user_remove_by_wrong_email():
     with pytest.raises(UserNotFound) as error:
         remove_user_email("wrong_email")
     assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+
+
+def test_user_can_be_set_as_admin():
+    """
+    This function makes and admin, and then
+    checks if the user is an admin.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    make_admin(EMAIL)
+
+    assert get_user_email(EMAIL).admin is True
+
+    remove_user_email(EMAIL)
+
+
+def test_user_can_be_removed_of_its_admin_priviliges():
+    """
+    This function makes and admin, and then
+    checks if the user is an admin.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    make_admin(EMAIL)
+
+    assert get_user_email(EMAIL).admin is True
+
+    remove_admin_status(EMAIL)
+
+    assert get_user_email(EMAIL).admin is False
 
     remove_user_email(EMAIL)

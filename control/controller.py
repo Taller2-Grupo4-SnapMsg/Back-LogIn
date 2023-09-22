@@ -3,7 +3,7 @@
 """
 This is the controller layer of the REST API for the login backend.
 """
-
+import datetime
 from pydantic import BaseModel
 
 # Para permitir pegarle a la API desde localhost:
@@ -16,7 +16,9 @@ from service.user import get_user_email as get_user_service
 from service.user import get_user_password
 from service.user import remove_user_email
 from service.user import get_all_users as get_all_users_service
-from service.user import get_user_nickname
+from service.user import get_user_username
+from service.user import make_admin as make_admin_service
+from service.user import remove_admin_status as remove_admin_service
 from service.errors import UserNotFound, PasswordDoesntMatch
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from control.auth import AuthHandler
@@ -49,12 +51,13 @@ class UserRegistration(BaseModel):
     email: str
     name: str
     last_name: str
-    nickname: str
+    username: str
+    date_of_birth: str
 
 
 # Create a POST route
 @app.post("/register", status_code=201)
-async def register_user(user_data: UserRegistration):
+def register_user(user_data: UserRegistration):
     """
     This function is the endpoint for user registration.
     """
@@ -67,10 +70,13 @@ async def register_user(user_data: UserRegistration):
     user.set_email(user_data.email)
     user.set_name(user_data.name)
     user.set_surname(user_data.last_name)
-    user.set_nickname(user_data.nickname)
+    user.set_username(user_data.username)
     user.set_bio("")
-    user.set_date_of_birth("")
-
+    date_time = user_data.date_of_birth.split(" ")
+    user.set_date_of_birth(
+        datetime.datetime(int(date_time[0]), int(date_time[1]), int(date_time[2]))
+    )
+    user.set_admin(False)
     try:
         user.save()
         token = auth_handler.encode_token(user_data.email)
@@ -156,7 +162,7 @@ def get_user_by_username(username: str):
     :return: User details or a 404 response.
     """
     try:
-        user = get_user_nickname(username)
+        user = get_user_username(username)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return user
@@ -177,6 +183,38 @@ def change_password(email: str, new_password: str):
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
+
+
+# Route to making an admin
+@app.put("/users/{email}/make_admin")
+def make_admin(email: str):
+    """
+    This function is a test function that mocks updating user information.
+
+    :param email: The email of the user to update.
+    :return: Status code with a JSON message.
+    """
+    try:
+        make_admin_service(email)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": email + " is now an admin"}
+
+
+# Route to removing admin status
+@app.put("/users/{email}/remove_admin")
+def remove_admin_status(email: str):
+    """
+    This function is a test function that mocks updating user information.
+
+    :param email: The email of the user to update.
+    :return: Status code with a JSON message.
+    """
+    try:
+        remove_admin_service(email)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": email + " is no longer an admin"}
 
 
 @app.delete("/users/{email}")
