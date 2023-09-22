@@ -39,3 +39,21 @@ class PasswordDoesntMatch(Exception):
 
     def __init__(self):
         super().__init__("Password doesn't match")
+
+
+class UserCantFollowItself(Exception):
+    """
+    Exception raised when the user tries to follow itself.
+    """
+
+    def __init__(self):
+        super().__init__("User can't follow itself!")
+
+
+class FollowingRelationAlreadyExists(Exception):
+    """
+    Exception raised when the user tries to follow another user that is already followed.
+    """
+
+    def __init__(self):
+        super().__init__("Following relation already exists!")

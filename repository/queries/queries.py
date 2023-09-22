@@ -4,7 +4,9 @@ Module dedicated to the queries that the repository might need.
 """
 from sqlalchemy.exc import IntegrityError
 from repository.tables.users import User
+from repository.tables.users import Following
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
+from repository.errors import RelationAlreadyExists
 
 
 def get_user_by_id(session, user_id):
@@ -47,6 +49,9 @@ def create_user(session, email, password, username, data):
         password=password,
         email=email,
         date_of_birth=data["date_of_birth"],
+        bio=data["bio"],
+        avatar=data["avatar"],
+        admin=False,
     )
     try:
         session.add(user)
@@ -97,6 +102,95 @@ def get_id_by_username(session, username):
     Queries the database for the id of the user with the given username.
     """
     return session.query(User).filter(User.username == username).first().id
+
+
+def update_user_admin(session, user_id, new_admin_status):
+    """
+    Changes the admin status of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "admin", new_admin_status)
+        session.commit()
+        return user
+    return None
+
+
+def create_follow(session, username, username_to_follow):
+    """
+    Creates a follow relationship between two users.
+    """
+    user = get_user_by_username(session, username)
+    user_to_follow = get_user_by_username(session, username_to_follow)
+    if user and user_to_follow:
+        try:
+            following = Following(user.id, user_to_follow.id)
+            session.add(following)
+            session.commit()
+        except IntegrityError as error:
+            session.rollback()
+            raise RelationAlreadyExists() from error
+        return following
+    return None
+
+
+def get_followers(session, user_id):
+    """
+    Returns a list of the followers of the user with the given username.
+    """
+    users = session.query(Following).filter(Following.following_id == user_id).all()
+    return [
+        session.query(User).filter(User.id == user.user_id).first() for user in users
+    ]
+
+
+def get_following(session, user_id):
+    """
+    Returns a list of the users that the user with the given username is following.
+    """
+    users = session.query(Following).filter(Following.user_id == user_id).all()
+    return [
+        session.query(User).filter(User.id == user.following_id).first()
+        for user in users
+    ]
+
+
+def get_following_relations(session):
+    """
+    Returns a list of all the following relations.
+    """
+    return session.query(Following).all()
+
+
+def get_following_count(session, user_id):
+    """
+    Returns the number of users that the user with the given username is following.
+    """
+    return session.query(Following).filter(Following.user_id == user_id).count()
+
+
+def get_followers_count(session, user_id):
+    """
+    Returns the number of followers of the user with the given username.
+    """
+    return session.query(Following).filter(Following.following_id == user_id).count()
+
+
+def remove_follow(session, user_id, user_id_to_unfollow):
+    """
+    Removes the folowing relation between the two users.
+    """
+    following = (
+        session.query(Following)
+        .filter(Following.user_id == user_id)
+        .filter(Following.following_id == user_id_to_unfollow)
+        .first()
+    )
+    if following:
+        session.delete(following)
+        session.commit()
+        return
+    raise KeyError("The relation doesn't exist")
 
 
 def get_all_users(session):
