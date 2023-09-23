@@ -170,9 +170,6 @@ ec64cc95cd5b   dpage/pgadmin4:7.5      "/entrypoint.sh"         34 minutes ago  
 37fa1b9c1d44   postgres:14             "docker-entrypoint.s…"   34 minutes ago   Up 29 minutes   0.0.0.0:5432->5432/tcp, :::5432->5432/tcp        postgres_taller2
 ```
 
-Hasta aca, si vas bien, deberias por ejemplo poder correr los tests con:
-
-`pytest tests/user_tests.py`
 
 En `localhost:8000/docs` te tiene que aparecer la api con todos los endpoints y una breve descripcion.
 donde vas a poder insertar y sacar todo lo que quieras, porque total vas a estar con la base de datos local tuya.
@@ -186,6 +183,8 @@ Una vez ya tenes todo instalado, y apagaste la compu, lo unico que tenes que hac
 `echo $DB_URI` (para chequear que este bien)
 
 `echo $PYTHONPATH` (para chequear que este bien, si no lo agregas con el export)
+
+Hasta aca, si vas bien, deberias por ejemplo poder correr los tests con:
 
 `pytest tests/user_tests.py`
 

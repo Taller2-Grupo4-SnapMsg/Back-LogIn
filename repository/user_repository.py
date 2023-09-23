@@ -13,6 +13,8 @@ from repository.queries.queries import create_user as create_user_db
 from repository.queries.queries import get_all_users as get_all_users_db
 from repository.queries.queries import delete_user as delete_user_db
 from repository.queries.queries import update_user_password as update_user_password_db
+from repository.queries.queries import update_user_bio as update_user_bio_db
+from repository.queries.queries import update_user_avatar as update_user_avatar_db
 from repository.queries.queries import update_user_admin as update_user_admin_db
 from repository.queries.queries import create_follow as create_follow_db
 from repository.queries.queries import get_followers as get_followers_db
@@ -201,6 +203,32 @@ def get_user_collection():
     :return: A list of all the users in the db
     """
     return get_all_users_db(session)
+
+
+def update_user_bio(email: str, bio: str):
+    """
+    This is used for updating a user's bio.
+
+    :param email: The email used to identify the user.
+    :param bio: The bio to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_bio_db(session, user.id, bio)
+
+
+def update_user_avatar(email: str, avatar: str):
+    """
+    This is used for updating a user's avatar.
+
+    :param email: The email used to identify the user.
+    :param avatar: The avatar to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_avatar_db(session, user.id, avatar)
 
 
 session.close()

@@ -22,6 +22,8 @@ from service.user import remove_follow
 from service.user import get_user_password
 from service.user import change_password
 from service.user import remove_user_username
+from service.user import change_bio
+from service.user import change_avatar
 from service.errors import UserNotFound
 from service.errors import EmailAlreadyRegistered, UsernameAlreadyRegistered
 from service.errors import PasswordDoesntMatch, FollowingRelationAlreadyExists
@@ -719,3 +721,33 @@ def test_get_all_following_wrong_username():
     remove_follow(user.username, user_to_be_followed.username)
     remove_user_email(EMAIL)
     remove_user_email(EMAIL + "1")
+
+
+def test_change_user_bio():
+    """
+    This function tests the change user bio.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_bio(EMAIL, "new_bio")
+
+    assert get_user_email(EMAIL).bio == "new_bio"
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_avatar():
+    """
+    This function tests the change user avatar.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_avatar(EMAIL, "new_avatar")
+
+    assert get_user_email(EMAIL).avatar == "new_avatar"
+
+    remove_user_email(EMAIL)

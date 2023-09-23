@@ -12,6 +12,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi import Depends
 from service.user import User
 from service.user import change_password as change_password_service
+from service.user import change_bio as change_bio_service
+from service.user import change_avatar as change_avatar_service
 from service.user import get_user_email as get_user_service
 from service.user import get_user_password
 from service.user import remove_user_email
@@ -370,14 +372,46 @@ def get_user_by_username(username: str):
 @app.put("/users/{email}/password")
 def change_password(email: str, new_password: str):
     """
-    This function is a test function that mocks updating user information.
+    This function is for changing the user's password
 
     :param email: The email of the user to update.
-    :param update_info: New user information.
+    :param new_password: User's new password.
     :return: Status code with a JSON message.
     """
     try:
         change_password_service(email, new_password)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
+@app.put("/users/{email}/bio")
+def change_bio(email: str, new_bio: str):
+    """
+    This function is for changing the user's bio
+
+    :param email: The email of the user to update.
+    :param new_bio: User's new bio.
+    :return: Status code with a JSON message.
+    """
+    try:
+        change_bio_service(email, new_bio)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
+@app.put("/users/{email}/avatar")
+def change_avatar(email: str, new_avatar: str):
+    """
+    This function is for changing the user's avatar
+
+    :param email: The email of the user to update.
+    :param new_avatar: User's new avatar.
+    :return: Status code with a JSON message.
+    """
+    try:
+        change_avatar_service(email, new_avatar)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}

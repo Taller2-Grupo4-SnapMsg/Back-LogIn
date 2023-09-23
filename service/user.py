@@ -6,6 +6,8 @@ This module is for the service layer of the REST API for the login backend.
 from pydantic import BaseModel
 from repository.user_repository import register_user
 from repository.user_repository import update_user_password as update_user_password_repo
+from repository.user_repository import update_user_bio as update_user_bio_repo
+from repository.user_repository import update_user_avatar as update_user_avatar_repo
 from repository.user_repository import get_user_email as get_user_repo
 from repository.user_repository import remove_user
 from repository.user_repository import get_user_collection
@@ -163,6 +165,32 @@ def change_password(email: str, new_password: str):
     """
     try:
         update_user_password_repo(email, new_password)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_bio(email: str, new_bio: str):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param user: The user's new information.
+    """
+    try:
+        update_user_bio_repo(email, new_bio)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_avatar(email: str, new_avatar: str):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param user: The user's new information.
+    """
+    try:
+        update_user_avatar_repo(email, new_avatar)
     except KeyError as error:
         raise UserNotFound() from error
 

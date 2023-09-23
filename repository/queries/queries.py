@@ -193,6 +193,30 @@ def remove_follow(session, user_id, user_id_to_unfollow):
     raise KeyError("The relation doesn't exist")
 
 
+def update_user_bio(session, user_id, new_bio):
+    """
+    Changes the bio of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "bio", new_bio)
+        session.commit()
+        return user
+    return None
+
+
+def update_user_avatar(session, user_id, new_avatar):
+    """
+    Changes the avatar of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "avatar", new_avatar)
+        session.commit()
+        return user
+    return None
+
+
 def get_all_users(session):
     """
     Query mostly for testing, it retrieves all the users of the database.
