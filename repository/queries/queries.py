@@ -205,6 +205,42 @@ def update_user_bio(session, user_id, new_bio):
     return None
 
 
+def update_user_name(session, user_id, new_name):
+    """
+    Changes the name of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "name", new_name)
+        session.commit()
+        return user
+    return None
+
+
+def update_user_date_of_birth(session, user_id, new_date_of_birth):
+    """
+    Changes the date_of_birth of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "date_of_birth", new_date_of_birth)
+        session.commit()
+        return user
+    return None
+
+
+def update_user_last_name(session, user_id, new_last_name):
+    """
+    Changes the last name of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "surname", new_last_name)
+        session.commit()
+        return user
+    return None
+
+
 def update_user_avatar(session, user_id, new_avatar):
     """
     Changes the avatar of the user with the given id.

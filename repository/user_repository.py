@@ -14,6 +14,11 @@ from repository.queries.queries import get_all_users as get_all_users_db
 from repository.queries.queries import delete_user as delete_user_db
 from repository.queries.queries import update_user_password as update_user_password_db
 from repository.queries.queries import update_user_bio as update_user_bio_db
+from repository.queries.queries import update_user_name as update_user_name_db
+from repository.queries.queries import (
+    update_user_date_of_birth as update_user_date_of_birth_db,
+)
+from repository.queries.queries import update_user_last_name as update_user_last_name_db
 from repository.queries.queries import update_user_avatar as update_user_avatar_db
 from repository.queries.queries import update_user_admin as update_user_admin_db
 from repository.queries.queries import create_follow as create_follow_db
@@ -216,6 +221,45 @@ def update_user_bio(email: str, bio: str):
     if user is None:
         raise KeyError()
     update_user_bio_db(session, user.id, bio)
+
+
+def update_user_last_name(email: str, last_name: str):
+    """
+    This is used for updating a user's last_name.
+
+    :param email: The email used to identify the user.
+    :param last_name: The last_name to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_last_name_db(session, user.id, last_name)
+
+
+def update_user_name(email: str, name: str):
+    """
+    This is used for updating a user's name.
+
+    :param email: The email used to identify the user.
+    :param name: The name to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_name_db(session, user.id, name)
+
+
+def update_user_date_of_birth(email: str, date_of_birth: str):
+    """
+    This is used for updating a user's date_of_birth.
+
+    :param email: The email used to identify the user.
+    :param date_of_birth: The date_of_birth to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_date_of_birth_db(session, user.id, date_of_birth)
 
 
 def update_user_avatar(email: str, avatar: str):

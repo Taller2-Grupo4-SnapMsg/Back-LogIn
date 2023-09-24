@@ -7,6 +7,13 @@ from pydantic import BaseModel
 from repository.user_repository import register_user
 from repository.user_repository import update_user_password as update_user_password_repo
 from repository.user_repository import update_user_bio as update_user_bio_repo
+from repository.user_repository import update_user_name as update_user_name_repo
+from repository.user_repository import (
+    update_user_date_of_birth as update_user_date_of_birth_repo,
+)
+from repository.user_repository import (
+    update_user_last_name as update_user_last_name_repo,
+)
 from repository.user_repository import update_user_avatar as update_user_avatar_repo
 from repository.user_repository import get_user_email as get_user_repo
 from repository.user_repository import remove_user
@@ -178,6 +185,45 @@ def change_bio(email: str, new_bio: str):
     """
     try:
         update_user_bio_repo(email, new_bio)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_name(email: str, new_name: str):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param user: The user's new information.
+    """
+    try:
+        update_user_name_repo(email, new_name)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_date_of_birth(email: str, new_date_of_birth: str):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param user: The user's new information.
+    """
+    try:
+        update_user_date_of_birth_repo(email, new_date_of_birth)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_last_name(email: str, new_last_name: str):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param user: The user's new information.
+    """
+    try:
+        update_user_last_name_repo(email, new_last_name)
     except KeyError as error:
         raise UserNotFound() from error
 
