@@ -13,6 +13,9 @@ from fastapi import Depends
 from service.user import User
 from service.user import change_password as change_password_service
 from service.user import change_bio as change_bio_service
+from service.user import change_name as change_name_service
+from service.user import change_date_of_birth as change_date_of_birth_service
+from service.user import change_last_name as change_last_name_service
 from service.user import change_avatar as change_avatar_service
 from service.user import get_user_email as get_user_service
 from service.user import get_user_password
@@ -34,6 +37,9 @@ from service.errors import UserNotFound, PasswordDoesntMatch
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
 from control.auth import AuthHandler
+
+from fastapi import Header
+from fastapi import HTTPException
 
 USER_ALREADY_REGISTERED = 409
 USER_NOT_FOUND = 404
@@ -417,6 +423,54 @@ def change_avatar(email: str, new_avatar: str):
     return {"message": "User information updated"}
 
 
+@app.put("/users/{email}/name")
+def change_name(email: str, new_name: str):
+    """
+    This function is for changing the user's name
+
+    :param email: The email of the user to update.
+    :param new_name: User's new name.
+    :return: Status code with a JSON message.
+    """
+    try:
+        change_name_service(email, new_name)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
+@app.put("/users/{email}/date_of_birth")
+def change_date_of_birth(email: str, new_date_of_birth: str):
+    """
+    This function is for changing the user's date_of_birth
+
+    :param email: The email of the user to update.
+    :param new_date_of_birth: User's new date_of_birth.
+    :return: Status code with a JSON message.
+    """
+    try:
+        change_date_of_birth_service(email, new_date_of_birth)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
+@app.put("/users/{email}/last_name")
+def change_last_name(email: str, new_last_name: str):
+    """
+    This function is for changing the user's last_name
+
+    :param email: The email of the user to update.
+    :param new_last_name: User's new last_name.
+    :return: Status code with a JSON message.
+    """
+    try:
+        change_last_name_service(email, new_last_name)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
 # Route to making an admin
 @app.put("/users/{email}/make_admin")
 def make_admin(email: str):
@@ -493,3 +547,23 @@ def ping():
     :return: Status code with a JSON message.
     """
     return {"message": "pong"}
+
+
+@app.get("/get_user_by_token", response_model=UserResponse)
+def get_user_by_token(token: str = Header(...)):
+    """
+    This function retrieves an user by token.
+
+    :param token: The authentication token.
+    :return: User details or a 401 response.
+    """
+    auth_handler = AuthHandler()
+    try:
+        user_email = auth_handler.decode_token(
+            token
+        )  # auth_handler.auth_wrapper(token)
+        user = get_user_service(user_email)
+        user = generate_response(user)
+        return user
+    except HTTPException as error:
+        raise error
