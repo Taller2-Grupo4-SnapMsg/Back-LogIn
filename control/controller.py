@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException
 from fastapi import Depends
+from fastapi import Header
 from service.user import User
 from service.user import change_password as change_password_service
 from service.user import change_bio as change_bio_service
@@ -37,9 +38,6 @@ from service.errors import UserNotFound, PasswordDoesntMatch
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
 from control.auth import AuthHandler
-
-from fastapi import Header
-from fastapi import HTTPException
 
 USER_ALREADY_REGISTERED = 409
 USER_NOT_FOUND = 404
@@ -557,7 +555,6 @@ def get_user_by_token(token: str = Header(...)):
     :param token: The authentication token.
     :return: User details or a 401 response.
     """
-    auth_handler = AuthHandler()
     try:
         user_email = auth_handler.decode_token(
             token
