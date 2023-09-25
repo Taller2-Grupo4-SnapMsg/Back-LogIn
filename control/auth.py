@@ -11,7 +11,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 
 LIFE_TIME_DAYS = 0
-LIFE_TIME_MINS = 5
+LIFE_TIME_MINS = 0
+LIFE_TIME_SECS = 30
 ENCODING_ALGORITHM = "HS256"
 
 ERROR_TOKEN_EXPIRED = 401
@@ -46,7 +47,9 @@ class AuthHandler:
         """
         payload = {
             "exp": datetime.utcnow()
-            + timedelta(days=LIFE_TIME_DAYS, minutes=LIFE_TIME_MINS),
+            + timedelta(
+                days=LIFE_TIME_DAYS, minutes=LIFE_TIME_MINS, seconds=LIFE_TIME_SECS
+            ),
             "iat": datetime.utcnow(),
             "sub": user_email,
         }
