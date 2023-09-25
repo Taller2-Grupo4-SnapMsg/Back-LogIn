@@ -3,6 +3,8 @@
 """
 This is the test module.
 """
+from datetime import datetime
+
 import pytest
 from service.user import User
 
@@ -24,6 +26,9 @@ from service.user import change_password
 from service.user import remove_user_username
 from service.user import change_bio
 from service.user import change_avatar
+from service.user import change_name
+from service.user import change_date_of_birth
+from service.user import change_last_name
 from service.errors import UserNotFound
 from service.errors import EmailAlreadyRegistered, UsernameAlreadyRegistered
 from service.errors import PasswordDoesntMatch, FollowingRelationAlreadyExists
@@ -738,6 +743,21 @@ def test_change_user_bio():
     remove_user_email(EMAIL)
 
 
+def test_change_user_bio_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_bio("wrong_email", "new_bio")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+
+
 def test_change_user_avatar():
     """
     This function tests the change user avatar.
@@ -749,5 +769,125 @@ def test_change_user_avatar():
     change_avatar(EMAIL, "new_avatar")
 
     assert get_user_email(EMAIL).avatar == "new_avatar"
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_avatar_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_avatar("wrong_email", "new_avatar")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_name():
+    """
+    This function tests the change user name.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_name(EMAIL, "new_name")
+
+    assert get_user_email(EMAIL).name == "new_name"
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_name_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_name("wrong_email", "new_name")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_date_of_birth():
+    """
+    This function tests the change user date of birth.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_date_of_birth(EMAIL, "999 9 9")
+
+    assert get_user_email(EMAIL).date_of_birth == datetime(999, 9, 9)
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_date_of_birth_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_date_of_birth("wrong_email", "999 9 9")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_last_name():
+    """
+    This function tests the change user last name.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_last_name(EMAIL, "new_last_name")
+
+    assert get_user_email(EMAIL).surname == "new_last_name"
+
+    remove_user_email(EMAIL)
+
+
+def test_change_user_last_name_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_last_name("wrong_email", "new_last_name")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+
+
+def test_remove_user_username_wrong_username():
+    """
+    This function tests the exception user not found
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        remove_user_username("wrong_username")
+    assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
