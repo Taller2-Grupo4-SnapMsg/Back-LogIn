@@ -34,13 +34,14 @@ from service.user import get_all_following
 from service.user import get_followers_count as get_followers_count_service
 from service.user import get_following_count as get_following_count_service
 from service.user import remove_follow as remove_follow_service
-from service.errors import UserNotFound, PasswordDoesntMatch
+from service.errors import UserNotFound
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
 from control.auth import AuthHandler
 
 USER_ALREADY_REGISTERED = 409
 USER_NOT_FOUND = 404
+USER_NOT_ADMIN = 400
 PASSWORD_DOESNT_MATCH = 401
 
 app = FastAPI()
@@ -171,57 +172,52 @@ class UserLogIn(BaseModel):
 @app.post("/login/", status_code=200)
 def login(user_data: UserLogIn):
     """
-    This function is a test function that mocks user login.
+    This function is the endpoint for the mobile front to log in an already existing user
 
     :param user: The user to login.
     :return: Status code with a JSON message.
     """
     try:
-        # try_login(user_data.email, hash_password)
         hash_password = get_user_password(user_data.email)
         if auth_handler.verify_password(user_data.password, hash_password):
-            # Passwords match, proceed with login
             token = auth_handler.encode_token(user_data.email)
             return {"message": "Login successful", "token": token}
+
+        raise HTTPException(
+            status_code=PASSWORD_DOESNT_MATCH, detail="Password does not match"
+        )
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    except PasswordDoesntMatch as error:
-        raise HTTPException(
-            status_code=PASSWORD_DOESNT_MATCH, detail=str(error)
-        ) from error
-    # Excepcion token?
-    return {
-        "message": "Login unsuccessful, something went wrong, but we don't know what it is"
-    }
+
+    # Never reached
+    # return {
+    #    "message": "Login unsuccessful, something went wrong, but we don't know what it is"
+    # }
 
 
 @app.post("/login_admin/", status_code=200)
 def login_admin(user_data: UserLogIn):
     """
-    This function is for back-office log in.
+    This function is the endpoint for the web backoffice front to log in an already existing admin
 
     :param user: The user to login.
     :return: Status code with a JSON message.
     """
     try:
-        # try_login(user_data.email, hash_password)
         user = get_user_service(user_data.email)
         if not user.admin:
-            raise HTTPException(status_code=400, detail="User is not an admin")
+            raise HTTPException(
+                status_code=USER_NOT_ADMIN, detail="User is not an admin"
+            )
         if auth_handler.verify_password(user_data.password, user.password):
-            # Passwords match, proceed with login
             token = auth_handler.encode_token(user_data.email)
             return {"message": "Login successful", "token": token}
+
+        raise HTTPException(
+            status_code=PASSWORD_DOESNT_MATCH, detail="Password does not match"
+        )
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    except PasswordDoesntMatch as error:
-        raise HTTPException(
-            status_code=PASSWORD_DOESNT_MATCH, detail=str(error)
-        ) from error
-    # Excepcion token?
-    return {
-        "message": "Login unsuccessful, something went wrong, but we don't know what it is"
-    }
 
 
 class FollowUsernames(BaseModel):
