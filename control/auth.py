@@ -10,9 +10,9 @@ from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 
-LIFE_TIME_DAYS = 0
+LIFE_TIME_DAYS = 30
 LIFE_TIME_MINS = 0
-LIFE_TIME_SECS = 30
+LIFE_TIME_SECS = 0
 ENCODING_ALGORITHM = "HS256"
 
 ERROR_TOKEN_EXPIRED = 401
