@@ -371,20 +371,20 @@ def test_user_can_follow_another_user():
 
     user = get_user_email(EMAIL)
 
-    create_follow(user.username, user_to_be_followed.username)
+    create_follow(user.email, user_to_be_followed.email)
 
-    assert get_following_count(user.username) == 1
-    assert get_followers_count(user_to_be_followed.username) == 1
+    assert get_following_count(user.email) == 1
+    assert get_followers_count(user_to_be_followed.email) == 1
 
-    followers = get_all_followers(user_to_be_followed.username)
+    followers = get_all_followers(user_to_be_followed.email)
 
     assert followers[0].username == user.username
 
-    following = get_all_following(user.username)
+    following = get_all_following(user.email)
 
     assert following[0].username == user_to_be_followed.username
 
-    remove_follow(user.username, user_to_be_followed.username)
+    remove_follow(user.email, user_to_be_followed.email)
     remove_user_email(EMAIL)
     remove_user_email(EMAIL + "1")
 
@@ -413,16 +413,16 @@ def test_user_cant_follow_the_same_user_twice():
 
     user = get_user_email(EMAIL)
 
-    create_follow(user.username, user_to_be_followed.username)
+    create_follow(user.email, user_to_be_followed.email)
 
-    assert get_following_count(user.username) == 1
-    assert get_followers_count(user_to_be_followed.username) == 1
+    assert get_following_count(user.email) == 1
+    assert get_followers_count(user_to_be_followed.email) == 1
 
     with pytest.raises(FollowingRelationAlreadyExists) as error:
-        create_follow(user.username, user_to_be_followed.username)
+        create_follow(user.email, user_to_be_followed.email)
     assert str(error.value) == "Following relation already exists!"
 
-    remove_follow(user.username, user_to_be_followed.username)
+    remove_follow(user.email, user_to_be_followed.email)
     remove_user_email(EMAIL)
     remove_user_email(EMAIL + "1")
 
@@ -438,7 +438,7 @@ def test_user_cant_follow_itself():
     user = get_user_email(EMAIL)
 
     with pytest.raises(UserCantFollowItself) as error:
-        create_follow(user.username, user.username)
+        create_follow(user.email, user.email)
     assert str(error.value) == "User can't follow itself!"
 
     remove_user_email(EMAIL)
@@ -455,7 +455,7 @@ def test_user_cant_follow_user_that_doesnt_exist():
     user = get_user_email(EMAIL)
 
     with pytest.raises(UserNotFound) as error:
-        create_follow(user.username, "wrong_username")
+        create_follow(user.email, "wrong_email")
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
@@ -472,7 +472,7 @@ def test_user_cant_be_followed_by_a_user_that_doesnt_exist():
     user = get_user_email(EMAIL)
 
     with pytest.raises(UserNotFound) as error:
-        create_follow("wrong_username", user.username)
+        create_follow("wrong_email", user.email)
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
@@ -636,7 +636,7 @@ def test_remove_follow_wrong_username():
     user = get_user_email(EMAIL)
 
     with pytest.raises(UserNotFound) as error:
-        remove_follow(user.username, "wrong_username")
+        remove_follow(user.email, "wrong_username")
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
@@ -682,13 +682,13 @@ def test_get_all_followers_wrong_username():
 
     user = get_user_email(EMAIL)
 
-    create_follow(user.username, user_to_be_followed.username)
+    create_follow(user.email, user_to_be_followed.email)
 
     with pytest.raises(UserNotFound) as error:
         get_all_followers("wrong_username")
     assert str(error.value) == "User not found"
 
-    remove_follow(user.username, user_to_be_followed.username)
+    remove_follow(user.email, user_to_be_followed.email)
     remove_user_email(EMAIL)
     remove_user_email(EMAIL + "1")
 
@@ -717,13 +717,13 @@ def test_get_all_following_wrong_username():
 
     user = get_user_email(EMAIL)
 
-    create_follow(user.username, user_to_be_followed.username)
+    create_follow(user.email, user_to_be_followed.email)
 
     with pytest.raises(UserNotFound) as error:
         get_all_following("wrong_username")
     assert str(error.value) == "User not found"
 
-    remove_follow(user.username, user_to_be_followed.username)
+    remove_follow(user.email, user_to_be_followed.email)
     remove_user_email(EMAIL)
     remove_user_email(EMAIL + "1")
 

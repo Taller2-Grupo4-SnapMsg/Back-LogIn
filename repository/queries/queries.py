@@ -116,12 +116,12 @@ def update_user_admin(session, user_id, new_admin_status):
     return None
 
 
-def create_follow(session, username, username_to_follow):
+def create_follow(session, email, email_to_follow):
     """
     Creates a follow relationship between two users.
     """
-    user = get_user_by_username(session, username)
-    user_to_follow = get_user_by_username(session, username_to_follow)
+    user = get_user_by_mail(session, email)
+    user_to_follow = get_user_by_mail(session, email_to_follow)
     if user and user_to_follow:
         try:
             following = Following(user.id, user_to_follow.id)

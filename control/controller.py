@@ -8,9 +8,10 @@ from pydantic import BaseModel
 
 # Para permitir pegarle a la API desde localhost:
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, HTTPException
-from fastapi import Depends
+from fastapi import FastAPI, HTTPException, Query
 from fastapi import Header
+from fastapi import status
+
 from service.user import User
 from service.user import change_password as change_password_service
 from service.user import change_bio as change_bio_service
@@ -34,6 +35,8 @@ from service.user import get_all_following
 from service.user import get_followers_count as get_followers_count_service
 from service.user import get_following_count as get_following_count_service
 from service.user import remove_follow as remove_follow_service
+from service.user import is_email_admin
+
 from service.errors import UserNotFound
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
@@ -42,7 +45,7 @@ from control.auth import AuthHandler
 USER_ALREADY_REGISTERED = 409
 USER_NOT_FOUND = 404
 USER_NOT_ADMIN = 400
-PASSWORD_DOESNT_MATCH = 401
+INCORRECT_CREDENTIALS = status.HTTP_401_UNAUTHORIZED
 
 app = FastAPI()
 auth_handler = AuthHandler()
@@ -123,6 +126,30 @@ def generate_response_list(users):
     return response
 
 
+def check_for_user_token(token: str):
+    """
+    This function checks if the user is logged in.
+    Used for everytime you need to check if the request
+    is from a verified user, like in the following routes.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        get_user_service(email)
+    except UserNotFound as error:
+        raise error
+
+
+def token_is_admin(token: str):
+    """
+    This function checks if the token given is an admin.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        return is_email_admin(email)
+    except UserNotFound as error:
+        raise error
+
+
 # Create a POST route
 @app.post("/register", status_code=201)
 def register_user(user_data: UserRegistration):
@@ -169,7 +196,7 @@ class UserLogIn(BaseModel):
 
 
 # Route to handle user login
-@app.post("/login/", status_code=200)
+@app.post("/login", status_code=200)
 def login(user_data: UserLogIn):
     """
     This function is the endpoint for the mobile front to log in an already existing user
@@ -184,18 +211,15 @@ def login(user_data: UserLogIn):
             return {"message": "Login successful", "token": token}
 
         raise HTTPException(
-            status_code=PASSWORD_DOESNT_MATCH, detail="Password does not match"
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
         )
     except UserNotFound as error:
-        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-
-    # Never reached
-    # return {
-    #    "message": "Login unsuccessful, something went wrong, but we don't know what it is"
-    # }
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
 
 
-@app.post("/login_admin/", status_code=200)
+@app.post("/login_admin", status_code=200, response_model=dict)
 def login_admin(user_data: UserLogIn):
     """
     This function is the endpoint for the web backoffice front to log in an already existing admin
@@ -207,41 +231,33 @@ def login_admin(user_data: UserLogIn):
         user = get_user_service(user_data.email)
         if not user.admin:
             raise HTTPException(
-                status_code=USER_NOT_ADMIN, detail="User is not an admin"
+                status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
             )
         if auth_handler.verify_password(user_data.password, user.password):
             token = auth_handler.encode_token(user_data.email)
             return {"message": "Login successful", "token": token}
 
         raise HTTPException(
-            status_code=PASSWORD_DOESNT_MATCH, detail="Password does not match"
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
         )
     except UserNotFound as error:
-        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-
-
-class FollowUsernames(BaseModel):
-    """
-    This class is a Pydantic model for the request body.
-    """
-
-    username_follower: str
-    username_following: str
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
 
 
 @app.post("/follow")
-def create_follow(follow_usernames: FollowUsernames):
+def create_follow(email_following: str, token: str = Header(...)):
     """
     This function creates a following relation between the given users.
 
-    :param username_follower: Email of the user that will follow.
-    :param username_following: Email of the user that is going to be followed.
+    :param token: Identifier of the user who wants to follow someone.
+    :param email_following: Email of the user that is going to be followed.
     :return: Status code with a JSON message.
     """
     try:
-        create_follow_service(
-            follow_usernames.username_follower, follow_usernames.username_following
-        )
+        email_follower = auth_handler.decode_token(token)
+        create_follow_service(email_follower, email_following)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     except UserCantFollowItself as error:
@@ -251,126 +267,168 @@ def create_follow(follow_usernames: FollowUsernames):
     return {"message": "Follow successful"}
 
 
-@app.get("/follow/{username}")
-def get_followers(username: str):
+@app.get("/followers/{email}")
+def get_followers(email: str, token: str = Header(...)):
     """
     This function returns the users a username is followed by.
 
-    :param username: Username of the user to get the followers of.
+    :param email: Email of the user to get the followers of.
+    :param token: Token used to verify you are requesting from a valid user.
     :return: Status code with a JSON message.
     """
+    # Checks the person requesting is a logged user:
     try:
-        user_list = get_all_followers(username)
+        check_for_user_token(token)
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
+    # Does the actual request:
+    try:
+        user_list = get_all_followers(email)
         return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
-@app.get("/following/{username}")
-def get_following(username: str):
+@app.get("/following/{email}")
+def get_following(email: str, token: str = Header(...)):
     """
     This function returns the users a username is following.
 
-    :param username: Username of the user to get the following of.
+    :param email: Email of the user to get the following of.
+    :param token: Token used to verify you are requesting from a valid user.
     :return: Status code with a JSON message.
     """
+    # Checks the person requesting is a logged user:
     try:
-        user_list = get_all_following(username)
+        check_for_user_token(token)
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
+    # Does the actual request:
+    try:
+        user_list = get_all_following(email)
         return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
-@app.get("/follow/{username}/count")
-def get_followers_count(username: str):
+@app.get("/follow/{email}/count")
+def get_followers_count(email: str, token: str = Header(...)):
     """
     This function returns the number of followers of a username.
 
-    :param username: Username of the user to get the followers count of.
+    :param email: Email of the user to get the followers count of.
     :return: Status code with a JSON message.
     """
+    # Checks the person requesting is a logged user:
     try:
-        return get_followers_count_service(username)
+        check_for_user_token(token)
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
+    # Does the actual request:
+    try:
+        return get_followers_count_service(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
-@app.get("/following/{username}/count")
-def get_following_count(username: str):
+@app.get("/following/{email}/count")
+def get_following_count(email: str, token: str = Header(...)):
     """
-    This function returns the number of users a username is following.
+    This function returns the number of users a email is following.
 
-    :param username: Username of the user to get the following count of.
+    :param email: Email of the user to get the following count of.
+    :param token: Token used to verify you are requesting from a valid user.
     :return: Status code with a JSON message.
     """
+    # Checks the person requesting is a logged user:
     try:
-        return get_following_count_service(username)
+        check_for_user_token(token)
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
+    # Does the actual request:
+    try:
+        return get_following_count_service(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
 @app.delete("/unfollow")
-def unfollow(unfollow_usernames: FollowUsernames):
+def unfollow(email_unfollowing: str, token: str = Header(...)):
     """
     This function deletes a following relation between the given users.
 
-    :param username_follower: Username of the user that will unfollow.
+    :param token: Identifier of the user that is going to unfollow someone.
     :param username_following: Username of the user that is going to be unfollowed.
     :return: Status code with a JSON message.
     """
     try:
-        return remove_follow_service(
-            unfollow_usernames.username_follower, unfollow_usernames.username_following
-        )
+        email_follower = auth_handler.decode_token(token)
+        return remove_follow_service(email_follower, email_unfollowing)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
-@app.get("/protected")
-def protected(useremail=Depends(auth_handler.auth_wrapper)):
+@app.get("/users/find", response_model=UserResponse)
+def get_user(
+    email: str = Query(None, title="Email", description="User email"),
+    username: str = Query(None, title="Username", description="Username of the user"),
+    token: str = Header(...),
+):
     """
-    Wrapper for protected routes.
-    """
-    return {"email": useremail}
-
-
-# Route to get user details
-@app.get("/users/email/{email}", response_model=UserResponse)
-def get_user(email: str):
-    """
-    This function is a function that retrieves an user by mail.
+    This function retrieves a user by either email or username.
 
     :param email: The email of the user to get.
-    :return: User details or a 404 response.
-    """
-    try:
-        user = get_user_service(email)
-        user = generate_response(user)
-    except UserNotFound as error:
-        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    return user
-
-
-# Route to get user by username
-@app.get("/users/username/{username}")
-def get_user_by_username(username: str):
-    """
-    This function retrieves an user by username.
-
     :param username: The username of the user to get.
+    :param token: Token used to verify the user.
     :return: User details or a 404 response.
     """
     try:
-        user = get_user_username(username)
-        user = generate_response(user)
+        check_for_user_token(token)
     except UserNotFound as error:
-        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    return user
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
+
+    if email is None and username is None:
+        raise HTTPException(
+            status_code=400,
+            detail="At least one of 'email' or 'username' must be provided.",
+        )
+
+    if email:
+        try:
+            user = get_user_service(email)
+            user = generate_response(user)
+            return user
+        except UserNotFound as error:
+            raise HTTPException(
+                status_code=USER_NOT_FOUND, detail=str(error)
+            ) from error
+
+    if username:
+        try:
+            user = get_user_username(username)
+            user = generate_response(user)
+            return user
+        except UserNotFound as error:
+            raise HTTPException(
+                status_code=USER_NOT_FOUND, detail=str(error)
+            ) from error
+    # it never reachs here, but pylint...
+    return {"message": "Something went wrong"}
 
 
 # Route to update user information
-@app.put("/users/{email}/password")
-def change_password(email: str, new_password: str):
+@app.put("/users/password")
+def change_password(new_password: str, token: str = Header(...)):
     """
     This function is for changing the user's password
 
@@ -379,86 +437,93 @@ def change_password(email: str, new_password: str):
     :return: Status code with a JSON message.
     """
     try:
+        email = auth_handler.decode_token(token)
+        new_password = auth_handler.get_password_hash(new_password)
         change_password_service(email, new_password)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
 
 
-@app.put("/users/{email}/bio")
-def change_bio(email: str, new_bio: str):
+@app.put("/users/bio")
+def change_bio(new_bio: str, token: str = Header(...)):
     """
     This function is for changing the user's bio
 
-    :param email: The email of the user to update.
     :param new_bio: User's new bio.
+    :param token: Token used to identify the user.
     :return: Status code with a JSON message.
     """
     try:
+        email = auth_handler.decode_token(token)
         change_bio_service(email, new_bio)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
 
 
-@app.put("/users/{email}/avatar")
-def change_avatar(email: str, new_avatar: str):
+@app.put("/users/avatar")
+def change_avatar(new_avatar: str, token: str = Header(...)):
     """
     This function is for changing the user's avatar
 
-    :param email: The email of the user to update.
     :param new_avatar: User's new avatar.
+    :param token: Token used to identify the user.
     :return: Status code with a JSON message.
     """
     try:
+        email = auth_handler.decode_token(token)
         change_avatar_service(email, new_avatar)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
 
 
-@app.put("/users/{email}/name")
-def change_name(email: str, new_name: str):
+@app.put("/users/name")
+def change_name(new_name: str, token: str = Header(...)):
     """
     This function is for changing the user's name
 
-    :param email: The email of the user to update.
     :param new_name: User's new name.
+    :param token: Token used to identify the user.
     :return: Status code with a JSON message.
     """
     try:
+        email = auth_handler.decode_token(token)
         change_name_service(email, new_name)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
 
 
-@app.put("/users/{email}/date_of_birth")
-def change_date_of_birth(email: str, new_date_of_birth: str):
+@app.put("/users/date_of_birth")
+def change_date_of_birth(new_date_of_birth: str, token: str = Header(...)):
     """
     This function is for changing the user's date_of_birth
 
-    :param email: The email of the user to update.
     :param new_date_of_birth: User's new date_of_birth.
+    :param token: Token used to verify the user.
     :return: Status code with a JSON message.
     """
     try:
+        email = auth_handler.decode_token(token)
         change_date_of_birth_service(email, new_date_of_birth)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
 
 
-@app.put("/users/{email}/last_name")
-def change_last_name(email: str, new_last_name: str):
+@app.put("/users/last_name")
+def change_last_name(new_last_name: str, token: str = Header(...)):
     """
     This function is for changing the user's last_name
 
-    :param email: The email of the user to update.
     :param new_last_name: User's new last_name.
+    :param token: Token used to verify the user.
     :return: Status code with a JSON message.
     """
     try:
+        email = auth_handler.decode_token(token)
         change_last_name_service(email, new_last_name)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -467,13 +532,19 @@ def change_last_name(email: str, new_last_name: str):
 
 # Route to making an admin
 @app.put("/users/{email}/make_admin")
-def make_admin(email: str):
+def make_admin(email: str, token: str = Header(...)):
     """
-    This function is a test function that mocks updating user information.
+    This function changes the status of email to admin.
 
     :param email: The email of the user to update.
+    :param token: Token used to verify the user who is calling this is an admin.
     :return: Status code with a JSON message.
     """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can make other users administrators",
+        )
     try:
         make_admin_service(email)
     except UserNotFound as error:
@@ -483,13 +554,19 @@ def make_admin(email: str):
 
 # Route to removing admin status
 @app.put("/users/{email}/remove_admin")
-def remove_admin_status(email: str):
+def remove_admin_status(email: str, token: str = Header(...)):
     """
     This function is a test function that mocks updating user information.
 
     :param email: The email of the user to update.
+    :param token: Token used to verify the user who is calling this is an admin.
     :return: Status code with a JSON message.
     """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can remove other users from being administrators",
+        )
     try:
         remove_admin_service(email)
     except UserNotFound as error:
@@ -498,49 +575,70 @@ def remove_admin_status(email: str):
 
 
 @app.delete("/users/{email}")
-def delete_user(email: str):
+def delete_user(email: str, token: str = Header(...)):
     """
     This function is a test function that mocks deleting a user.
 
     :param email: The email of the user to delete.
+    :param token: Token used to verify the user who is calling this is an admin
+    or the same user as email.
+
     :return: Status code with a JSON message.
     """
-    try:
-        remove_user_email(email)
-    except UserNotFound as error:
-        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    if token_is_admin(token) or email == auth_handler.decode_token(token):
+        try:
+            remove_user_email(email)
+        except UserNotFound as error:
+            raise HTTPException(
+                status_code=USER_NOT_FOUND, detail=str(error)
+            ) from error
+    else:
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Insufficient Permissions",
+        )
     return {"message": "User deleted"}
 
 
-@app.get("/users/")
-def get_all_users():
+@app.get(
+    "/users",
+    responses={
+        200: {"model": UserResponse, "description": "All users"},
+        400: {"description": "Only administrators can get all users"},
+    },
+)
+def get_all_users(token: str = Header(...)):
     """
-    This function is an auxiliary function that returns all the users in the db
+    This function is a functon that returns all of the users in the database.
+
+    :param token: Token used to verify the user who is calling this is an admin.
 
     :return: JSON of all users.
     """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can get all users",
+        )
     user_list = get_all_users_service()
     return generate_response_list(user_list)
 
 
 @app.get("/following")
-def get_all_following_relations():
+def get_all_following_relations(token: str = Header(...)):
     """
-    This function is an auxiliary function that returns all the users in the db
+    This function is a function that returns all of the following relations in the database.
+
+    :param token: Token used to verify the user who is calling this is an admin.
 
     :return: JSON of all users.
     """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can get all following relations",
+        )
     return get_all_following_relations_service()
-
-
-@app.get("/ping")
-def ping():
-    """
-    This function is a test function that mocks a ping.
-
-    :return: Status code with a JSON message.
-    """
-    return {"message": "pong"}
 
 
 @app.get("/get_user_by_token", response_model=UserResponse)
