@@ -120,6 +120,7 @@ class User(BaseModel):
                 "date_of_birth": self.date_of_birth,
                 "bio": self.bio,
                 "avatar": self.avatar,
+                "admin": self.admin,
             }  # Thanks pylint
             register_user(self.email, self.password, self.username, data)
         except UsernameAlreadyExists as error:

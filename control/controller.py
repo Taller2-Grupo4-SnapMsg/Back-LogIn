@@ -186,6 +186,41 @@ def register_user(user_data: UserRegistration):
     return {"message": "Registration successful", "token": token}
 
 
+@app.post("/register_admin")
+def register_admin(user_data: UserRegistration):
+    """
+    This function is the endpoint for admin registration.
+    """
+
+    user = User()
+
+    hashed_password = auth_handler.get_password_hash(user_data.password)
+    user.set_password(hashed_password)
+
+    user.set_email(user_data.email)
+    user.set_name(user_data.name)
+    user.set_surname(user_data.last_name)
+    user.set_username(user_data.username)
+    user.set_bio("")
+    date_time = user_data.date_of_birth.split(" ")
+    user.set_date_of_birth(
+        datetime.datetime(int(date_time[0]), int(date_time[1]), int(date_time[2]))
+    )
+    user.set_admin(True)
+    try:
+        user.save()
+        token = auth_handler.encode_token(user_data.email)
+    except UsernameAlreadyRegistered as error:
+        raise HTTPException(
+            status_code=USER_ALREADY_REGISTERED, detail=str(error)
+        ) from error
+    except EmailAlreadyRegistered as error:
+        raise HTTPException(
+            status_code=USER_ALREADY_REGISTERED, detail=str(error)
+        ) from error
+    return {"message": "Registration successful", "token": token}
+
+
 class UserLogIn(BaseModel):
     """
     This class is a Pydantic model for the request body.
