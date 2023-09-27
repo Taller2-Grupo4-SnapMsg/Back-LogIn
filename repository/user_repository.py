@@ -137,14 +137,14 @@ def remove_admin_status(email: str):
     update_user_admin_db(session, user.id, False)
 
 
-def create_follow(username: str, username_to_follow: str):
+def create_follow(email: str, email_to_follow: str):
     """
     This is used for creating a follow relation between two users.
 
-    :param username: The username of the user that wants to follow.
-    :param username_to_follow: The username of the user that is being followed.
+    :param email: The email of the user that wants to follow.
+    :param email_to_follow: The email of the user that is being followed.
     """
-    follow = create_follow_db(session, username, username_to_follow)
+    follow = create_follow_db(session, email, email_to_follow)
     if follow is None:
         raise KeyError()
 

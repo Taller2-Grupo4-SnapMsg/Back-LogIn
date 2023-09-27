@@ -258,7 +258,7 @@ def get_user_username(username: str):
     """
     This function is used to retrieve the user from the database.
 
-    :param email: The email of the user to retrieve.
+    :param username: The username of the user to retrieve.
     :return: The user's information.
     """
     try:
@@ -299,6 +299,17 @@ def get_all_users():
     return get_user_collection()
 
 
+def is_email_admin(email: str):
+    """
+    This function is used to check if a user is admin.
+    """
+    try:
+        user = get_user_email(email)
+        return user.admin
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
 def make_admin(email: str):
     """
     This function is used to make a user admin.
@@ -319,37 +330,37 @@ def remove_admin_status(email: str):
         raise UserNotFound() from error
 
 
-def create_follow(username: str, username_to_follow: str):
+def create_follow(email: str, email_to_follow: str):
     """
     This function is used to create a follow relationship.
     """
-    if username == username_to_follow:
+    if email == email_to_follow:
         raise UserCantFollowItself()
     try:
-        create_follow_repo(username, username_to_follow)
+        create_follow_repo(email, email_to_follow)
     except KeyError as error:
         raise UserNotFound() from error
     except RelationAlreadyExists as error:
         raise FollowingRelationAlreadyExists() from error
 
 
-def get_all_followers(username: str):
+def get_all_followers(email: str):
     """
     This function is used to retrieve all username's followers from the database.
     """
     try:
-        user = get_user_username(username)
+        user = get_user_email(email)
         return get_followers_db(user.id)
     except KeyError as error:
         raise UserNotFound() from error
 
 
-def get_all_following(username: str):
+def get_all_following(email: str):
     """
     This function is used to retrieve all users following  username from the database.
     """
     try:
-        user = get_user_username(username)
+        user = get_user_email(email)
         return get_following_db(user.id)
     except KeyError as error:
         raise UserNotFound() from error
@@ -362,35 +373,35 @@ def get_all_following_relations():
     return get_following_relations_db()
 
 
-def get_following_count(username: str):
+def get_following_count(email: str):
     """
-    This function is used to get username's following count from database.
+    This function is used to get email's following count from database.
     """
     try:
-        user = get_user_username(username)
+        user = get_user_email(email)
         return get_following_count_db(user.id)
     except KeyError as error:
         raise UserNotFound() from error
 
 
-def get_followers_count(username: str):
+def get_followers_count(email: str):
     """
-    This function is used to get username's followers count from database.
+    This function is used to get email's followers count from database.
     """
     try:
-        user = get_user_username(username)
+        user = get_user_email(email)
         return get_followers_count_db(user.id)
     except KeyError as error:
         raise UserNotFound() from error
 
 
-def remove_follow(username: str, username_to_unfollow: str):
+def remove_follow(email: str, email_to_unfollow: str):
     """
     This function is used to remove a follow relationship.
     """
     try:
-        user = get_user_username(username)
-        user_to_unfollow = get_user_username(username_to_unfollow)
+        user = get_user_email(email)
+        user_to_unfollow = get_user_email(email_to_unfollow)
         remove_follow_db(user.id, user_to_unfollow.id)
         return {"message": "Unfollow successful"}
     except KeyError as error:
