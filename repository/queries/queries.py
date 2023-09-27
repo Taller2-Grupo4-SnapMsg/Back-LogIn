@@ -51,7 +51,7 @@ def create_user(session, email, password, username, data):
         date_of_birth=data["date_of_birth"],
         bio=data["bio"],
         avatar=data["avatar"],
-        admin=False,
+        admin=data["admin"],
     )
     try:
         session.add(user)
