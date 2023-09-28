@@ -154,6 +154,18 @@ def get_following(session, user_id):
         for user in users
     ]
 
+def is_following(session, user_id, user_id_to_check_if_following):
+    """
+    Returns True if the user with the given id is following the user with the given id.
+    """
+    following = (
+        session.query(Following)
+        .filter(Following.user_id == user_id)
+        .filter(Following.following_id == user_id_to_check_if_following)
+        .first()
+    )
+    return following is not None
+
 
 def get_following_relations(session):
     """
