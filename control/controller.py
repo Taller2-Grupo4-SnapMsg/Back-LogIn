@@ -337,22 +337,19 @@ def get_is_following(email_following: str, token: str = Header(...)):
     :param token: Token used to verify you are requesting from a valid user.
     :return: Status code with a JSON message.
     """
-
-    try: 
+    try:
         email_follower = auth_handler.decode_token(token)
         check_for_user_token(token)
     except UserNotFound as error:
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
         ) from error
-    
     try:
         is_following = is_following_service(email_follower, email_following)
         return is_following
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    
-    
+
 
 @app.get("/following/{email}")
 def get_following(email: str, token: str = Header(...)):

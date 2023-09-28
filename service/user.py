@@ -30,9 +30,7 @@ from repository.user_repository import (
 from repository.user_repository import get_following_count as get_following_count_db
 from repository.user_repository import get_followers_count as get_followers_count_db
 from repository.user_repository import remove_follow as remove_follow_db
-
 from repository.user_repository import is_following as is_following_db
-
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from repository.errors import RelationAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
@@ -270,6 +268,7 @@ def get_user_username(username: str):
     except KeyError as error:
         raise UserNotFound() from error
 
+
 def is_following(email: str, email_to_check_if_following: str):
     """
     This function is used to check if a user is following another user.
@@ -280,6 +279,7 @@ def is_following(email: str, email_to_check_if_following: str):
         return is_following_db(user.id, user_to_check.id)
     except KeyError as error:
         raise UserNotFound() from error
+
 
 def remove_user_email(email: str):
     """

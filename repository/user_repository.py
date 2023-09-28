@@ -167,6 +167,7 @@ def get_following(user_id: int):
     """
     return get_following_db(session, user_id)
 
+
 def is_following(user_id: int, user_id_to_check_if_following: int):
     """
     This is used for getting the following of a user.
@@ -174,6 +175,7 @@ def is_following(user_id: int, user_id_to_check_if_following: int):
     :param user_id: The user's id.
     """
     return is_following_db(session, user_id, user_id_to_check_if_following)
+
 
 def get_following_relations():
     """
