@@ -34,6 +34,7 @@ class User(Base):
     bio = Column(String(500), nullable=False)
     avatar = Column(String(), nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    location = Column(String(100), nullable=False)
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -47,7 +48,9 @@ class User(Base):
         bio="",
         avatar="",
         admin=False,
+        location="",
     ):
+        # pylint: disable=R0801
         self.username = username
         self.surname = surname
         self.name = name
@@ -57,6 +60,7 @@ class User(Base):
         self.bio = bio
         self.avatar = avatar
         self.admin = admin
+        self.location = location
 
 
 class Following(Base):

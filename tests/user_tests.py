@@ -8,7 +8,6 @@ from datetime import datetime
 import pytest
 from service.user import User
 
-# from service.user import get_user_username
 from service.user import remove_user_email
 from service.user import get_user_email
 from service.user import try_login
@@ -29,6 +28,7 @@ from service.user import change_avatar
 from service.user import change_name
 from service.user import change_date_of_birth
 from service.user import change_last_name
+from service.user import change_location
 from service.errors import UserNotFound
 from service.errors import EmailAlreadyRegistered, UsernameAlreadyRegistered
 from service.errors import PasswordDoesntMatch, FollowingRelationAlreadyExists
@@ -63,6 +63,7 @@ def save_test_user_to_db():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Real_location",
     )
 
     user.save()
@@ -168,6 +169,7 @@ def test_user_already_registered_email():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Argentina",
     )
 
     user.save()
@@ -196,6 +198,7 @@ def test_user_already_registered_username():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Argentina",
     )
 
     user.save()
@@ -241,6 +244,7 @@ def test_setters_work():
     user.set_bio("Real_bio")
     user.set_avatar("image.png")
     user.set_admin(True)
+    user.set_location("Argentina")
 
     assert user.email == EMAIL
     assert user.password == PASSWORD
@@ -251,6 +255,7 @@ def test_setters_work():
     assert user.bio == "Real_bio"
     assert user.avatar == "image.png"
     assert user.admin is True
+    assert user.location == "Argentina"
 
 
 def test_user_login():
@@ -365,6 +370,7 @@ def test_user_can_follow_another_user():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Argentina",
     )
 
     user_to_be_followed.save()
@@ -407,6 +413,7 @@ def test_user_cant_follow_the_same_user_twice():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Argentina",
     )
 
     user_to_be_followed.save()
@@ -629,6 +636,7 @@ def test_remove_follow_wrong_username():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Argentina",
     )
 
     user_to_be_followed.save()
@@ -676,6 +684,7 @@ def test_get_all_followers_wrong_username():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Argentina",
     )
 
     user_to_be_followed.save()
@@ -711,6 +720,7 @@ def test_get_all_following_wrong_username():
         bio="Real_bio",
         admin=False,
         avatar="image.png",
+        location="Argentina",
     )
 
     user_to_be_followed.save()
@@ -891,3 +901,35 @@ def test_remove_user_username_wrong_username():
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
+
+
+def test_set_user_location():
+    """
+    This function tests that the user can be set a new location.
+    """
+
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_location(EMAIL, "new_location")
+
+    assert get_user_email(EMAIL).location == "new_location"
+
+    remove_test_user_from_db()
+
+
+def test_set_user_location_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_location("wrong_email", "new_location")
+    assert str(error.value) == "User not found"
+
+    remove_test_user_from_db()

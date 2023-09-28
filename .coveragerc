@@ -4,3 +4,7 @@ omit =
     */.local/*
     # omit everything in /usr
     /usr/*
+    # Omit the tests directory
+    ./tests/*
+    # omit conftest 
+    ./conftest.py

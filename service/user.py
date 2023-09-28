@@ -30,6 +30,7 @@ from repository.user_repository import (
 from repository.user_repository import get_following_count as get_following_count_db
 from repository.user_repository import get_followers_count as get_followers_count_db
 from repository.user_repository import remove_follow as remove_follow_db
+from repository.user_repository import update_user_location as update_user_location_repo
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from repository.errors import RelationAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
@@ -53,6 +54,7 @@ class User(BaseModel):
     bio: str = ""
     avatar: str = ""
     admin: bool = False
+    location: str = ""
 
     def set_email(self, email):
         """
@@ -108,12 +110,17 @@ class User(BaseModel):
         """
         self.admin = admin
 
+    def set_location(self, location):
+        """
+        This function is for saving the user's location.
+        """
+        self.location = location
+
     def save(self):
         """
         This function is used to save the user to the database.
         """
         try:
-            # self.date_of_birth = datetime.datetime.strptime(self.date_of_birth)
             data = {
                 "name": self.name,
                 "surname": self.surname,
@@ -121,6 +128,7 @@ class User(BaseModel):
                 "bio": self.bio,
                 "avatar": self.avatar,
                 "admin": self.admin,
+                "location": "",  # At time of registration, location is empty
             }  # Thanks pylint
             register_user(self.email, self.password, self.username, data)
         except UsernameAlreadyExists as error:
@@ -169,7 +177,7 @@ def change_password(email: str, new_password: str):
     This function is used to update the user in the database.
 
     :param email: The email of the user to update.
-    :param user: The user's new information.
+    :param new_passowrd: The user's new password.
     """
     try:
         update_user_password_repo(email, new_password)
@@ -182,7 +190,7 @@ def change_bio(email: str, new_bio: str):
     This function is used to update the user in the database.
 
     :param email: The email of the user to update.
-    :param user: The user's new information.
+    :param new_bio: The user's new bio.
     """
     try:
         update_user_bio_repo(email, new_bio)
@@ -195,7 +203,7 @@ def change_name(email: str, new_name: str):
     This function is used to update the user in the database.
 
     :param email: The email of the user to update.
-    :param user: The user's new information.
+    :param name: The user's new name.
     """
     try:
         update_user_name_repo(email, new_name)
@@ -208,7 +216,7 @@ def change_date_of_birth(email: str, new_date_of_birth: str):
     This function is used to update the user in the database.
 
     :param email: The email of the user to update.
-    :param user: The user's new information.
+    :param new_date_of_birth: The user's new date of birth.
     """
     try:
         update_user_date_of_birth_repo(email, new_date_of_birth)
@@ -221,7 +229,7 @@ def change_last_name(email: str, new_last_name: str):
     This function is used to update the user in the database.
 
     :param email: The email of the user to update.
-    :param user: The user's new information.
+    :param new_last_name: The user's new last name.
     """
     try:
         update_user_last_name_repo(email, new_last_name)
@@ -234,10 +242,23 @@ def change_avatar(email: str, new_avatar: str):
     This function is used to update the user in the database.
 
     :param email: The email of the user to update.
-    :param user: The user's new information.
+    :param new_avatar: The user's new avatar.
     """
     try:
         update_user_avatar_repo(email, new_avatar)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_location(email: str, new_location: str):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param new_location: The user's new location.
+    """
+    try:
+        update_user_location_repo(email, new_location)
     except KeyError as error:
         raise UserNotFound() from error
 

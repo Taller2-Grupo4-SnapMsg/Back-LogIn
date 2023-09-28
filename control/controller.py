@@ -19,6 +19,7 @@ from service.user import change_name as change_name_service
 from service.user import change_date_of_birth as change_date_of_birth_service
 from service.user import change_last_name as change_last_name_service
 from service.user import change_avatar as change_avatar_service
+from service.user import change_location as change_location_service
 from service.user import get_user_email as get_user_service
 from service.user import get_user_password
 from service.user import remove_user_email
@@ -87,6 +88,7 @@ class UserResponse(BaseModel):
     date_of_birth: str
     bio: str
     avatar: str
+    location: str
 
     # I disable it since it's a pydantic configuration
     # pylint: disable=too-few-public-methods
@@ -113,6 +115,7 @@ def generate_response(user):
         date_of_birth=str(user.date_of_birth),
         bio=user.bio,
         avatar=user.avatar,
+        location=user.location,
     )
 
 
@@ -560,6 +563,23 @@ def change_last_name(new_last_name: str, token: str = Header(...)):
     try:
         email = auth_handler.decode_token(token)
         change_last_name_service(email, new_last_name)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
+@app.put("/users/location")
+def change_location(new_location: str, token: str = Header(...)):
+    """
+    This function is for changing the user's location
+
+    :param new_location: User's new location.
+    :param token: Token used to verify the user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        change_location_service(email, new_location)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
