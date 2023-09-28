@@ -30,6 +30,7 @@ from repository.queries.queries import (
 from repository.queries.queries import get_following_count as get_following_count_db
 from repository.queries.queries import get_followers_count as get_followers_count_db
 from repository.queries.queries import remove_follow as remove_follow_db
+from repository.queries.queries import is_following as is_following_db
 
 # We connect to the database using the ORM defined in tables.py
 engine = create_engine(os.environ.get("DB_URI"))
@@ -165,6 +166,15 @@ def get_following(user_id: int):
     :param user_id: The user's id.
     """
     return get_following_db(session, user_id)
+
+
+def is_following(user_id: int, user_id_to_check_if_following: int):
+    """
+    This is used for getting the following of a user.
+
+    :param user_id: The user's id.
+    """
+    return is_following_db(session, user_id, user_id_to_check_if_following)
 
 
 def get_following_relations():
