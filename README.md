@@ -47,6 +47,8 @@ La migracion siempre se va hacer sobre el url que tenga el alembic.ini, se ve al
 
 `sqlalchemy.url = "postgresql://admin:admin123@localhost:5432/test-back-users"`
 
+Para correr la migracion **SIEMPRE** tenes que tener el DB_URI exportado, a la base de datos que vos quieras correr la migracion.
+
 ## Para correr el entorno del back de forma local...
 Requerimientos:
 - postgresql
