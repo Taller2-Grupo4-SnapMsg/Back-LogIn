@@ -19,8 +19,9 @@ from service.user import change_name as change_name_service
 from service.user import change_date_of_birth as change_date_of_birth_service
 from service.user import change_last_name as change_last_name_service
 from service.user import change_avatar as change_avatar_service
+from service.user import change_location as change_location_service
+from service.user import change_blocked_status as change_blocked_status_service
 from service.user import get_user_email as get_user_service
-from service.user import get_user_password
 from service.user import remove_user_email
 from service.user import get_all_users as get_all_users_service
 from service.user import get_user_username
@@ -48,6 +49,7 @@ USER_ALREADY_REGISTERED = 409
 USER_NOT_FOUND = 404
 USER_NOT_ADMIN = 400
 INCORRECT_CREDENTIALS = status.HTTP_401_UNAUTHORIZED
+BLOCKED_USER = status.HTTP_403_FORBIDDEN
 
 app = FastAPI()
 auth_handler = AuthHandler()
@@ -89,6 +91,8 @@ class UserResponse(BaseModel):
     date_of_birth: str
     bio: str
     avatar: str
+    location: str
+    blocked: bool
 
     # I disable it since it's a pydantic configuration
     # pylint: disable=too-few-public-methods
@@ -115,6 +119,8 @@ def generate_response(user):
         date_of_birth=str(user.date_of_birth),
         bio=user.bio,
         avatar=user.avatar,
+        location=user.location,
+        blocked=user.blocked,
     )
 
 
@@ -174,6 +180,7 @@ def register_user(user_data: UserRegistration):
         datetime.datetime(int(date_time[0]), int(date_time[1]), int(date_time[2]))
     )
     user.set_admin(False)
+    user.set_blocked(False)
     try:
         user.save()
         token = auth_handler.encode_token(user_data.email)
@@ -209,6 +216,7 @@ def register_admin(user_data: UserRegistration):
         datetime.datetime(int(date_time[0]), int(date_time[1]), int(date_time[2]))
     )
     user.set_admin(True)
+    user.set_blocked(False)
     try:
         user.save()
         token = auth_handler.encode_token(user_data.email)
@@ -242,8 +250,15 @@ def login(user_data: UserLogIn):
     :return: Status code with a JSON message.
     """
     try:
-        hash_password = get_user_password(user_data.email)
-        if auth_handler.verify_password(user_data.password, hash_password):
+        user = get_user_service(user_data.email)
+        # user.password has the hashed_password.
+        if auth_handler.verify_password(user_data.password, user.password):
+            if user.blocked:
+                raise HTTPException(
+                    status_code=BLOCKED_USER,
+                    detail="Your account is blocked. "
+                    + "If you think this is a mistake, contact an admin",
+                )
             token = auth_handler.encode_token(user_data.email)
             return {"message": "Login successful", "token": token}
 
@@ -588,6 +603,46 @@ def change_last_name(new_last_name: str, token: str = Header(...)):
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
+
+
+@app.put("/users/location")
+def change_location(new_location: str, token: str = Header(...)):
+    """
+    This function is for changing the user's location
+
+    :param new_location: User's new location.
+    :param token: Token used to verify the user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        change_location_service(email, new_location)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
+@app.put("/users/block/{email}")
+def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
+    """
+    This function is for changing a user's blocked status.
+
+    :param email: Email of the user to block.
+    :param blocked: New blocked status.
+    :param token: Token used to verify the user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        admin_email = auth_handler.decode_token(token)
+        if not is_email_admin(admin_email):
+            raise HTTPException(
+                status_code=USER_NOT_ADMIN,
+                detail="Only administrators can block users",
+            )
+        change_blocked_status_service(email, blocked)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": email + " is now " + ("blocked" if blocked else "unblocked")}
 
 
 # Route to making an admin

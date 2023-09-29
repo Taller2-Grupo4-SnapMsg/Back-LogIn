@@ -52,6 +52,8 @@ def create_user(session, email, password, username, data):
         bio=data["bio"],
         avatar=data["avatar"],
         admin=data["admin"],
+        location=data["location"],
+        blocked=data["blocked"],
     )
     try:
         session.add(user)
@@ -261,6 +263,30 @@ def update_user_avatar(session, user_id, new_avatar):
     user = session.query(User).filter(User.id == user_id).first()
     if user:
         setattr(user, "avatar", new_avatar)
+        session.commit()
+        return user
+    return None
+
+
+def update_user_location(session, user_id, new_location):
+    """
+    Changes the location of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "location", new_location)
+        session.commit()
+        return user
+    return None
+
+
+def update_user_blocked_status(session, user_id, blocked):
+    """
+    Changes the blocked status of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "blocked", blocked)
         session.commit()
         return user
     return None
