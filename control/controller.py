@@ -38,6 +38,8 @@ from service.user import get_following_count as get_following_count_service
 from service.user import remove_follow as remove_follow_service
 from service.user import is_email_admin
 
+from service.user import is_following as is_following_service
+
 from service.errors import UserNotFound
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
@@ -337,6 +339,29 @@ def get_followers(email: str, token: str = Header(...)):
     try:
         user_list = get_all_followers(email)
         return generate_response_list(user_list)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+
+
+@app.get("/is_following/{email}")
+def get_is_following(email_following: str, token: str = Header(...)):
+    """
+    This function returns if the user is following the given user.
+
+    :param email: Email of the user to check if is following.
+    :param token: Token used to verify you are requesting from a valid user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        email_follower = auth_handler.decode_token(token)
+        check_for_user_token(token)
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
+    try:
+        is_following = is_following_service(email_follower, email_following)
+        return is_following
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 

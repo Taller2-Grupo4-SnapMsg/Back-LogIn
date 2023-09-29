@@ -34,6 +34,7 @@ from repository.queries.queries import update_user_location as update_user_locat
 from repository.queries.queries import (
     update_user_blocked_status as update_user_blocked_status_db,
 )
+from repository.queries.queries import is_following as is_following_db
 
 # We connect to the database using the ORM defined in tables.py
 engine = create_engine(os.environ.get("DB_URI"))
@@ -169,6 +170,15 @@ def get_following(user_id: int):
     :param user_id: The user's id.
     """
     return get_following_db(session, user_id)
+
+
+def is_following(user_id: int, user_id_to_check_if_following: int):
+    """
+    This is used for getting the following of a user.
+
+    :param user_id: The user's id.
+    """
+    return is_following_db(session, user_id, user_id_to_check_if_following)
 
 
 def get_following_relations():
