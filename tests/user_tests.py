@@ -20,7 +20,6 @@ from service.user import get_followers_count
 from service.user import get_all_followers
 from service.user import get_all_following
 from service.user import remove_follow
-from service.user import get_user_password
 from service.user import change_password
 from service.user import remove_user_username
 from service.user import change_bio
@@ -29,6 +28,7 @@ from service.user import change_name
 from service.user import change_date_of_birth
 from service.user import change_last_name
 from service.user import change_location
+from service.user import change_blocked_status
 from service.errors import UserNotFound
 from service.errors import EmailAlreadyRegistered, UsernameAlreadyRegistered
 from service.errors import PasswordDoesntMatch, FollowingRelationAlreadyExists
@@ -64,6 +64,7 @@ def save_test_user_to_db():
         admin=False,
         avatar="image.png",
         location="Real_location",
+        blocked=False,
     )
 
     user.save()
@@ -83,6 +84,10 @@ def test_user_can_login_after_register():
         username=USERNAME,
         date_of_birth="666 6 6",
         bio="Real_bio",
+        admin=False,
+        avatar="image.png",
+        location="Argentina",
+        blocked=False,
     )
 
     user.save()
@@ -170,6 +175,7 @@ def test_user_already_registered_email():
         admin=False,
         avatar="image.png",
         location="Argentina",
+        blocked=False,
     )
 
     user.save()
@@ -199,6 +205,7 @@ def test_user_already_registered_username():
         admin=False,
         avatar="image.png",
         location="Argentina",
+        blocked=False,
     )
 
     user.save()
@@ -245,6 +252,7 @@ def test_setters_work():
     user.set_avatar("image.png")
     user.set_admin(True)
     user.set_location("Argentina")
+    user.set_blocked(True)
 
     assert user.email == EMAIL
     assert user.password == PASSWORD
@@ -256,6 +264,7 @@ def test_setters_work():
     assert user.avatar == "image.png"
     assert user.admin is True
     assert user.location == "Argentina"
+    assert user.blocked is True
 
 
 def test_user_login():
@@ -371,6 +380,7 @@ def test_user_can_follow_another_user():
         admin=False,
         avatar="image.png",
         location="Argentina",
+        blocked=False,
     )
 
     user_to_be_followed.save()
@@ -414,6 +424,7 @@ def test_user_cant_follow_the_same_user_twice():
         admin=False,
         avatar="image.png",
         location="Argentina",
+        blocked=False,
     )
 
     user_to_be_followed.save()
@@ -430,6 +441,10 @@ def test_user_cant_follow_the_same_user_twice():
     assert str(error.value) == "Following relation already exists!"
 
     remove_follow(user.email, user_to_be_followed.email)
+
+    assert get_following_count(user.email) == 0
+    assert get_followers_count(user_to_be_followed.email) == 0
+
     remove_user_email(EMAIL)
     remove_user_email(EMAIL + "1")
 
@@ -485,34 +500,6 @@ def test_user_cant_be_followed_by_a_user_that_doesnt_exist():
     remove_user_email(EMAIL)
 
 
-def test_get_user_password():
-    """
-    This function tests the get user password.
-    """
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    assert get_user_password(EMAIL) == PASSWORD
-
-    remove_user_email(EMAIL)
-
-
-def test_get_user_password_wrong_email():
-    """
-    This function tests the exception user not found
-    """
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    with pytest.raises(UserNotFound) as error:
-        get_user_password("wrong_email")
-    assert str(error.value) == "User not found"
-
-    remove_user_email(EMAIL)
-
-
 def test_update_user_password():
     """
     This function tests the update user password.
@@ -523,7 +510,9 @@ def test_update_user_password():
 
     change_password(EMAIL, "new_password")
 
-    assert get_user_password(EMAIL) == "new_password"
+    user = get_user_email(EMAIL)
+
+    assert user.password == "new_password"
 
     remove_user_email(EMAIL)
 
@@ -637,6 +626,7 @@ def test_remove_follow_wrong_username():
         admin=False,
         avatar="image.png",
         location="Argentina",
+        blocked=False,
     )
 
     user_to_be_followed.save()
@@ -685,6 +675,7 @@ def test_get_all_followers_wrong_username():
         admin=False,
         avatar="image.png",
         location="Argentina",
+        blocked=False,
     )
 
     user_to_be_followed.save()
@@ -721,6 +712,7 @@ def test_get_all_following_wrong_username():
         admin=False,
         avatar="image.png",
         location="Argentina",
+        blocked=False,
     )
 
     user_to_be_followed.save()
@@ -932,4 +924,49 @@ def test_set_user_location_wrong_email():
         change_location("wrong_email", "new_location")
     assert str(error.value) == "User not found"
 
+    remove_test_user_from_db()
+
+
+def test_set_user_blocked_status():
+    """
+    This function tests that the user can be blocked.
+    """
+
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_blocked_status(EMAIL, True)
+
+    assert get_user_email(EMAIL).blocked is True
+
+    remove_test_user_from_db()
+
+
+def test_set_user_blocked_status_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_blocked_status("wrong_email", True)
+    assert str(error.value) == "User not found"
+
+    remove_test_user_from_db()
+
+
+def test_unblock_an_user():
+    """
+    This function tests that the user can be unblocked.
+    """
+    remove_test_user_from_db()
+    save_test_user_to_db()
+    change_blocked_status(EMAIL, True)
+    assert get_user_email(EMAIL).blocked is True
+    change_blocked_status(EMAIL, False)
+    assert get_user_email(EMAIL).blocked is False
     remove_test_user_from_db()

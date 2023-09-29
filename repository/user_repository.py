@@ -31,6 +31,9 @@ from repository.queries.queries import get_following_count as get_following_coun
 from repository.queries.queries import get_followers_count as get_followers_count_db
 from repository.queries.queries import remove_follow as remove_follow_db
 from repository.queries.queries import update_user_location as update_user_location_db
+from repository.queries.queries import (
+    update_user_blocked_status as update_user_blocked_status_db,
+)
 
 # We connect to the database using the ORM defined in tables.py
 engine = create_engine(os.environ.get("DB_URI"))
@@ -287,6 +290,19 @@ def update_user_location(email: str, new_location: str):
     if user is None:
         raise KeyError()
     update_user_location_db(session, user.id, new_location)
+
+
+def update_user_blocked_status(email: str, blocked: bool):
+    """
+    This is used for updating a user's blocked status.
+
+    :param email: The email used to identify the user.
+    :param blocked: The blocked status to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_blocked_status_db(session, user.id, blocked)
 
 
 session.close()

@@ -31,6 +31,9 @@ from repository.user_repository import get_following_count as get_following_coun
 from repository.user_repository import get_followers_count as get_followers_count_db
 from repository.user_repository import remove_follow as remove_follow_db
 from repository.user_repository import update_user_location as update_user_location_repo
+from repository.user_repository import (
+    update_user_blocked_status as update_user_blocked_status_repo,
+)
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from repository.errors import RelationAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
@@ -55,6 +58,7 @@ class User(BaseModel):
     avatar: str = ""
     admin: bool = False
     location: str = ""
+    blocked: bool = False
 
     def set_email(self, email):
         """
@@ -116,6 +120,12 @@ class User(BaseModel):
         """
         self.location = location
 
+    def set_blocked(self, blocked_status):
+        """
+        This function is for modifying the user's blocked status.
+        """
+        self.blocked = blocked_status
+
     def save(self):
         """
         This function is used to save the user to the database.
@@ -129,7 +139,8 @@ class User(BaseModel):
                 "avatar": self.avatar,
                 "admin": self.admin,
                 "location": "",  # At time of registration, location is empty
-            }  # Thanks pylint
+                "blocked": False,  # At time of registration, user is not blocked
+            }
             register_user(self.email, self.password, self.username, data)
         except UsernameAlreadyExists as error:
             # if we had more errors we could do this and then default to a generic error:
@@ -156,20 +167,6 @@ def try_login(email: str, password: str):
     except KeyError as error:
         raise UserNotFound() from error
     return {"message": "Login successful"}
-
-
-def get_user_password(email: str):
-    """
-    This function is used to login the user.
-
-    :param email: The email of the user to login.
-    :param password: The password of the user to login.
-    """
-    try:
-        repo_user = get_user_repo(email)  # esto devuelve un usuario
-        return repo_user.password
-    except KeyError as error:
-        raise UserNotFound() from error
 
 
 def change_password(email: str, new_password: str):
@@ -259,6 +256,19 @@ def change_location(email: str, new_location: str):
     """
     try:
         update_user_location_repo(email, new_location)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_blocked_status(email: str, blocked_status: bool):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param blocked_status: The user's new blocked status.
+    """
+    try:
+        update_user_blocked_status_repo(email, blocked_status)
     except KeyError as error:
         raise UserNotFound() from error
 

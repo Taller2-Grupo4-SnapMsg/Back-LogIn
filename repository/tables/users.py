@@ -35,6 +35,7 @@ class User(Base):
     avatar = Column(String(), nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     location = Column(String(100), nullable=False)
+    blocked = Column(Boolean, nullable=False, default=False)
 
     # pylint: disable=too-many-arguments
     def __init__(
@@ -49,7 +50,8 @@ class User(Base):
         avatar="",
         admin=False,
         location="",
-    ):
+        blocked=False,
+    ):  # This is for the repetive nature of this code and users.save()
         # pylint: disable=R0801
         self.username = username
         self.surname = surname
@@ -61,6 +63,7 @@ class User(Base):
         self.avatar = avatar
         self.admin = admin
         self.location = location
+        self.blocked = blocked
 
 
 class Following(Base):
