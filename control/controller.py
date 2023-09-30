@@ -730,11 +730,16 @@ def get_all_users(token: str = Header(...)):
 
     :return: JSON of all users.
     """
-    if not token_is_admin(token):
+    try:
+        if not token_is_admin(token):
+            raise HTTPException(
+                status_code=USER_NOT_ADMIN,
+                detail="Only administrators can get all users",
+            )
+    except UserNotFound as error:
         raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can get all users",
-        )
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
     user_list = get_all_users_service()
     return generate_response_list(user_list)
 
