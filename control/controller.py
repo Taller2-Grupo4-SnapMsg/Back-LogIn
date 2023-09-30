@@ -151,11 +151,8 @@ def token_is_admin(token: str):
     """
     This function checks if the token given is an admin.
     """
-    try:
-        email = auth_handler.decode_token(token)
-        return is_email_admin(email)
-    except UserNotFound as error:
-        raise error
+    email = auth_handler.decode_token(token)
+    return is_email_admin(email)
 
 
 # Create a POST route
@@ -677,11 +674,16 @@ def remove_admin_status(email: str, token: str = Header(...)):
     :param token: Token used to verify the user who is calling this is an admin.
     :return: Status code with a JSON message.
     """
-    if not token_is_admin(token):
+    try:
+        if not token_is_admin(token):
+            raise HTTPException(
+                status_code=USER_NOT_ADMIN,
+                detail="Only administrators can remove other users from being administrators",
+            )
+    except UserNotFound as error:
         raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can remove other users from being administrators",
-        )
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
     try:
         remove_admin_service(email)
     except UserNotFound as error:
@@ -753,11 +755,16 @@ def get_all_following_relations(token: str = Header(...)):
 
     :return: JSON of all users.
     """
-    if not token_is_admin(token):
+    try:
+        if not token_is_admin(token):
+            raise HTTPException(
+                status_code=USER_NOT_ADMIN,
+                detail="Only administrators can get all following relations",
+            )
+    except UserNotFound as error:
         raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can get all following relations",
-        )
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
     return get_all_following_relations_service()
 
 
