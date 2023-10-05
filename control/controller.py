@@ -124,6 +124,53 @@ def generate_response(user):
     )
 
 
+class UserPostResponse(BaseModel):
+    """
+    This class is a Pydantic model for the response body.
+    """
+
+    id: int
+    email: str
+    name: str
+    last_name: str
+    username: str
+    date_of_birth: str
+    bio: str
+    avatar: str
+    location: str
+    blocked: bool
+
+    # I disable it since it's a pydantic configuration
+    # pylint: disable=too-few-public-methods
+    class Config:
+        """
+        This is a pydantic configuration so I can cast
+        orm_objects into pydantic models.
+        """
+
+        orm_mode = True
+        from_attributes = True
+
+
+def generate_response_with_id(user):
+    """
+    This function casts the orm_object into a pydantic model.
+    (from data base object to json)
+    """
+    return UserPostResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        last_name=user.surname,
+        username=user.username,
+        date_of_birth=str(user.date_of_birth),
+        bio=user.bio,
+        avatar=user.avatar,
+        location=user.location,
+        blocked=user.blocked,
+    )
+
+
 def generate_response_list(users):
     """
     This function casts the list of users into a list of pydantic models.
@@ -782,6 +829,25 @@ def get_user_by_token(token: str = Header(...)):
         )  # auth_handler.auth_wrapper(token)
         user = get_user_service(user_email)
         user = generate_response(user)
+        return user
+    except HTTPException as error:
+        raise error
+
+
+@app.get("/user", response_model=UserPostResponse)
+def get_user_by_token_with_id(token: str = Header(...)):
+    """
+    This function retrieves an user by token.
+
+    :param token: The authentication token.
+    :return: User details or a 401 response.
+    """
+    try:
+        user_email = auth_handler.decode_token(
+            token
+        )  # auth_handler.auth_wrapper(token)
+        user = get_user_service(user_email)
+        user = generate_response_with_id(user)
         return user
     except HTTPException as error:
         raise error
