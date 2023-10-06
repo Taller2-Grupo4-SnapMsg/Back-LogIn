@@ -20,28 +20,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Create the 'posts' table
-    op.create_table(
-        "posts",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("posted_at", sa.DateTime(), default=sa.func.now(), nullable=True),
-        sa.Column("content", sa.String(length=800), nullable=True),
-        sa.Column("image", sa.String(length=100), nullable=True),
-        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
-    )
-
-    # Create the 'likes' table
-    op.create_table(
-        "likes",
-        sa.Column("id_post", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("created_at", sa.DateTime(), default=sa.func.now(), nullable=True),
-        sa.ForeignKeyConstraint(["id_post"], ["posts.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id_post", "user_id"),
-    )
+    pass
 
 
 def downgrade() -> None:

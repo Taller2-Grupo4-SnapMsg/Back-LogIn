@@ -49,6 +49,9 @@ class Like(Base):
         nullable=False,
         primary_key=True,
     )
+    # We disable duplicate code because it's literally the same
+    # column with foreign key from users
+    # pylint: disable=R0801
     user_id = Column(
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
