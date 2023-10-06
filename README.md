@@ -11,7 +11,7 @@ los endpoints y una breve descripcion.
 Instalate pytest: 
 `pip install -U pytest`
 y haces:
-`pytest /tests/user_tests.py`
+`pytest /tests/*`
 ## Para el black:
 `pip install black`
 
@@ -19,12 +19,12 @@ y haces:
 ## Para correr el coverage:
 `pip install coverage`
 
-`coverage run -m pytest /tests/user_tests.py`
+`coverage run -m pytest /tests/*`
 
 `coverage report -m`
 
 Si te esta fallando un test en particular, podes probar con:
-`pytest tests/user_tests -k "nombre_test"`
+`pytest -k "nombre_test" tests/*`
 
 ## Si te esta molestando pylint...
 Probablemente sea por la variable de entorno PYTHONPATH, deberias hacer:
@@ -188,11 +188,11 @@ Una vez ya tenes todo instalado, y apagaste la compu, lo unico que tenes que hac
 
 Hasta aca, si vas bien, deberias por ejemplo poder correr los tests con:
 
-`pytest tests/user_tests.py`
+`pytest tests/*`
 
 Para el coverage:
 
-`coverage run -m pytest tests/user_tests.py`
+`coverage run -m pytest tests/*`
 
 `coverage report -m`
 

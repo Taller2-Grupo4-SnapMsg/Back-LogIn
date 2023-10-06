@@ -13,33 +13,33 @@ from fastapi import Header
 from fastapi import status
 
 from service.user import User
-from service.user import change_password as change_password_service
-from service.user import change_bio as change_bio_service
-from service.user import change_name as change_name_service
-from service.user import change_date_of_birth as change_date_of_birth_service
-from service.user import change_last_name as change_last_name_service
-from service.user import change_avatar as change_avatar_service
-from service.user import change_location as change_location_service
-from service.user import change_blocked_status as change_blocked_status_service
-from service.user import get_user_email as get_user_service
-from service.user import remove_user_email
-from service.user import get_all_users as get_all_users_service
-from service.user import get_user_username
-from service.user import make_admin as make_admin_service
-from service.user import remove_admin_status as remove_admin_service
-from service.user import create_follow as create_follow_service
 from service.user import (
+    change_password as change_password_service,
+    change_bio as change_bio_service,
+    change_name as change_name_service,
+    change_date_of_birth as change_date_of_birth_service,
+    change_last_name as change_last_name_service,
+    change_avatar as change_avatar_service,
+    change_location as change_location_service,
+    change_blocked_status as change_blocked_status_service,
+    get_user_email as get_user_service,
+    remove_user_email,
+    get_all_users as get_all_users_service,
+    get_user_username,
+    make_admin as make_admin_service,
+    remove_admin_status as remove_admin_service,
+    create_follow as create_follow_service,
     get_all_following_relations as get_all_following_relations_service,
+    get_all_followers,
+    get_all_following,
+    get_followers_count as get_followers_count_service,
+    get_following_count as get_following_count_service,
+    remove_follow as remove_follow_service,
+    is_email_admin,
+    set_user_interests as change_interests_service,
+    is_following as is_following_service,
+    get_user_interests as get_user_interests_service,
 )
-from service.user import get_all_followers
-from service.user import get_all_following
-from service.user import get_followers_count as get_followers_count_service
-from service.user import get_following_count as get_following_count_service
-from service.user import remove_follow as remove_follow_service
-from service.user import is_email_admin
-
-from service.user import is_following as is_following_service
-
 from service.errors import UserNotFound
 from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
 from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
@@ -664,6 +664,38 @@ def change_location(new_location: str, token: str = Header(...)):
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
+
+
+@app.put("/users/interests")
+def change_interests(new_interests: str, token: str = Header(...)):
+    """
+    This function is for changing the user's interests
+
+    :param new_interests: User's new interests.
+    :param token: Token used to verify the user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        change_interests_service(email, new_interests)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User information updated"}
+
+
+@app.get("/users/interests")
+def get_interests(token: str = Header(...)):
+    """
+    This function is for getting the user's interests
+
+    :param token: Token used to verify the user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        return get_user_interests_service(email)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
 @app.put("/users/block/{email}")

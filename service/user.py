@@ -34,7 +34,9 @@ from repository.user_repository import update_user_location as update_user_locat
 from repository.user_repository import (
     update_user_blocked_status as update_user_blocked_status_repo,
 )
-from repository.user_repository import is_following as is_following_db
+from repository.user_repository import is_following as is_following_repo
+from repository.user_repository import set_user_interests as set_user_interests_repo
+from repository.user_repository import get_user_interests as get_user_interests_repo
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from repository.errors import RelationAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
@@ -307,7 +309,7 @@ def is_following(email: str, email_to_check_if_following: str):
     try:
         user = get_user_email(email)
         user_to_check = get_user_email(email_to_check_if_following)
-        return is_following_db(user.id, user_to_check.id)
+        return is_following_repo(user.id, user_to_check.id)
     except KeyError as error:
         raise UserNotFound() from error
 
@@ -449,5 +451,35 @@ def remove_follow(email: str, email_to_unfollow: str):
         user_to_unfollow = get_user_email(email_to_unfollow)
         remove_follow_db(user.id, user_to_unfollow.id)
         return {"message": "Unfollow successful"}
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def set_user_interests(email: str, interests: str):
+    """
+    This function is used to set the user's interests.
+
+    :param email: The email of the user to update.
+    :param interests: The user's interests in a string format like "Coooking,Cars,planes".
+    """
+    try:
+        user = get_user_email(email)
+        interests_list = interests.split(",")
+        set_user_interests_repo(user.id, interests_list)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def get_user_interests(email: str):
+    """
+    This function is used to get the user's interests.
+
+    :param email: The email of the user to update.
+    :return: The user's interest in a list
+    """
+    try:
+        user = get_user_email(email)
+        interests = get_user_interests_repo(user.id)
+        return [interest.interest for interest in interests]
     except KeyError as error:
         raise UserNotFound() from error
