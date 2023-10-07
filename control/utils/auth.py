@@ -78,3 +78,7 @@ class AuthHandler:
         """
         # extra level of security
         return self.decode_token(auth.credentials)
+
+
+# Singleton instance of the AuthHandler class:
+auth_handler = AuthHandler()
