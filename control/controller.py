@@ -866,6 +866,22 @@ def get_user_by_token(token: str = Header(...)):
         raise error
 
 
+@app.get("/admin/is_admin")
+def validate_admin_token(token: str = Header(...)):
+    """
+    This function checks if a token is an admin or not.
+
+    :param token: The authentication token.
+    :return: User details or a 401 response.
+    """
+    try:
+        return {"is_admin": token_is_admin(token)}
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        ) from error
+
+
 @app.get("/user", response_model=UserPostResponse)
 def get_user_by_token_with_id(token: str = Header(...)):
     """
