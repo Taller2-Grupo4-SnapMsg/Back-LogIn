@@ -7,6 +7,7 @@ This module represents the tables on the database of the users' microservice
 import datetime
 from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, UniqueConstraint
 from repository.tables.users import Base
+from repository.tables.users import create_users_foreign_key
 
 
 # pylint: disable=too-few-public-methods
@@ -49,15 +50,9 @@ class Like(Base):
         nullable=False,
         primary_key=True,
     )
-    # We disable duplicate code because it's literally the same
-    # column with foreign key from users
-    # pylint: disable=R0801
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-        primary_key=True,
-    )
+
+    user_id = create_users_foreign_key()
+
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     _table_args__ = (UniqueConstraint("user_id", "id_post"),)

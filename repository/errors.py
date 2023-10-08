@@ -39,3 +39,15 @@ class RelationAlreadyExists(Exception):
 
     def __init__(self):
         super().__init__("Relation already exists")
+
+
+class InterestAlreadyExists(Exception):
+    """
+    Exception raised when adding an interest fails.
+    """
+
+    def __init__(self, msg=None):
+        if msg:
+            super().__init__(msg)
+        else:
+            super().__init__("Interest already exists")

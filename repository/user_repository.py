@@ -7,34 +7,36 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from repository.tables.users import Base
-from repository.queries.queries import get_user_by_mail as get_user_by_mail_db
-from repository.queries.queries import get_user_by_username as get_user_by_username_db
-from repository.queries.queries import create_user as create_user_db
-from repository.queries.queries import get_all_users as get_all_users_db
-from repository.queries.queries import delete_user as delete_user_db
-from repository.queries.queries import update_user_password as update_user_password_db
-from repository.queries.queries import update_user_bio as update_user_bio_db
-from repository.queries.queries import update_user_name as update_user_name_db
-from repository.queries.queries import (
+from repository.queries.user_queries import (
+    create_user as create_user_db,
+    delete_user as delete_user_db,
+    get_all_users as get_all_users_db,
+    get_user_by_mail as get_user_by_mail_db,
+    get_user_by_username as get_user_by_username_db,
+    update_user_password as update_user_password_db,
+    update_user_admin as update_user_admin_db,
+    update_user_bio as update_user_bio_db,
+    update_user_last_name as update_user_last_name_db,
+    update_user_name as update_user_name_db,
     update_user_date_of_birth as update_user_date_of_birth_db,
-)
-from repository.queries.queries import update_user_last_name as update_user_last_name_db
-from repository.queries.queries import update_user_avatar as update_user_avatar_db
-from repository.queries.queries import update_user_admin as update_user_admin_db
-from repository.queries.queries import create_follow as create_follow_db
-from repository.queries.queries import get_followers as get_followers_db
-from repository.queries.queries import get_following as get_following_db
-from repository.queries.queries import (
-    get_following_relations as get_following_relations_db,
-)
-from repository.queries.queries import get_following_count as get_following_count_db
-from repository.queries.queries import get_followers_count as get_followers_count_db
-from repository.queries.queries import remove_follow as remove_follow_db
-from repository.queries.queries import update_user_location as update_user_location_db
-from repository.queries.queries import (
+    update_user_avatar as update_user_avatar_db,
+    update_user_location as update_user_location_db,
     update_user_blocked_status as update_user_blocked_status_db,
+    delete_user_interests,
+    add_user_interest,
+    get_user_interests as get_user_interests_db,
 )
-from repository.queries.queries import is_following as is_following_db
+
+from repository.queries.follow_queries import (
+    create_follow as create_follow_db,
+    get_followers as get_followers_db,
+    get_following as get_following_db,
+    get_following_relations as get_following_relations_db,
+    get_following_count as get_following_count_db,
+    get_followers_count as get_followers_count_db,
+    remove_follow as remove_follow_db,
+    is_following as is_following_db,
+)
 
 # We connect to the database using the ORM defined in tables.py
 engine = create_engine(os.environ.get("DB_URI"))
@@ -313,6 +315,28 @@ def update_user_blocked_status(email: str, blocked: bool):
     if user is None:
         raise KeyError()
     update_user_blocked_status_db(session, user.id, blocked)
+
+
+def set_user_interests(user_id: int, interests: list):
+    """
+    This function is used for setting a user's interests.
+
+    :param user_id: The id of the user you want to set the interests.
+    :param interests: The interests to set in a list.
+    """
+    delete_user_interests(session, user_id)
+    for interest in interests:
+        add_user_interest(session, user_id, interest)
+
+
+def get_user_interests(user_id: int):
+    """
+    This function is used for getting a user's interests.
+
+    :param user_id: The id of the user you want the interests.
+    :return: A list of the user's interests.
+    """
+    return get_user_interests_db(session, user_id)
 
 
 session.close()
