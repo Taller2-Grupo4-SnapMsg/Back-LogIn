@@ -28,7 +28,7 @@ class Post(Base):
     # verificar si 800 caracteres es mucho para un tweet
     content = Column(String(800), unique=False, nullable=True)
     # verificar que image y content no sean NULL a la vez
-    image = Column(String(100), unique=False, nullable=True)
+    image = Column(String(), unique=False, nullable=True)
 
     # pylint: disable=too-many-arguments
     def __init__(self, user_id, content, image):
