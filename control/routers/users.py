@@ -13,6 +13,7 @@ from service.user import (
     remove_user_email,
     get_user_interests as get_user_interests_service,
     get_user_username,
+    search_for_users,
 )
 from service.errors import UserNotFound
 
@@ -27,6 +28,7 @@ from control.utils.utils import (
     check_for_user_token,
     token_is_admin,
     generate_response,
+    generate_response_list,
     generate_response_with_id,
     create_user_from_user_data,
     handle_user_registration,
@@ -186,3 +188,18 @@ def get_user_by_token_with_id(token: str = Header(...)):
         return user
     except HTTPException as error:
         raise error
+
+
+@router.get("/user/search/{username}")
+def search_users_by_username(
+    username: str, offset: int, ammount: int, token: str = Header(...)
+):
+    """
+    This function retrieves an user by token.
+
+    :param token: The authentication token.
+    :return: User details or a 401 response.
+    """
+    check_for_user_token(token)
+    users = search_for_users(username, offset, ammount)
+    return generate_response_list(users)
