@@ -17,6 +17,7 @@ from service.user import (
     get_following_count as get_following_count_service,
     remove_follow as remove_follow_service,
     is_following as is_following_service,
+    is_follower as is_follower_service,
 )
 
 from service.errors import (
@@ -73,9 +74,7 @@ def get_followers(email: str, token: str = Header(...)):
     :param token: Token used to verify you are requesting from a valid user.
     :return: Status code with a JSON message.
     """
-    # Checks the person requesting is a logged user:
     check_for_user_token(token)
-    # Does the actual request:
     try:
         user_list = get_all_followers(email)
         return generate_response_list(user_list)
@@ -97,6 +96,24 @@ def get_is_following(email_following: str, token: str = Header(...)):
     check_for_user_token(token)
     try:
         is_following = is_following_service(email_follower, email_following)
+        return is_following
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+
+
+@router.get("/is_follower/{email}")
+def get_is_follower(email_follower: str, token: str = Header(...)):
+    """
+    This function returns if the user is a follower the given user.
+
+    :param email: Email of the user to check if is a follower.
+    :param token: Token used to verify you are requesting from a valid user.
+    :return: Status code with a JSON message.
+    """
+    email = auth_handler.decode_token(token)
+    check_for_user_token(token)
+    try:
+        is_following = is_follower_service(email, email_follower)
         return is_following
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
