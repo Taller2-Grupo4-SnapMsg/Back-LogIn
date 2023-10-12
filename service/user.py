@@ -4,39 +4,34 @@
 This module is for the service layer of the REST API for the login backend.
 """
 from pydantic import BaseModel
-from repository.user_repository import register_user
-from repository.user_repository import update_user_password as update_user_password_repo
-from repository.user_repository import update_user_bio as update_user_bio_repo
-from repository.user_repository import update_user_name as update_user_name_repo
 from repository.user_repository import (
+    register_user,
+    update_user_password as update_user_password_repo,
+    update_user_bio as update_user_bio_repo,
+    update_user_name as update_user_name_repo,
     update_user_date_of_birth as update_user_date_of_birth_repo,
-)
-from repository.user_repository import (
     update_user_last_name as update_user_last_name_repo,
-)
-from repository.user_repository import update_user_avatar as update_user_avatar_repo
-from repository.user_repository import get_user_email as get_user_repo
-from repository.user_repository import remove_user
-from repository.user_repository import get_user_collection
-from repository.user_repository import get_user_username as get_user_username_repo
-from repository.user_repository import make_admin as make_admin_repo
-from repository.user_repository import remove_admin_status as remove_admin_repo
-from repository.user_repository import create_follow as create_follow_repo
-from repository.user_repository import get_followers as get_followers_db
-from repository.user_repository import get_following as get_following_db
-from repository.user_repository import (
-    get_following_relations as get_following_relations_db,
-)
-from repository.user_repository import get_following_count as get_following_count_db
-from repository.user_repository import get_followers_count as get_followers_count_db
-from repository.user_repository import remove_follow as remove_follow_db
-from repository.user_repository import update_user_location as update_user_location_repo
-from repository.user_repository import (
+    update_user_avatar as update_user_avatar_repo,
+    get_user_email as get_user_repo,
+    remove_user,
+    get_user_collection,
+    get_user_username as get_user_username_repo,
+    make_admin as make_admin_repo,
+    remove_admin_status as remove_admin_repo,
+    create_follow as create_follow_repo,
+    get_followers as get_followers_repo,
+    get_following as get_following_repo,
+    get_following_relations as get_following_relations_repo,
+    get_following_count as get_following_count_repo,
+    get_followers_count as get_followers_count_repo,
+    remove_follow as remove_follow_repo,
+    update_user_location as update_user_location_repo,
     update_user_blocked_status as update_user_blocked_status_repo,
+    is_following as is_following_repo,
+    set_user_interests as set_user_interests_repo,
+    get_user_interests as get_user_interests_repo,
+    search_for_users as search_for_users_repo,
 )
-from repository.user_repository import is_following as is_following_repo
-from repository.user_repository import set_user_interests as set_user_interests_repo
-from repository.user_repository import get_user_interests as get_user_interests_repo
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from repository.errors import RelationAlreadyExists
 from service.errors import UserNotFound, PasswordDoesntMatch
@@ -397,7 +392,7 @@ def get_all_followers(email: str):
     """
     try:
         user = get_user_email(email)
-        return get_followers_db(user.id)
+        return get_followers_repo(user.id)
     except KeyError as error:
         raise UserNotFound() from error
 
@@ -408,7 +403,7 @@ def get_all_following(email: str):
     """
     try:
         user = get_user_email(email)
-        return get_following_db(user.id)
+        return get_following_repo(user.id)
     except KeyError as error:
         raise UserNotFound() from error
 
@@ -417,7 +412,7 @@ def get_all_following_relations():
     """
     This function is used to retrieve all follow relations from the database.
     """
-    return get_following_relations_db()
+    return get_following_relations_repo()
 
 
 def get_following_count(email: str):
@@ -426,7 +421,7 @@ def get_following_count(email: str):
     """
     try:
         user = get_user_email(email)
-        return get_following_count_db(user.id)
+        return get_following_count_repo(user.id)
     except KeyError as error:
         raise UserNotFound() from error
 
@@ -437,7 +432,7 @@ def get_followers_count(email: str):
     """
     try:
         user = get_user_email(email)
-        return get_followers_count_db(user.id)
+        return get_followers_count_repo(user.id)
     except KeyError as error:
         raise UserNotFound() from error
 
@@ -449,7 +444,7 @@ def remove_follow(email: str, email_to_unfollow: str):
     try:
         user = get_user_email(email)
         user_to_unfollow = get_user_email(email_to_unfollow)
-        remove_follow_db(user.id, user_to_unfollow.id)
+        remove_follow_repo(user.id, user_to_unfollow.id)
         return {"message": "Unfollow successful"}
     except KeyError as error:
         raise UserNotFound() from error
@@ -483,3 +478,22 @@ def get_user_interests(email: str):
         return [interest.interest for interest in interests]
     except KeyError as error:
         raise UserNotFound() from error
+
+
+MAX_AMMOUNT = 25
+
+
+def search_for_users(username: str, start: int, ammount: int):
+    """
+    This function is used to search for users.
+
+    :param username: The username of the user to search for.
+    :param start: The start of the search (offset).
+    :param ammount: The ammount of users to return. if it's greater than
+    MAX_AMMOUNT, it will be set to MAX_AMMOUNT. And if there is not enough users
+    it will return everything it found.
+    :return: A list of users.
+    """
+    # We set a max ammount so bad people can't overload the server
+    ammount = min(ammount, MAX_AMMOUNT)
+    return search_for_users_repo(username, start, ammount)

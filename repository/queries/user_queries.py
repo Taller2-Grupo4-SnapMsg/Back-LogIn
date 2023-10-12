@@ -257,3 +257,22 @@ def get_user_interests(session, user_id):
     :returns: a list of the interests of the user
     """
     return session.query(Interests).filter(Interests.user_id == user_id).all()
+
+
+def search_for_users(session, username, start, amount):
+    """
+    Searches for users with the given username.
+
+    :param: session: the session to use
+    :param: username: the username to search for
+    :param: start: the start of the search (offset)
+    :param: amount: the amount of users to return
+    :returns: a list of users with the given username
+    """
+    return (
+        session.query(User)
+        .filter(User.username.like(f"%{username}%"))
+        .offset(start)
+        .limit(amount)
+        .all()
+    )

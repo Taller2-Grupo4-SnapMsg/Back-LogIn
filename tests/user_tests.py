@@ -8,23 +8,28 @@ from datetime import datetime
 import pytest
 from service.user import User
 
-from service.user import remove_user_email
-from service.user import get_user_email
-from service.user import try_login
-from service.user import get_user_username
-from service.user import make_admin
-from service.user import remove_admin_status
-from service.user import remove_user_username
-from service.user import change_bio
-from service.user import change_avatar
-from service.user import change_name
-from service.user import change_date_of_birth
-from service.user import change_last_name
-from service.user import change_location
-from service.user import change_blocked_status
-from service.errors import UserNotFound
-from service.errors import EmailAlreadyRegistered, UsernameAlreadyRegistered
-from service.errors import PasswordDoesntMatch
+from service.user import (
+    get_user_email,
+    get_user_username,
+    remove_user_email,
+    remove_user_username,
+    try_login,
+    make_admin,
+    remove_admin_status,
+    change_bio,
+    change_avatar,
+    change_name,
+    change_date_of_birth,
+    change_last_name,
+    change_location,
+    change_blocked_status,
+)
+from service.errors import (
+    EmailAlreadyRegistered,
+    UsernameAlreadyRegistered,
+    PasswordDoesntMatch,
+    UserNotFound,
+)
 
 EMAIL = "real_email@gmail.com"
 USERNAME = "real_username"
@@ -60,11 +65,11 @@ def remove_test_user_from_db(email=EMAIL):
         return
 
 
-def save_test_user_to_db():
+def save_test_user_to_db(email=EMAIL, username=USERNAME, password=PASSWORD):
     """
     This function saves the test user to the database.
     """
-    user = create_generic_user()
+    user = create_generic_user(email, username, password)
 
     user.save()
 

@@ -25,6 +25,7 @@ from repository.queries.user_queries import (
     delete_user_interests,
     add_user_interest,
     get_user_interests as get_user_interests_db,
+    search_for_users as search_for_users_db,
 )
 
 from repository.queries.follow_queries import (
@@ -337,6 +338,18 @@ def get_user_interests(user_id: int):
     :return: A list of the user's interests.
     """
     return get_user_interests_db(session, user_id)
+
+
+def search_for_users(username: str, start: int, amount: int):
+    """
+    This function is used for searching for users.
+
+    :param username: The username to search for.
+    :param start: The start of the search. (offset)
+    :param amount: The amount of users to return.
+    :return: A list of users.
+    """
+    return search_for_users_db(session, username, start, amount)
 
 
 session.close()
