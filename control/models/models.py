@@ -70,6 +70,7 @@ class UserPostResponse(BaseModel):
     avatar: str
     location: str
     blocked: bool
+    is_public: bool
 
     # I disable it since it's a pydantic configuration
     # pylint: disable=too-few-public-methods

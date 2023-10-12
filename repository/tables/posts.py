@@ -27,7 +27,6 @@ class Post(Base):
     posted_at = Column(DateTime, default=datetime.datetime.utcnow)
     content = Column(String(1000), unique=False, nullable=True)  # 1K
     image = Column(String(1000), unique=False, nullable=True)  # 1K
-    is_public = Column(bool, default=True, nullable=False)
 
     # pylint: disable=too-many-arguments
     def __init__(self, user_id, content, image):
