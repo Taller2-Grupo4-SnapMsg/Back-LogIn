@@ -28,6 +28,7 @@ from repository.user_repository import (
     update_user_location as update_user_location_repo,
     update_user_blocked_status as update_user_blocked_status_repo,
     is_following as is_following_repo,
+    is_follower as is_follower_repo,
     set_user_interests as set_user_interests_repo,
     get_user_interests as get_user_interests_repo,
     search_for_users as search_for_users_repo,
@@ -305,6 +306,18 @@ def is_following(email: str, email_to_check_if_following: str):
         user = get_user_email(email)
         user_to_check = get_user_email(email_to_check_if_following)
         return is_following_repo(user.id, user_to_check.id)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def is_follower(email: str, email_to_check_if_follower: str):
+    """
+    This function is used to check if a user is a follower of another user.
+    """
+    try:
+        user = get_user_email(email)
+        user_to_check = get_user_email(email_to_check_if_follower)
+        return is_follower_repo(user_to_check.id, user.id)
     except KeyError as error:
         raise UserNotFound() from error
 

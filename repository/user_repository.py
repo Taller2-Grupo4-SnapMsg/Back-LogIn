@@ -177,11 +177,20 @@ def get_following(user_id: int):
 
 def is_following(user_id: int, user_id_to_check_if_following: int):
     """
-    This is used for getting the following of a user.
+    This is used for checking if an user is following another user.
 
     :param user_id: The user's id.
     """
     return is_following_db(session, user_id, user_id_to_check_if_following)
+
+
+def is_follower(user_id: int, user_id_to_check_if_follower: int):
+    """
+    This is used for checking if an user is a follower of another user.
+
+    :param user_id: The user's id.
+    """
+    return is_following_db(session, user_id_to_check_if_follower, user_id)
 
 
 def get_following_relations():

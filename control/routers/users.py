@@ -2,6 +2,10 @@
 """
 This module is dedicated for all the users routes.
 """
+import firebase_admin
+from firebase_admin import credentials, auth
+from firebase_admin.auth import InvalidIdTokenError
+
 from fastapi import (
     APIRouter,
     Header,
@@ -38,6 +42,8 @@ from control.utils.utils import (
 from control.codes import USER_NOT_FOUND, USER_NOT_ADMIN
 
 router = APIRouter()
+cred = credentials.Certificate("firebase_credentials.json")
+firebase_admin.initialize_app(cred)
 
 
 # Create a POST route
@@ -63,6 +69,26 @@ def login(user_data: UserLogIn):
     user = handle_get_user_email(user_data.email)
     # user.password has the hashed_password.
     return handle_user_login(user_data.password, user.password, user_data.email)
+
+
+@router.post("/login_with_google", status_code=200)
+def login_with_google(firebase_id_token: str = Header(...)):
+    """
+    This function is the endpoint for logging in with a Google ID
+    token using Firebase Authentication.
+
+    :param firebase_id_token: Firebase ID token for Google authentication.
+    :return: Status code with a JSON message.
+    """
+    try:
+        decoded_token = auth.verify_id_token(firebase_id_token)
+        user = handle_get_user_email(decoded_token["email"])
+        token = auth_handler.encode_token(user.email)
+        return {"message": "Login successful", "token": token}
+    except InvalidIdTokenError as error:
+        raise HTTPException(
+            status_code=403, detail="Invalid Firebase ID token"
+        ) from error
 
 
 @router.get("/users/find", response_model=UserResponse)

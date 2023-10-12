@@ -67,6 +67,20 @@ def login_admin(user_data: UserLogIn):
     return handle_user_login(user_data.password, user.password, user_data.email)
 
 
+@router.post("/is_admin", status_code=200)
+def is_admin(token: str = Header(...)):
+    """
+    This function is the endpoint to check if a user is an admin.
+    """
+    try:
+        admin_email = auth_handler.decode_token(token)
+        return is_email_admin(admin_email)
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=USER_NOT_FOUND, detail="Invalid token"
+        ) from error
+
+
 @router.put("/users/block/{email}")
 def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     """
