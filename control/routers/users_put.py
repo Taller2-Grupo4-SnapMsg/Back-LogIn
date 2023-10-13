@@ -167,3 +167,20 @@ def change_interests(new_interests: str, token: str = Header(...)):
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
+
+
+@router.put("/users/privacy")
+def change_user_privacy(is_public: bool, token: str = Header(...)):
+    """
+    This function is for changing the user's privacy
+
+    :param is_public: User's new privacy.
+    :param token: Token used to verify the user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        change_user_privacy(email, is_public)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User privacy updated, now profle is public: " + str(is_public)}

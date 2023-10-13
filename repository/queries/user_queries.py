@@ -56,6 +56,7 @@ def create_user(session, email, password, username, data):
         admin=data["admin"],
         location=data["location"],
         blocked=data["blocked"],
+        is_public=data["is_public"],
     )
     try:
         session.add(user)
@@ -199,6 +200,18 @@ def update_user_blocked_status(session, user_id, blocked):
     user = session.query(User).filter(User.id == user_id).first()
     if user:
         setattr(user, "blocked", blocked)
+        session.commit()
+        return user
+    return None
+
+
+def update_user_public_status(session, user_id, public):
+    """
+    Changes the public status of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "is_public", public)
         session.commit()
         return user
     return None

@@ -32,6 +32,7 @@ from repository.user_repository import (
     set_user_interests as set_user_interests_repo,
     get_user_interests as get_user_interests_repo,
     search_for_users as search_for_users_repo,
+    update_user_public_status as update_user_public_status_repo,
 )
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from repository.errors import RelationAlreadyExists
@@ -58,6 +59,7 @@ class User(BaseModel):
     admin: bool = False
     location: str = ""
     blocked: bool = False
+    is_public: bool = True
 
     def set_email(self, email):
         """
@@ -125,6 +127,12 @@ class User(BaseModel):
         """
         self.blocked = blocked_status
 
+    def set_public(self, public_status):
+        """
+        This function is for modifying the user's public status.
+        """
+        self.is_public = public_status
+
     def save(self):
         """
         This function is used to save the user to the database.
@@ -139,6 +147,7 @@ class User(BaseModel):
                 "admin": self.admin,
                 "location": "",  # At time of registration, location is empty
                 "blocked": False,  # At time of registration, user is not blocked
+                "is_public": True,  # At time of registration, user is public
             }
             register_user(self.email, self.password, self.username, data)
         except UsernameAlreadyExists as error:
@@ -255,6 +264,19 @@ def change_location(email: str, new_location: str):
     """
     try:
         update_user_location_repo(email, new_location)
+    except KeyError as error:
+        raise UserNotFound() from error
+
+
+def change_public_status(email: str, public_status: bool):
+    """
+    This function is used to update the user in the database.
+
+    :param email: The email of the user to update.
+    :param public_status: The user's new public status.
+    """
+    try:
+        update_user_public_status_repo(email, public_status)
     except KeyError as error:
         raise UserNotFound() from error
 

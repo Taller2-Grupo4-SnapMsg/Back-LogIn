@@ -56,6 +56,7 @@ def generate_response(user):
         avatar=user.avatar,
         location=user.location,
         blocked=user.blocked,
+        is_public=user.is_public,
     )
 
 
@@ -75,6 +76,7 @@ def generate_response_with_id(user):
         avatar=user.avatar,
         location=user.location,
         blocked=user.blocked,
+        is_public=user.is_public,
     )
 
 

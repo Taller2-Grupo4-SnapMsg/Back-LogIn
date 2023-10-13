@@ -26,6 +26,7 @@ from repository.queries.user_queries import (
     add_user_interest,
     get_user_interests as get_user_interests_db,
     search_for_users as search_for_users_db,
+    update_user_public_status as update_user_public_status_db,
 )
 
 from repository.queries.follow_queries import (
@@ -312,6 +313,19 @@ def update_user_location(email: str, new_location: str):
     if user is None:
         raise KeyError()
     update_user_location_db(session, user.id, new_location)
+
+
+def update_user_public_status(email: str, new_status: str):
+    """
+    This is used for updating a user's status.
+
+    :param email: The email used to identify the user.
+    :param new_status: The status to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_public_status_db(session, user.id, new_status)
 
 
 def update_user_blocked_status(email: str, blocked: bool):

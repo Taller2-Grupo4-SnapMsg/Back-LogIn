@@ -23,6 +23,7 @@ from service.user import (
     change_last_name,
     change_location,
     change_blocked_status,
+    change_public_status,
 )
 from service.errors import (
     EmailAlreadyRegistered,
@@ -641,4 +642,54 @@ def test_unblock_an_user():
     assert get_user_email(EMAIL).blocked is True
     change_blocked_status(EMAIL, False)
     assert get_user_email(EMAIL).blocked is False
+    remove_test_user_from_db()
+
+
+def test_set_profile_to_private():
+    """
+    This function tests that a user can set it's profile to private.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_public_status(EMAIL, True)
+
+    assert get_user_email(EMAIL).is_public is True
+
+    remove_test_user_from_db()
+
+
+def test_set_profile_to_private_wrong_email():
+    """
+    This function tests the exception user not found
+    """
+
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    with pytest.raises(UserNotFound) as error:
+        change_public_status("wrong_email", True)
+    assert str(error.value) == "User not found"
+
+    remove_test_user_from_db()
+
+
+def test_set_profile_to_private_and_then_public():
+    """
+    This function tests that a user can set it's profile to private and then to public.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    change_public_status(EMAIL, True)
+
+    assert get_user_email(EMAIL).is_public is True
+
+    change_public_status(EMAIL, False)
+
+    assert get_user_email(EMAIL).is_public is False
+
     remove_test_user_from_db()
