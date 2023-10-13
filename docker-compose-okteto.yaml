@@ -4,7 +4,7 @@ services:
   back-users:
     build:
       context: .
-      dockerfile: Dockerfile  # Use your Dockerfile for the FastAPI app
+      dockerfile: dockerfile  # Use your Dockerfile for the FastAPI app
     container_name: back-users
     volumes:
       - .:/app
