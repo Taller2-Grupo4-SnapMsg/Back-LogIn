@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  # Servicio para tu FastAPI application
+  back-users:
+    build:
+      context: .
+      dockerfile: Dockerfile  # Use your Dockerfile for the FastAPI app
+    container_name: back-users
+    depends_on:
+      - postgres
+    volumes:
+      - .:/app
+    environment:
+      DB_URI: postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
+    ports:
+      - "8000:8000"
