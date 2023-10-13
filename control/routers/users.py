@@ -89,6 +89,10 @@ def login_with_google(firebase_id_token: str = Header(...)):
     try:
         decoded_token = auth.verify_id_token(firebase_id_token)
         user = handle_get_user_email(decoded_token["email"])
+        if user.admin:
+            raise HTTPException(
+                status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+            )
         token = auth_handler.encode_token(user.email)
         return {"message": "Login successful", "token": token}
     except InvalidIdTokenError as error:
