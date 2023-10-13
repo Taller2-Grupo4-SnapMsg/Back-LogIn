@@ -16,6 +16,7 @@ from service.user import (
     change_avatar as change_avatar_service,
     change_location as change_location_service,
     set_user_interests as change_interests_service,
+    change_public_status,
 )
 from service.errors import (
     UserNotFound,
@@ -147,6 +148,7 @@ def change_location(new_location: str, token: str = Header(...)):
     try:
         email = auth_handler.decode_token(token)
         change_location_service(email, new_location)
+        change_user_privacy(email, False)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -180,7 +182,7 @@ def change_user_privacy(is_public: bool, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_user_privacy(email, is_public)
+        change_public_status(email, is_public)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User privacy updated, now profle is public: " + str(is_public)}

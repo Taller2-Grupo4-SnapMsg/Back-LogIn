@@ -15,7 +15,7 @@ y haces:
 ## Para el black:
 `pip install black`
 
-`black *`
+`bash black.sh`
 ## Para correr el coverage:
 `pip install coverage`
 
