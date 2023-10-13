@@ -5,9 +5,11 @@ This is a module for all the tests that are related to the user search.
 from service.user import (
     search_for_users,
 )
-from tests.user_tests import (
+from tests.utils import (
     remove_test_user_from_db,
     save_test_user_to_db,
+    create_multiple_generic_users,
+    remove_multiple_generic_users,
     USERNAME,
     EMAIL,
 )
@@ -59,10 +61,11 @@ def test_search_for_a_name_partially_multiple_users():
         save_test_user_to_db(email=EMAIL + str(i), username=USERNAME + str(i))
 
     users = search_for_users(USERNAME[0:3], START, AMMOUNT)
+    emails = [user.email for user in users]
 
     assert len(users) == AMMOUNT
     for i in range(0, AMMOUNT):
-        assert users[i].email == EMAIL + str(i)
+        assert EMAIL + str(i) in emails
 
     for i in range(0, AMMOUNT):
         remove_test_user_from_db(EMAIL + str(i))
@@ -74,8 +77,7 @@ def test_search_for_a_name_partially_multiple_users_with_start():
     """
     remove_test_user_from_db()
 
-    for i in range(0, AMMOUNT):
-        save_test_user_to_db(email=EMAIL + str(i), username=USERNAME + str(i))
+    create_multiple_generic_users(AMMOUNT)
 
     users = search_for_users(USERNAME[0:3], 5, AMMOUNT)
 
@@ -83,8 +85,7 @@ def test_search_for_a_name_partially_multiple_users_with_start():
     for i in range(0, AMMOUNT - 5):
         assert users[i].email == EMAIL + str(i + 5)
 
-    for i in range(0, AMMOUNT):
-        remove_test_user_from_db(EMAIL + str(i))
+    remove_multiple_generic_users(AMMOUNT)
 
 
 def test_search_for_users_and_there_is_none():

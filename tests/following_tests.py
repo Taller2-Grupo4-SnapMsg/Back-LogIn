@@ -24,7 +24,7 @@ from service.errors import (
     UserNotFound,
 )
 
-from tests.user_tests import (
+from tests.utils import (
     remove_test_user_from_db,
     save_test_user_to_db,
     EMAIL,

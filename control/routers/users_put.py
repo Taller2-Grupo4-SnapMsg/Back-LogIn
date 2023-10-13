@@ -28,7 +28,7 @@ from control.codes import (
     USER_NOT_FOUND,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Users"])
 origins = ["*"]
 
 

@@ -40,7 +40,7 @@ from control.codes import (
 # Singleton instance of the AuthHandler class:
 from control.utils.auth import auth_handler
 
-router = APIRouter()
+router = APIRouter(tags=["Followers"])
 origins = ["*"]
 
 
