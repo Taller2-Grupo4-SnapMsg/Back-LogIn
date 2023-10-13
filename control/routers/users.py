@@ -203,6 +203,10 @@ def get_user_by_token(token: str = Header(...)):
         user = get_user_service(user_email)
         user = generate_response(user)
         return user
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail=str(error)
+        ) from error
     except HTTPException as error:
         raise error
 
@@ -222,6 +226,10 @@ def get_user_by_token_with_id(token: str = Header(...)):
         user = get_user_service(user_email)
         user = generate_response_with_id(user)
         return user
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail=str(error)
+        ) from error
     except HTTPException as error:
         raise error
 
