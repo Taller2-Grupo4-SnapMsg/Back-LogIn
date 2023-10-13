@@ -4,9 +4,11 @@
 This is the test module that tests the interests feature of users.
 """
 import pytest
-from tests.user_tests import remove_test_user_from_db
-from tests.user_tests import save_test_user_to_db
-from tests.user_tests import EMAIL
+from tests.user_tests import (
+    remove_test_user_from_db,
+    save_test_user_to_db,
+    EMAIL,
+)
 from service.user import (
     set_user_interests,
     get_user_interests,

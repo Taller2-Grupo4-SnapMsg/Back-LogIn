@@ -14,15 +14,12 @@ from service.user import (
     remove_user_email,
     remove_user_username,
     try_login,
-    make_admin,
-    remove_admin_status,
     change_bio,
     change_avatar,
     change_name,
     change_date_of_birth,
     change_last_name,
     change_location,
-    change_blocked_status,
     change_public_status,
 )
 from service.errors import (
@@ -31,48 +28,14 @@ from service.errors import (
     PasswordDoesntMatch,
     UserNotFound,
 )
-
-EMAIL = "real_email@gmail.com"
-USERNAME = "real_username"
-PASSWORD = "Real_password123"
-
-
-def create_generic_user(email=EMAIL, username=USERNAME, password=PASSWORD):
-    """
-    Function to create a generic user that is used on the tests
-    """
-    return User(
-        email=email,
-        password=password,
-        name="Real_name",
-        surname="Real_surname",
-        username=username,
-        date_of_birth="666 6 6",
-        bio="Real_bio",
-        admin=False,
-        avatar="image.png",
-        location="Real_location",
-        blocked=False,
-    )
-
-
-def remove_test_user_from_db(email=EMAIL):
-    """
-    This function removes the test user from the database.
-    """
-    try:
-        remove_user_email(email)
-    except UserNotFound:
-        return
-
-
-def save_test_user_to_db(email=EMAIL, username=USERNAME, password=PASSWORD):
-    """
-    This function saves the test user to the database.
-    """
-    user = create_generic_user(email, username, password)
-
-    user.save()
+from tests.utils import (
+    remove_test_user_from_db,
+    save_test_user_to_db,
+    create_generic_user,
+    EMAIL,
+    USERNAME,
+    PASSWORD,
+)
 
 
 def test_user_can_login_after_register():
@@ -292,42 +255,6 @@ def test_user_remove_by_wrong_email():
     remove_user_email(EMAIL)
 
 
-def test_user_can_be_set_as_admin():
-    """
-    This function makes and admin, and then
-    checks if the user is an admin.
-    """
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    make_admin(EMAIL)
-
-    assert get_user_email(EMAIL).admin is True
-
-    remove_user_email(EMAIL)
-
-
-def test_user_can_be_removed_of_its_admin_priviliges():
-    """
-    This function makes and admin, and then
-    checks if the user is an admin.
-    """
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    make_admin(EMAIL)
-
-    assert get_user_email(EMAIL).admin is True
-
-    remove_admin_status(EMAIL)
-
-    assert get_user_email(EMAIL).admin is False
-
-    remove_user_email(EMAIL)
-
-
 def test_remove_user_by_username():
     """
     This function tests the remove user by username.
@@ -353,36 +280,6 @@ def test_remove_user_by_username_wrong_username():
 
     with pytest.raises(UserNotFound) as error:
         remove_user_username("wrong_username")
-    assert str(error.value) == "User not found"
-
-    remove_user_email(EMAIL)
-
-
-def test_make_user_admin_wrong_email():
-    """
-    This function tests the exception user not found
-    """
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    with pytest.raises(UserNotFound) as error:
-        make_admin("wrong_email")
-    assert str(error.value) == "User not found"
-
-    remove_user_email(EMAIL)
-
-
-def test_remove_admin_priviliges_wrong_email():
-    """
-    This function tests the exception user not found
-    """
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    with pytest.raises(UserNotFound) as error:
-        remove_admin_status("wrong_email")
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
@@ -597,51 +494,6 @@ def test_set_user_location_wrong_email():
         change_location("wrong_email", "new_location")
     assert str(error.value) == "User not found"
 
-    remove_test_user_from_db()
-
-
-def test_set_user_blocked_status():
-    """
-    This function tests that the user can be blocked.
-    """
-
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    change_blocked_status(EMAIL, True)
-
-    assert get_user_email(EMAIL).blocked is True
-
-    remove_test_user_from_db()
-
-
-def test_set_user_blocked_status_wrong_email():
-    """
-    This function tests the exception user not found
-    """
-
-    remove_test_user_from_db()
-
-    save_test_user_to_db()
-
-    with pytest.raises(UserNotFound) as error:
-        change_blocked_status("wrong_email", True)
-    assert str(error.value) == "User not found"
-
-    remove_test_user_from_db()
-
-
-def test_unblock_an_user():
-    """
-    This function tests that the user can be unblocked.
-    """
-    remove_test_user_from_db()
-    save_test_user_to_db()
-    change_blocked_status(EMAIL, True)
-    assert get_user_email(EMAIL).blocked is True
-    change_blocked_status(EMAIL, False)
-    assert get_user_email(EMAIL).blocked is False
     remove_test_user_from_db()
 
 

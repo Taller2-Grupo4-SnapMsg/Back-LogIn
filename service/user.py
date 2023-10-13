@@ -33,6 +33,7 @@ from repository.user_repository import (
     get_user_interests as get_user_interests_repo,
     search_for_users as search_for_users_repo,
     update_user_public_status as update_user_public_status_repo,
+    search_for_users_admins as search_for_users_admins_repo,
 )
 from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
 from repository.errors import RelationAlreadyExists
@@ -532,3 +533,21 @@ def search_for_users(username: str, start: int, ammount: int):
     # We set a max ammount so bad people can't overload the server
     ammount = min(ammount, MAX_AMMOUNT)
     return search_for_users_repo(username, start, ammount)
+
+
+def search_for_users_admins(username: str, start: int, ammount: int):
+    """
+    This function is used to search for users by the admins, the only
+    difference with the other function, is that this one lists all the users
+    while the other only lists users that are not admins.
+
+    :param username: The username of the user to search for.
+    :param start: The start of the search (offset).
+    :param ammount: The ammount of users to return. if it's greater than
+    MAX_AMMOUNT, it will be set to MAX_AMMOUNT. And if there is not enough users
+    it will return everything it found.
+    :return: A list of users.
+    """
+    # We set a max ammount so bad people can't overload the server
+    ammount = min(ammount, MAX_AMMOUNT)
+    return search_for_users_admins_repo(username, start, ammount)

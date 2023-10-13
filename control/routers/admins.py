@@ -13,6 +13,7 @@ from service.user import (
     remove_admin_status as remove_admin_service,
     is_email_admin,
     change_blocked_status as change_blocked_status_service,
+    search_for_users_admins,
 )
 from service.errors import UserNotFound
 
@@ -36,7 +37,9 @@ from control.codes import (
     USER_NOT_ADMIN,
 )
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Admins"],
+)
 origins = ["*"]
 
 
@@ -132,6 +135,26 @@ def remove_admin_status(email: str, token: str = Header(...)):
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is no longer an admin"}
+
+
+@router.get("/admin/find_users/{username}")
+def find_users(username: str, start: int, ammount: int, token: str = Header(...)):
+    """
+    Searches among all users (and admins) for a given username.
+
+    :param username: The username to search for.
+    :param start: The index of the first user to return.
+    :param ammount: The ammount of users to return.
+    :param token: Token used to verify the user who is calling this is an admin.
+    :return: Status code with a JSON message.
+    """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can find users",
+        )
+    users = search_for_users_admins(username, start, ammount)
+    return generate_response_list(users)
 
 
 @router.get("/admin/is_admin")

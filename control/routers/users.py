@@ -39,9 +39,11 @@ from control.utils.utils import (
     handle_user_login,
     handle_get_user_email,
 )
-from control.codes import USER_NOT_FOUND, USER_NOT_ADMIN
+from control.codes import USER_NOT_FOUND, USER_NOT_ADMIN, INCORRECT_CREDENTIALS
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Users"],
+)
 cred = credentials.Certificate("firebase_credentials.json")
 firebase_admin.initialize_app(cred)
 
@@ -67,6 +69,10 @@ def login(user_data: UserLogIn):
     :return: Status code with a JSON message.
     """
     user = handle_get_user_email(user_data.email)
+    if user.admin:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        )
     # user.password has the hashed_password.
     return handle_user_login(user_data.password, user.password, user_data.email)
 
