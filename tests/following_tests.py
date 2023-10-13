@@ -5,25 +5,32 @@ This is the test module that tests the follow feature between users.
 """
 import pytest
 
-from service.user import create_follow
-from service.user import get_following_count
-from service.user import get_followers_count
-from service.user import get_all_followers
-from service.user import get_all_following
-from service.user import remove_follow
-from service.user import change_password
-from service.user import remove_user_email
-from service.user import get_user_email
+from service.user import (
+    create_follow,
+    get_following_count,
+    get_followers_count,
+    get_all_followers,
+    get_all_following,
+    remove_follow,
+    change_password,
+    remove_user_email,
+    get_user_email,
+    is_follower,
+)
 
-from service.errors import FollowingRelationAlreadyExists
-from service.errors import UserCantFollowItself
-from service.errors import UserNotFound
+from service.errors import (
+    FollowingRelationAlreadyExists,
+    UserCantFollowItself,
+    UserNotFound,
+)
 
-from tests.user_tests import remove_test_user_from_db
-from tests.user_tests import save_test_user_to_db
-from tests.user_tests import EMAIL
-from tests.user_tests import USERNAME
-from tests.user_tests import create_generic_user
+from tests.user_tests import (
+    remove_test_user_from_db,
+    save_test_user_to_db,
+    EMAIL,
+    USERNAME,
+    create_generic_user,
+)
 
 
 def test_user_can_follow_another_user():
@@ -265,6 +272,118 @@ def test_get_all_followers_wrong_username():
     with pytest.raises(UserNotFound) as error:
         get_all_followers("wrong_username")
     assert str(error.value) == "User not found"
+
+    remove_follow(user.email, user_to_be_followed.email)
+    remove_user_email(EMAIL)
+    remove_user_email(EMAIL + "1")
+
+
+def test_is_follower_returns_false_if_not_following():
+    """
+    This function tests the is_follower function.
+    """
+    remove_test_user_from_db()
+    remove_test_user_from_db(EMAIL + "1")
+
+    save_test_user_to_db()
+    save_test_user_to_db(EMAIL + "1", USERNAME + "1")
+
+    assert is_follower(EMAIL, EMAIL + "1") is False
+
+    remove_user_email(EMAIL)
+    remove_user_email(EMAIL + "1")
+
+
+def test_is_follower_returns_true_if_following():
+    """
+    This function tests the is_follower function when the user is following.
+    """
+    remove_test_user_from_db()
+    remove_test_user_from_db(EMAIL + "1")
+
+    save_test_user_to_db()
+    save_test_user_to_db(EMAIL + "1", USERNAME + "1")
+
+    user = get_user_email(EMAIL)
+    user_to_be_followed = get_user_email(EMAIL + "1")
+
+    create_follow(user.email, user_to_be_followed.email)
+
+    assert is_follower(user_to_be_followed.email, user.email)
+
+    remove_follow(user.email, user_to_be_followed.email)
+    remove_user_email(EMAIL)
+    remove_user_email(EMAIL + "1")
+
+
+def test_is_follower_wrong_email():
+    """
+    This function tests the exception that is raised when a user is not found.
+    """
+    remove_test_user_from_db()
+    remove_test_user_from_db(EMAIL + "1")
+
+    save_test_user_to_db()
+    save_test_user_to_db(EMAIL + "1", USERNAME + "1")
+
+    with pytest.raises(UserNotFound) as error:
+        is_follower(EMAIL, "wrong_email")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+    remove_user_email(EMAIL + "1")
+
+
+def test_is_following_wrong_email():
+    """
+    This function tests the exception that is raised when a user is not found.
+    """
+    remove_test_user_from_db()
+    remove_test_user_from_db(EMAIL + "1")
+
+    save_test_user_to_db()
+    save_test_user_to_db(EMAIL + "1", USERNAME + "1")
+
+    with pytest.raises(UserNotFound) as error:
+        is_follower("wrong_email", EMAIL + "1")
+    assert str(error.value) == "User not found"
+
+    remove_user_email(EMAIL)
+    remove_user_email(EMAIL + "1")
+
+
+def test_is_following_returns_false_if_not_following():
+    """
+    This function tests the is_following function.
+    """
+    remove_test_user_from_db()
+    remove_test_user_from_db(EMAIL + "1")
+
+    save_test_user_to_db()
+    save_test_user_to_db(EMAIL + "1", USERNAME + "1")
+
+    assert is_follower(EMAIL, EMAIL + "1") is False
+
+    remove_user_email(EMAIL)
+    remove_user_email(EMAIL + "1")
+
+
+def test_is_following_returns_true_if_following():
+    """
+    This function tests the is_following function when the user is following.
+    """
+    remove_test_user_from_db()
+    remove_test_user_from_db(EMAIL + "1")
+
+    save_test_user_to_db()
+    save_test_user_to_db(EMAIL + "1", USERNAME + "1")
+
+    user = get_user_email(EMAIL)
+    user_to_be_followed = get_user_email(EMAIL + "1")
+
+    create_follow(user.email, user_to_be_followed.email)
+
+    assert is_follower(user_to_be_followed.email, user.email)
 
     remove_follow(user.email, user_to_be_followed.email)
     remove_user_email(EMAIL)
