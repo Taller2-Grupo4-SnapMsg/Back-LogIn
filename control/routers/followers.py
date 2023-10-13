@@ -95,8 +95,7 @@ def get_is_following(email_following: str, token: str = Header(...)):
     email_follower = auth_handler.decode_token(token)
     check_for_user_token(token)
     try:
-        is_following = is_following_service(email_follower, email_following)
-        return is_following
+        return is_following_service(email_follower, email_following)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -113,8 +112,7 @@ def get_is_follower(email_follower: str, token: str = Header(...)):
     email = auth_handler.decode_token(token)
     check_for_user_token(token)
     try:
-        is_following = is_follower_service(email, email_follower)
-        return is_following
+        return is_follower_service(email, email_follower)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 

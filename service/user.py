@@ -317,7 +317,7 @@ def is_follower(email: str, email_to_check_if_follower: str):
     try:
         user = get_user_email(email)
         user_to_check = get_user_email(email_to_check_if_follower)
-        return is_follower_repo(user_to_check.id, user.id)
+        return is_follower_repo(user.id, user_to_check.id)
     except KeyError as error:
         raise UserNotFound() from error
 
