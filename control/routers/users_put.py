@@ -148,7 +148,6 @@ def change_location(new_location: str, token: str = Header(...)):
     try:
         email = auth_handler.decode_token(token)
         change_location_service(email, new_location)
-        change_user_privacy(email, False)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
