@@ -285,7 +285,7 @@ def search_for_users(session, username: str, start, amount):
     """
     return (
         session.query(User)
-        .filter(and_(User.username.like(f"%{username}%"), not_(User.admin)))
+        .filter(and_(User.username.ilike(f"%{username}%"), not_(User.admin)))
         .offset(start)
         .limit(amount)
         .all()
@@ -304,7 +304,7 @@ def search_for_users_admins(session, username, start, amount):
     """
     return (
         session.query(User)
-        .filter(User.username.like(f"%{username}%"))
+        .filter(User.username.ilike(f"%{username}%"))
         .offset(start)
         .limit(amount)
         .all()
