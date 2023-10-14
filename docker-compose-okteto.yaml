@@ -9,5 +9,5 @@ services:
       DB_URI: postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
     ports:
       - "8000:8000"
+    working_dir: /app☺    
     command: bash -c "pip install --no-cache-dir -r requirements.txt && uvicorn control.controller:app --host 0.0.0.0 --port 8080"
-    
