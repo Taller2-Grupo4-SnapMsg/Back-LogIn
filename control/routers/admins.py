@@ -14,6 +14,7 @@ from service.user import (
     is_email_admin,
     change_blocked_status as change_blocked_status_service,
     search_for_users_admins,
+    get_all_following_relations as get_all_following_relations_service,
 )
 from service.errors import UserNotFound
 
@@ -190,3 +191,20 @@ def get_all_users(token: str = Header(...)):
         )
     user_list = get_all_users_service()
     return generate_response_list(user_list)
+
+
+@router.get("/following")
+def get_all_following_relations(token: str = Header(...)):
+    """
+    This function is a function that returns all of the following relations in the database.
+
+    :param token: Token used to verify the user who is calling this is an admin.
+
+    :return: JSON of all users.
+    """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can get all following relations",
+        )
+    return get_all_following_relations_service()

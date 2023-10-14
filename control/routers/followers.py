@@ -10,7 +10,6 @@ from fastapi import (
 
 from service.user import (
     create_follow as create_follow_service,
-    get_all_following_relations as get_all_following_relations_service,
     get_all_followers,
     get_all_following,
     get_followers_count as get_followers_count_service,
@@ -29,12 +28,10 @@ from service.errors import (
 from control.utils.utils import (
     check_for_user_token,
     generate_response_list,
-    token_is_admin,
 )
 
 from control.codes import (
     USER_NOT_FOUND,
-    USER_NOT_ADMIN,
 )
 
 # Singleton instance of the AuthHandler class:
@@ -44,7 +41,7 @@ router = APIRouter(tags=["Followers"])
 origins = ["*"]
 
 
-@router.post("/follow")
+@router.post("/follow/{email_following}")
 def create_follow(email_following: str, token: str = Header(...)):
     """
     This function creates a following relation between the given users.
@@ -185,20 +182,3 @@ def unfollow(email_unfollowing: str, token: str = Header(...)):
         return remove_follow_service(email_follower, email_unfollowing)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-
-
-@router.get("/following")
-def get_all_following_relations(token: str = Header(...)):
-    """
-    This function is a function that returns all of the following relations in the database.
-
-    :param token: Token used to verify the user who is calling this is an admin.
-
-    :return: JSON of all users.
-    """
-    if not token_is_admin(token):
-        raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can get all following relations",
-        )
-    return get_all_following_relations_service()
