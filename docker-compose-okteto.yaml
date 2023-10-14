@@ -1,10 +1,7 @@
 version: '3.9'
 services:
-  # Servicio para tu FastAPI application
   back-users:
-    build:
-      context: .
-      dockerfile: dockerfile  # Use your Dockerfile for the FastAPI app
+    image: python:3.9  # Use the base Python image
     container_name: back-users
     volumes:
       - .:/app
@@ -12,3 +9,4 @@ services:
       DB_URI: postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
     ports:
       - "8000:8000"
+      
