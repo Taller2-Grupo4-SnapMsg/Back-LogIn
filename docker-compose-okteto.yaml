@@ -3,11 +3,11 @@ services:
   back-users:
     image: python:3.9  # Use the base Python image
     container_name: back-users
-    volumes:
-      - .:/app
+    working_dir: /app
     environment:
       DB_URI: postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
     ports:
       - "8000:8000"
-    working_dir: /app☺    
     command: bash -c "pip install --no-cache-dir -r requirements.txt && uvicorn control.controller:app --host 0.0.0.0 --port 8080"
+    volumes:
+      - .:/app
