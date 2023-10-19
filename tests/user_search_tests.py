@@ -4,7 +4,7 @@ This is a module for all the tests that are related to the user search.
 """
 import pytest
 
-from service.user import search_for_users, MAX_AMMOUNT
+from service.user_handler import UserHandler, MAX_AMMOUNT
 from service.errors import MaxAmmountExceeded
 from tests.utils import (
     remove_test_user_from_db,
@@ -18,6 +18,10 @@ from tests.utils import (
 START = 0
 AMMOUNT = 10
 
+# We create the handler that will be used in all tests.
+# Since the handler is stateless, we don't care if it's global.
+handler = UserHandler()
+
 
 def test_search_for_ambiguous_term_and_only_get_ten():
     """
@@ -29,7 +33,7 @@ def test_search_for_ambiguous_term_and_only_get_ten():
 
     create_multiple_generic_users(AMMOUNT)
 
-    users = search_for_users("Real", START, MAX_AMMOUNT)
+    users = handler.search_for_users("Real", START, MAX_AMMOUNT)
 
     assert len(users) == AMMOUNT
 
@@ -44,7 +48,7 @@ def test_search_returns_a_list_of_users():
 
     save_test_user_to_db()
 
-    users = search_for_users(USERNAME, START, AMMOUNT)
+    users = handler.search_for_users(USERNAME, START, AMMOUNT)
 
     assert len(users) == 1
     assert users[0].email == EMAIL
@@ -60,7 +64,7 @@ def test_search_for_a_name_partially():
 
     save_test_user_to_db()
 
-    users = search_for_users(USERNAME[0:3], START, AMMOUNT)
+    users = handler.search_for_users(USERNAME[0:3], START, AMMOUNT)
 
     assert len(users) == 1
     assert users[0].email == EMAIL
@@ -78,7 +82,7 @@ def test_search_for_a_name_partially_multiple_users():
     for i in range(0, AMMOUNT):
         save_test_user_to_db(email=EMAIL + str(i), username=USERNAME + str(i))
 
-    users = search_for_users(USERNAME[0:3], START, AMMOUNT)
+    users = handler.search_for_users(USERNAME[0:3], START, AMMOUNT)
     emails = [user.email for user in users]
 
     assert len(users) == AMMOUNT
@@ -97,7 +101,7 @@ def test_search_for_a_name_partially_multiple_users_with_start():
 
     create_multiple_generic_users(AMMOUNT)
 
-    users = search_for_users(USERNAME[0:3], 5, AMMOUNT)
+    users = handler.search_for_users(USERNAME[0:3], 5, AMMOUNT)
 
     assert len(users) == AMMOUNT - 5
     for i in range(0, AMMOUNT - 5):
@@ -112,7 +116,7 @@ def test_search_for_users_and_there_is_none():
     """
     remove_test_user_from_db()
 
-    users = search_for_users(USERNAME, START, AMMOUNT)
+    users = handler.search_for_users(USERNAME, START, AMMOUNT)
 
     assert len(users) == 0
 
@@ -125,7 +129,7 @@ def test_search_for_users_and_there_is_none_with_start():
     """
     remove_test_user_from_db()
 
-    users = search_for_users(USERNAME, 5, AMMOUNT)
+    users = handler.search_for_users(USERNAME, 5, AMMOUNT)
 
     assert len(users) == 0
 
@@ -140,7 +144,7 @@ def test_search_for_user_that_doesnt_match_and_we_get_empty_list():
 
     save_test_user_to_db()
 
-    users = search_for_users("not a user", START, AMMOUNT)
+    users = handler.search_for_users("not a user", START, AMMOUNT)
 
     assert len(users) == 0
 
@@ -155,7 +159,7 @@ def test_search_for_user_surname_and_get_results():
 
     save_test_user_to_db()
 
-    users = search_for_users("real_surname", START, AMMOUNT)
+    users = handler.search_for_users("real_surname", START, AMMOUNT)
 
     assert len(users) == 1
     assert users[0].email == EMAIL
@@ -168,4 +172,6 @@ def test_more_than_max_ammount_throws_exception():
     This function tests that if we search for more than the max ammount of users,
     we get an exception.
     """
-    pytest.raises(MaxAmmountExceeded, search_for_users, "Real", START, MAX_AMMOUNT + 1)
+    pytest.raises(
+        MaxAmmountExceeded, handler.search_for_users, "Real", START, MAX_AMMOUNT + 1
+    )

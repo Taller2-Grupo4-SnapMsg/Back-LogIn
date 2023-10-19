@@ -3,12 +3,16 @@
 This is a module that contains all the functions that are used on the tests.
 """
 from service.user import User
-from service.user import remove_user_email
+from service.user_handler import UserHandler
 from service.errors import UserNotFound
 
 EMAIL = "real_email@gmail.com"
 USERNAME = "real_username"
 PASSWORD = "Real_password123"
+
+# We create the handler that will be used in all tests.
+# Since the handler is stateless, we don't care if it's global.
+handler = UserHandler()
 
 
 def save_test_user_to_db(email=EMAIL, username=USERNAME, password=PASSWORD):
@@ -52,7 +56,7 @@ def remove_multiple_generic_users(ammount=10):
     Function to remove multiple generic users that are used on the tests
     """
     for i in range(0, ammount):
-        remove_user_email(EMAIL + str(i))
+        handler.remove_user_email(EMAIL + str(i))
 
 
 def remove_test_user_from_db(email=EMAIL):
@@ -60,6 +64,6 @@ def remove_test_user_from_db(email=EMAIL):
     This function removes the test user from the database.
     """
     try:
-        remove_user_email(email)
+        handler.remove_user_email(email)
     except UserNotFound:
         return

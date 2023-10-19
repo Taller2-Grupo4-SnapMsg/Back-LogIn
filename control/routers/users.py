@@ -12,13 +12,7 @@ from fastapi import (
     HTTPException,
     Query,
 )
-from service.user import (
-    get_user_email as get_user_service,
-    remove_user_email,
-    get_user_interests as get_user_interests_service,
-    get_user_username,
-    search_for_users,
-)
+from service.user_handler import UserHandler
 from service.errors import UserNotFound, MaxAmmountExceeded
 
 from control.models.models import (
@@ -52,6 +46,9 @@ router = APIRouter(
 cred = credentials.Certificate("firebase_credentials.json")
 firebase_admin.initialize_app(cred)
 
+# We create a global handler for the service layer.
+# Since the handler is stateless, we don't care if it's global.
+user_handler = UserHandler()
 
 # Create a POST route
 @router.post("/register", status_code=201)
@@ -131,7 +128,7 @@ def get_user(
 
     if email:
         try:
-            user = get_user_service(email)
+            user = user_handler.get_user_email(email)
             user = generate_response(user)
             return user
         except UserNotFound as error:
@@ -141,7 +138,7 @@ def get_user(
 
     if username:
         try:
-            user = get_user_username(username)
+            user = user_handler.get_user_username(username)
             user = generate_response(user)
             return user
         except UserNotFound as error:
@@ -162,7 +159,7 @@ def get_interests(token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        return get_user_interests_service(email)
+        return user_handler.get_user_interests(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -180,7 +177,7 @@ def delete_user(email: str, token: str = Header(...)):
     """
     if token_is_admin(token) or email == auth_handler.decode_token(token):
         try:
-            remove_user_email(email)
+            user_handler.remove_user_email(email)
         except UserNotFound as error:
             raise HTTPException(
                 status_code=USER_NOT_FOUND, detail=str(error)
@@ -205,7 +202,7 @@ def get_user_by_token(token: str = Header(...)):
         user_email = auth_handler.decode_token(
             token
         )  # auth_handler.auth_wrapper(token)
-        user = get_user_service(user_email)
+        user = user_handler.get_user_email(user_email)
         user = generate_response(user)
         return user
     except UserNotFound as error:
@@ -228,7 +225,7 @@ def get_user_by_token_with_id(token: str = Header(...)):
         user_email = auth_handler.decode_token(
             token
         )  # auth_handler.auth_wrapper(token)
-        user = get_user_service(user_email)
+        user = user_handler.get_user_email(user_email)
         user = generate_response_with_id(user)
         return user
     except UserNotFound as error:
@@ -254,7 +251,7 @@ def search_users(
     """
     check_for_user_token(token)
     try:
-        users = search_for_users(query, int(offset), int(ammount))
+        users = user_handler.search_for_users(query, int(offset), int(ammount))
     except MaxAmmountExceeded as error:
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     return generate_response_list(users)

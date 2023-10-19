@@ -6,12 +6,7 @@ This is the test module for admin related functions.
 
 import pytest
 from service.admin_handler import AdminHandler
-from service.user import (
-    get_user_email,
-    remove_user_email,
-    search_for_users,
-    MAX_AMMOUNT,
-)
+from service.user_handler import UserHandler, MAX_AMMOUNT
 from service.errors import (
     UserNotFound,
     MaxAmmountExceeded,
@@ -31,6 +26,7 @@ AMMOUNT = 10
 # We create the handler that will be used in all tests.
 # Since the handler is stateless, we don't care if it's global.
 handler = AdminHandler()
+user_handler = UserHandler()
 
 
 def test_user_can_be_set_as_admin():
@@ -44,9 +40,9 @@ def test_user_can_be_set_as_admin():
 
     handler.make_admin(EMAIL)
 
-    assert get_user_email(EMAIL).admin is True
+    assert user_handler.get_user_email(EMAIL).admin is True
 
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_user_can_be_removed_of_its_admin_priviliges():
@@ -60,13 +56,13 @@ def test_user_can_be_removed_of_its_admin_priviliges():
 
     handler.make_admin(EMAIL)
 
-    assert get_user_email(EMAIL).admin is True
+    assert user_handler.get_user_email(EMAIL).admin is True
 
     handler.remove_admin_status(EMAIL)
 
-    assert get_user_email(EMAIL).admin is False
+    assert user_handler.get_user_email(EMAIL).admin is False
 
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_make_user_admin_wrong_email():
@@ -81,7 +77,7 @@ def test_make_user_admin_wrong_email():
         handler.make_admin("wrong_email")
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_admin_doesnt_appear_on_user_search():
@@ -95,9 +91,9 @@ def test_admin_doesnt_appear_on_user_search():
 
     handler.make_admin(EMAIL)
 
-    assert get_user_email(EMAIL).admin is True
+    assert user_handler.get_user_email(EMAIL).admin is True
 
-    users = search_for_users(USERNAME, START, AMMOUNT)
+    users = user_handler.search_for_users(USERNAME, START, AMMOUNT)
 
     assert len(users) == 0
 
@@ -116,7 +112,7 @@ def test_remove_admin_priviliges_wrong_email():
         handler.remove_admin_status("wrong_email")
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_admin_appears_when_using_search_with_admin():
@@ -130,7 +126,7 @@ def test_admin_appears_when_using_search_with_admin():
 
     handler.make_admin(EMAIL)
 
-    assert get_user_email(EMAIL).admin is True
+    assert user_handler.get_user_email(EMAIL).admin is True
 
     users = handler.search_for_users_admins(USERNAME, START, AMMOUNT)
 
@@ -171,7 +167,7 @@ def test_search_for_users_admin_throws_exception_when_max_ammount_exceeded():
 
     handler.make_admin(EMAIL)
 
-    assert get_user_email(EMAIL).admin is True
+    assert user_handler.get_user_email(EMAIL).admin is True
 
     pytest.raises(
         MaxAmmountExceeded,
@@ -195,7 +191,7 @@ def test_set_user_blocked_status():
 
     handler.change_blocked_status(EMAIL, True)
 
-    assert get_user_email(EMAIL).blocked is True
+    assert user_handler.get_user_email(EMAIL).blocked is True
 
     remove_test_user_from_db()
 
@@ -223,7 +219,7 @@ def test_unblock_an_user():
     remove_test_user_from_db()
     save_test_user_to_db()
     handler.change_blocked_status(EMAIL, True)
-    assert get_user_email(EMAIL).blocked is True
+    assert user_handler.get_user_email(EMAIL).blocked is True
     handler.change_blocked_status(EMAIL, False)
-    assert get_user_email(EMAIL).blocked is False
+    assert user_handler.get_user_email(EMAIL).blocked is False
     remove_test_user_from_db()

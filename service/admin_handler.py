@@ -10,7 +10,7 @@ from repository.user_repository import (
     remove_admin_status as remove_admin_repo,
     update_user_blocked_status as update_user_blocked_status_repo,
 )
-from service.user import MAX_AMMOUNT
+from service.user_handler import MAX_AMMOUNT
 from service.errors import UserNotFound, MaxAmmountExceeded
 
 
