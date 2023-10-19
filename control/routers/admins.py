@@ -37,6 +37,8 @@ router = APIRouter(
 )
 origins = ["*"]
 
+# We create global handlers for the service layer.
+# Since the handlers are stateless, we don't care if it's global.
 follower_handler = FollowHandler()
 admin_handler = AdminHandler()
 
