@@ -2,9 +2,10 @@
 """
 This is a module for all the tests that are related to the user search.
 """
-from service.user import (
-    search_for_users,
-)
+import pytest
+
+from service.user import search_for_users, MAX_AMMOUNT
+from service.errors import MaxAmmountExceeded
 from tests.utils import (
     remove_test_user_from_db,
     save_test_user_to_db,
@@ -16,6 +17,23 @@ from tests.utils import (
 
 START = 0
 AMMOUNT = 10
+
+
+def test_search_for_ambiguous_term_and_only_get_ten():
+    """
+    This function tests that if we search a term that appears
+    on both the name, username, and last name of the users, the users only
+    appear once.
+    """
+    remove_test_user_from_db()
+
+    create_multiple_generic_users(AMMOUNT)
+
+    users = search_for_users("Real", START, MAX_AMMOUNT)
+
+    assert len(users) == AMMOUNT
+
+    remove_multiple_generic_users(AMMOUNT)
 
 
 def test_search_returns_a_list_of_users():
@@ -127,3 +145,27 @@ def test_search_for_user_that_doesnt_match_and_we_get_empty_list():
     assert len(users) == 0
 
     remove_test_user_from_db()
+
+
+def test_search_for_user_surname_and_get_results():
+    """
+    This function tests that if we search by surname we get the correct results.
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    users = search_for_users("real_surname", START, AMMOUNT)
+
+    assert len(users) == 1
+    assert users[0].email == EMAIL
+
+    remove_test_user_from_db()
+
+
+def test_more_than_max_ammount_throws_exception():
+    """
+    This function tests that if we search for more than the max ammount of users,
+    we get an exception.
+    """
+    pytest.raises(MaxAmmountExceeded, search_for_users, "Real", START, MAX_AMMOUNT + 1)

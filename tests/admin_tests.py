@@ -13,9 +13,11 @@ from service.user import (
     search_for_users,
     search_for_users_admins,
     change_blocked_status,
+    MAX_AMMOUNT,
 )
 from service.errors import (
     UserNotFound,
+    MaxAmmountExceeded,
 )
 from tests.utils import (
     remove_test_user_from_db,
@@ -156,6 +158,25 @@ def test_multiple_admins_appear_when_searching_for_admins():
         assert EMAIL + str(i) in emails
 
     remove_multiple_generic_users(AMMOUNT)
+
+
+def test_search_for_users_admin_throws_exception_when_max_ammount_exceeded():
+    """
+    This function tests the exception when the max ammount is exceeded
+    """
+    remove_test_user_from_db()
+
+    save_test_user_to_db()
+
+    make_admin(EMAIL)
+
+    assert get_user_email(EMAIL).admin is True
+
+    pytest.raises(
+        MaxAmmountExceeded, search_for_users_admins, USERNAME, START, MAX_AMMOUNT + 1
+    )
+
+    remove_test_user_from_db()
 
 
 def test_set_user_blocked_status():

@@ -18,28 +18,27 @@ from repository.user_repository import (
     get_user_username as get_user_username_repo,
     make_admin as make_admin_repo,
     remove_admin_status as remove_admin_repo,
-    create_follow as create_follow_repo,
-    get_followers as get_followers_repo,
-    get_following as get_following_repo,
-    get_following_relations as get_following_relations_repo,
-    get_following_count as get_following_count_repo,
-    get_followers_count as get_followers_count_repo,
-    remove_follow as remove_follow_repo,
     update_user_location as update_user_location_repo,
     update_user_blocked_status as update_user_blocked_status_repo,
-    is_following as is_following_repo,
-    is_follower as is_follower_repo,
     set_user_interests as set_user_interests_repo,
     get_user_interests as get_user_interests_repo,
     search_for_users as search_for_users_repo,
     update_user_public_status as update_user_public_status_repo,
     search_for_users_admins as search_for_users_admins_repo,
 )
-from repository.errors import UsernameAlreadyExists, EmailAlreadyExists
-from repository.errors import RelationAlreadyExists
-from service.errors import UserNotFound, PasswordDoesntMatch
-from service.errors import UsernameAlreadyRegistered, EmailAlreadyRegistered
-from service.errors import UserCantFollowItself, FollowingRelationAlreadyExists
+from repository.errors import (
+    UsernameAlreadyExists,
+    EmailAlreadyExists,
+)
+from service.errors import (
+    UsernameAlreadyRegistered,
+    EmailAlreadyRegistered,
+    UserNotFound,
+    PasswordDoesntMatch,
+    MaxAmmountExceeded,
+)
+
+MAX_AMMOUNT = 25
 
 
 # Pydantic model for users
@@ -321,30 +320,6 @@ def get_user_username(username: str):
         raise UserNotFound() from error
 
 
-def is_following(email: str, email_to_check_if_following: str):
-    """
-    This function is used to check if a user is following another user.
-    """
-    try:
-        user = get_user_email(email)
-        user_to_check = get_user_email(email_to_check_if_following)
-        return is_following_repo(user.id, user_to_check.id)
-    except KeyError as error:
-        raise UserNotFound() from error
-
-
-def is_follower(email: str, email_to_check_if_follower: str):
-    """
-    This function is used to check if a user is a follower of another user.
-    """
-    try:
-        user = get_user_email(email)
-        user_to_check = get_user_email(email_to_check_if_follower)
-        return is_follower_repo(user.id, user_to_check.id)
-    except KeyError as error:
-        raise UserNotFound() from error
-
-
 def remove_user_email(email: str):
     """
     This function is used to remove the user from the database.
@@ -408,84 +383,6 @@ def remove_admin_status(email: str):
         raise UserNotFound() from error
 
 
-def create_follow(email: str, email_to_follow: str):
-    """
-    This function is used to create a follow relationship.
-    """
-    if email == email_to_follow:
-        raise UserCantFollowItself()
-    try:
-        create_follow_repo(email, email_to_follow)
-    except KeyError as error:
-        raise UserNotFound() from error
-    except RelationAlreadyExists as error:
-        raise FollowingRelationAlreadyExists() from error
-
-
-def get_all_followers(email: str):
-    """
-    This function is used to retrieve all username's followers from the database.
-    """
-    try:
-        user = get_user_email(email)
-        return get_followers_repo(user.id)
-    except KeyError as error:
-        raise UserNotFound() from error
-
-
-def get_all_following(email: str):
-    """
-    This function is used to retrieve all users following  username from the database.
-    """
-    try:
-        user = get_user_email(email)
-        return get_following_repo(user.id)
-    except KeyError as error:
-        raise UserNotFound() from error
-
-
-def get_all_following_relations():
-    """
-    This function is used to retrieve all follow relations from the database.
-    """
-    return get_following_relations_repo()
-
-
-def get_following_count(email: str):
-    """
-    This function is used to get email's following count from database.
-    """
-    try:
-        user = get_user_email(email)
-        return get_following_count_repo(user.id)
-    except KeyError as error:
-        raise UserNotFound() from error
-
-
-def get_followers_count(email: str):
-    """
-    This function is used to get email's followers count from database.
-    """
-    try:
-        user = get_user_email(email)
-        return get_followers_count_repo(user.id)
-    except KeyError as error:
-        raise UserNotFound() from error
-
-
-def remove_follow(email: str, email_to_unfollow: str):
-    """
-    This function is used to remove a follow relationship.
-    """
-    try:
-        user = get_user_email(email)
-        user_to_unfollow = get_user_email(email_to_unfollow)
-        remove_follow_repo(user.id, user_to_unfollow.id)
-        return {"message": "Unfollow successful"}
-    except KeyError as error:
-        raise UserNotFound() from error
-
-
 def set_user_interests(email: str, interests: str):
     """
     This function is used to set the user's interests.
@@ -516,9 +413,6 @@ def get_user_interests(email: str):
         raise UserNotFound() from error
 
 
-MAX_AMMOUNT = 25
-
-
 def search_for_users(username: str, start: int, ammount: int):
     """
     This function is used to search for users.
@@ -530,8 +424,8 @@ def search_for_users(username: str, start: int, ammount: int):
     it will return everything it found.
     :return: A list of users.
     """
-    # We set a max ammount so bad people can't overload the server
-    ammount = min(ammount, MAX_AMMOUNT)
+    if ammount > MAX_AMMOUNT:
+        raise MaxAmmountExceeded("Ammount can't be greater than " + str(MAX_AMMOUNT))
     return search_for_users_repo(username, start, ammount)
 
 
@@ -549,5 +443,6 @@ def search_for_users_admins(username: str, start: int, ammount: int):
     :return: A list of users.
     """
     # We set a max ammount so bad people can't overload the server
-    ammount = min(ammount, MAX_AMMOUNT)
+    if ammount > MAX_AMMOUNT:
+        raise MaxAmmountExceeded("Ammount can't be greater than " + str(MAX_AMMOUNT))
     return search_for_users_admins_repo(username, start, ammount)

@@ -14,8 +14,8 @@ from service.user import (
     is_email_admin,
     change_blocked_status as change_blocked_status_service,
     search_for_users_admins,
-    get_all_following_relations as get_all_following_relations_service,
 )
+from service.follow_handler import FollowHandler
 from service.errors import UserNotFound
 
 from control.models.models import (
@@ -42,6 +42,8 @@ router = APIRouter(
     tags=["Admins"],
 )
 origins = ["*"]
+
+follower_handler = FollowHandler()
 
 
 @router.post("/register_admin")
@@ -207,4 +209,4 @@ def get_all_following_relations(token: str = Header(...)):
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can get all following relations",
         )
-    return get_all_following_relations_service()
+    return follower_handler.get_all_following_relations()

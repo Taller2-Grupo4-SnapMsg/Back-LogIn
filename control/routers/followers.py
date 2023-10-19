@@ -8,16 +8,7 @@ from fastapi import (
     HTTPException,
 )
 
-from service.user import (
-    create_follow as create_follow_service,
-    get_all_followers,
-    get_all_following,
-    get_followers_count as get_followers_count_service,
-    get_following_count as get_following_count_service,
-    remove_follow as remove_follow_service,
-    is_following as is_following_service,
-    is_follower as is_follower_service,
-)
+from service.follow_handler import FollowHandler
 
 from service.errors import (
     UserNotFound,
@@ -40,6 +31,8 @@ from control.utils.auth import auth_handler
 router = APIRouter(tags=["Followers"])
 origins = ["*"]
 
+handler = FollowHandler()
+
 
 @router.post("/follow/{email_following}")
 def create_follow(email_following: str, token: str = Header(...)):
@@ -52,7 +45,7 @@ def create_follow(email_following: str, token: str = Header(...)):
     """
     try:
         email_follower = auth_handler.decode_token(token)
-        create_follow_service(email_follower, email_following)
+        handler.create_follow(email_follower, email_following)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     except UserCantFollowItself as error:
@@ -73,7 +66,7 @@ def get_followers(email: str, token: str = Header(...)):
     """
     check_for_user_token(token)
     try:
-        user_list = get_all_followers(email)
+        user_list = handler.get_all_followers(email)
         return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -92,7 +85,7 @@ def get_is_following(email_following: str, token: str = Header(...)):
     email_follower = auth_handler.decode_token(token)
     check_for_user_token(token)
     try:
-        return is_following_service(email_follower, email_following)
+        return handler.is_following(email_follower, email_following)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -109,7 +102,7 @@ def get_is_follower(email_follower: str, token: str = Header(...)):
     email = auth_handler.decode_token(token)
     check_for_user_token(token)
     try:
-        return is_follower_service(email, email_follower)
+        return handler.is_follower(email, email_follower)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -127,7 +120,7 @@ def get_following(email: str, token: str = Header(...)):
     check_for_user_token(token)
     # Does the actual request:
     try:
-        user_list = get_all_following(email)
+        user_list = handler.get_all_following(email)
         return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -145,7 +138,7 @@ def get_followers_count(email: str, token: str = Header(...)):
     check_for_user_token(token)
     # Does the actual request:
     try:
-        return get_followers_count_service(email)
+        return handler.get_followers_count(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -163,7 +156,7 @@ def get_following_count(email: str, token: str = Header(...)):
     check_for_user_token(token)
     # Does the actual request:
     try:
-        return get_following_count_service(email)
+        return handler.get_following_count(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -179,6 +172,6 @@ def unfollow(email_unfollowing: str, token: str = Header(...)):
     """
     try:
         email_follower = auth_handler.decode_token(token)
-        return remove_follow_service(email_follower, email_unfollowing)
+        return handler.remove_follow(email_follower, email_unfollowing)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error

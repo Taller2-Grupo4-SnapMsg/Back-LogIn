@@ -3,7 +3,7 @@
 Module dedicated to the queries that the repository might need.
 """
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import and_, not_
+from sqlalchemy import and_, not_, or_
 from repository.tables.users import User, Interests
 from repository.errors import (
     UsernameAlreadyExists,
@@ -285,7 +285,16 @@ def search_for_users(session, username: str, start, amount):
     """
     return (
         session.query(User)
-        .filter(and_(User.username.ilike(f"%{username}%"), not_(User.admin)))
+        .filter(
+            and_(
+                or_(
+                    User.username.ilike(f"%{username}%"),
+                    User.name.ilike(f"%{username}%"),
+                    User.surname.ilike(f"%{username}%"),
+                ),
+                not_(User.admin),
+            )
+        )
         .offset(start)
         .limit(amount)
         .all()

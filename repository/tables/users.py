@@ -113,9 +113,6 @@ class Interests(Base):
 
     __tablename__ = "interests"
 
-    # We disable duplicate code here since it is a table and the
-    # foreign key is the same in all tables
-    # pylint: disable=R0801
     user_id = create_users_foreign_key()
 
     interest = Column(String(75), nullable=False, primary_key=True)
