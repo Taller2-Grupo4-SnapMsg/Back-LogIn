@@ -5,14 +5,11 @@ This is the test module for admin related functions.
 """
 
 import pytest
+from service.admin_handler import AdminHandler
 from service.user import (
-    make_admin,
-    remove_admin_status,
     get_user_email,
     remove_user_email,
     search_for_users,
-    search_for_users_admins,
-    change_blocked_status,
     MAX_AMMOUNT,
 )
 from service.errors import (
@@ -31,6 +28,10 @@ from tests.utils import (
 START = 0
 AMMOUNT = 10
 
+# We create the handler that will be used in all tests.
+# Since the handler is stateless, we don't care if it's global.
+handler = AdminHandler()
+
 
 def test_user_can_be_set_as_admin():
     """
@@ -41,7 +42,7 @@ def test_user_can_be_set_as_admin():
 
     save_test_user_to_db()
 
-    make_admin(EMAIL)
+    handler.make_admin(EMAIL)
 
     assert get_user_email(EMAIL).admin is True
 
@@ -57,11 +58,11 @@ def test_user_can_be_removed_of_its_admin_priviliges():
 
     save_test_user_to_db()
 
-    make_admin(EMAIL)
+    handler.make_admin(EMAIL)
 
     assert get_user_email(EMAIL).admin is True
 
-    remove_admin_status(EMAIL)
+    handler.remove_admin_status(EMAIL)
 
     assert get_user_email(EMAIL).admin is False
 
@@ -77,7 +78,7 @@ def test_make_user_admin_wrong_email():
     save_test_user_to_db()
 
     with pytest.raises(UserNotFound) as error:
-        make_admin("wrong_email")
+        handler.make_admin("wrong_email")
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
@@ -92,7 +93,7 @@ def test_admin_doesnt_appear_on_user_search():
 
     save_test_user_to_db()
 
-    make_admin(EMAIL)
+    handler.make_admin(EMAIL)
 
     assert get_user_email(EMAIL).admin is True
 
@@ -112,7 +113,7 @@ def test_remove_admin_priviliges_wrong_email():
     save_test_user_to_db()
 
     with pytest.raises(UserNotFound) as error:
-        remove_admin_status("wrong_email")
+        handler.remove_admin_status("wrong_email")
     assert str(error.value) == "User not found"
 
     remove_user_email(EMAIL)
@@ -127,11 +128,11 @@ def test_admin_appears_when_using_search_with_admin():
 
     save_test_user_to_db()
 
-    make_admin(EMAIL)
+    handler.make_admin(EMAIL)
 
     assert get_user_email(EMAIL).admin is True
 
-    users = search_for_users_admins(USERNAME, START, AMMOUNT)
+    users = handler.search_for_users_admins(USERNAME, START, AMMOUNT)
 
     assert len(users) == 1
     assert users[0].email == EMAIL
@@ -148,9 +149,9 @@ def test_multiple_admins_appear_when_searching_for_admins():
     create_multiple_generic_users(AMMOUNT)
 
     for i in range(0, AMMOUNT):
-        make_admin(EMAIL + str(i))
+        handler.make_admin(EMAIL + str(i))
 
-    users = search_for_users_admins(USERNAME, START, AMMOUNT)
+    users = handler.search_for_users_admins(USERNAME, START, AMMOUNT)
     emails = [user.email for user in users]
 
     assert len(users) == AMMOUNT
@@ -168,12 +169,16 @@ def test_search_for_users_admin_throws_exception_when_max_ammount_exceeded():
 
     save_test_user_to_db()
 
-    make_admin(EMAIL)
+    handler.make_admin(EMAIL)
 
     assert get_user_email(EMAIL).admin is True
 
     pytest.raises(
-        MaxAmmountExceeded, search_for_users_admins, USERNAME, START, MAX_AMMOUNT + 1
+        MaxAmmountExceeded,
+        handler.search_for_users_admins,
+        USERNAME,
+        START,
+        MAX_AMMOUNT + 1,
     )
 
     remove_test_user_from_db()
@@ -188,7 +193,7 @@ def test_set_user_blocked_status():
 
     save_test_user_to_db()
 
-    change_blocked_status(EMAIL, True)
+    handler.change_blocked_status(EMAIL, True)
 
     assert get_user_email(EMAIL).blocked is True
 
@@ -205,7 +210,7 @@ def test_set_user_blocked_status_wrong_email():
     save_test_user_to_db()
 
     with pytest.raises(UserNotFound) as error:
-        change_blocked_status("wrong_email", True)
+        handler.change_blocked_status("wrong_email", True)
     assert str(error.value) == "User not found"
 
     remove_test_user_from_db()
@@ -217,8 +222,8 @@ def test_unblock_an_user():
     """
     remove_test_user_from_db()
     save_test_user_to_db()
-    change_blocked_status(EMAIL, True)
+    handler.change_blocked_status(EMAIL, True)
     assert get_user_email(EMAIL).blocked is True
-    change_blocked_status(EMAIL, False)
+    handler.change_blocked_status(EMAIL, False)
     assert get_user_email(EMAIL).blocked is False
     remove_test_user_from_db()

@@ -17,13 +17,15 @@ from control.models.models import (
 from service.user import User
 from service.user import (
     get_user_email as get_user_service,
-    is_email_admin,
 )
+from service.admin_handler import AdminHandler
 from service.errors import (
     UserNotFound,
     UsernameAlreadyRegistered,
     EmailAlreadyRegistered,
 )
+
+admin_handler = AdminHandler()
 
 
 def check_for_user_token(token: str):
@@ -96,7 +98,7 @@ def token_is_admin(token: str):
     """
     email = auth_handler.decode_token(token)
     try:
-        return is_email_admin(email)
+        return admin_handler.is_email_admin(email)
     # in theory, this should never happen, since the token is verified
     # We can't have a valid token that doesn't belong to a user
     except UserNotFound as error:
