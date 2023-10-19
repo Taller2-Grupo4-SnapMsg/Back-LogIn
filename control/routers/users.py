@@ -19,7 +19,7 @@ from service.user import (
     get_user_username,
     search_for_users,
 )
-from service.errors import UserNotFound
+from service.errors import UserNotFound, MaxAmmountExceeded
 
 from control.models.models import (
     UserLogIn,
@@ -39,7 +39,12 @@ from control.utils.utils import (
     handle_user_login,
     handle_get_user_email,
 )
-from control.codes import USER_NOT_FOUND, USER_NOT_ADMIN, INCORRECT_CREDENTIALS
+from control.codes import (
+    USER_NOT_FOUND,
+    INCORRECT_CREDENTIALS,
+    USER_NOT_ADMIN,
+    BAD_REQUEST,
+)
 
 router = APIRouter(
     tags=["Users"],
@@ -234,9 +239,12 @@ def get_user_by_token_with_id(token: str = Header(...)):
         raise error
 
 
-@router.get("/user/search/{username}")
-def search_users_by_username(
-    username: str, offset: int, ammount: int, token: str = Header(...)
+@router.get("/user/search/{query}")
+def search_users(
+    query: str,
+    offset=Query(0, title="offset", description="offset for pagination"),
+    ammount=Query(10, title="ammount", description="max ammount of users to return"),
+    token: str = Header(...),
 ):
     """
     This function retrieves an user by token.
@@ -245,5 +253,8 @@ def search_users_by_username(
     :return: User details or a 401 response.
     """
     check_for_user_token(token)
-    users = search_for_users(username, offset, ammount)
+    try:
+        users = search_for_users(query, int(offset), int(ammount))
+    except MaxAmmountExceeded as error:
+        raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     return generate_response_list(users)
