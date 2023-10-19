@@ -15,9 +15,7 @@ from control.models.models import (
     UserRegistration,
 )
 from service.user import User
-from service.user import (
-    get_user_email as get_user_service,
-)
+from service.user_handler import UserHandler
 from service.admin_handler import AdminHandler
 from service.errors import (
     UserNotFound,
@@ -26,6 +24,7 @@ from service.errors import (
 )
 
 admin_handler = AdminHandler()
+user_handler = UserHandler()
 
 
 def check_for_user_token(token: str):
@@ -36,7 +35,7 @@ def check_for_user_token(token: str):
     """
     try:
         email = auth_handler.decode_token(token)
-        get_user_service(email)
+        user_handler.get_user_email(email)
     except UserNotFound as error:
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
@@ -164,7 +163,7 @@ def handle_get_user_email(email: str):
     This function handles getting a user from the data base.
     """
     try:
-        return get_user_service(email)
+        return user_handler.get_user_email(email)
     except UserNotFound as error:
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
