@@ -7,15 +7,9 @@ from fastapi import (
     Header,
     HTTPException,
 )
-from service.user import (
-    get_all_users as get_all_users_service,
-    make_admin as make_admin_service,
-    remove_admin_status as remove_admin_service,
-    is_email_admin,
-    change_blocked_status as change_blocked_status_service,
-    search_for_users_admins,
-    get_all_following_relations as get_all_following_relations_service,
-)
+
+from service.follow_handler import FollowHandler
+from service.admin_handler import AdminHandler
 from service.errors import UserNotFound
 
 from control.models.models import (
@@ -42,6 +36,11 @@ router = APIRouter(
     tags=["Admins"],
 )
 origins = ["*"]
+
+# We create global handlers for the service layer.
+# Since the handlers are stateless, we don't care if it's global.
+follower_handler = FollowHandler()
+admin_handler = AdminHandler()
 
 
 @router.post("/register_admin")
@@ -83,12 +82,12 @@ def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     """
     try:
         admin_email = auth_handler.decode_token(token)
-        if not is_email_admin(admin_email):
+        if not admin_handler.is_email_admin(admin_email):
             raise HTTPException(
                 status_code=USER_NOT_ADMIN,
                 detail="Only administrators can block users",
             )
-        change_blocked_status_service(email, blocked)
+        admin_handler.change_blocked_status(email, blocked)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is now " + ("blocked" if blocked else "unblocked")}
@@ -110,7 +109,7 @@ def make_admin(email: str, token: str = Header(...)):
             detail="Only administrators can make other users administrators",
         )
     try:
-        make_admin_service(email)
+        admin_handler.make_admin(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is now an admin"}
@@ -132,7 +131,7 @@ def remove_admin_status(email: str, token: str = Header(...)):
             detail="Only administrators can remove other users from being administrators",
         )
     try:
-        remove_admin_service(email)
+        admin_handler.remove_admin_status(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is no longer an admin"}
@@ -154,7 +153,7 @@ def find_users(username: str, start: int, ammount: int, token: str = Header(...)
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can find users",
         )
-    users = search_for_users_admins(username, start, ammount)
+    users = admin_handler.search_for_users_admins(username, start, ammount)
     return generate_response_list(users)
 
 
@@ -189,7 +188,7 @@ def get_all_users(token: str = Header(...)):
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can get all users",
         )
-    user_list = get_all_users_service()
+    user_list = admin_handler.get_all_users()
     return generate_response_list(user_list)
 
 
@@ -207,4 +206,4 @@ def get_all_following_relations(token: str = Header(...)):
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can get all following relations",
         )
-    return get_all_following_relations_service()
+    return follower_handler.get_all_following_relations()

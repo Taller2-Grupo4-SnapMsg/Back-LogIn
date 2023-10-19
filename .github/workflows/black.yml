@@ -6,5 +6,13 @@ jobs:
   Black-Lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: psf/black@stable
+      - name: Check code formatting
+        uses: psf/black@stable
+        with:
+          options: "--check --diff"  # Add the options here
+
+      - name: Display Black output
+        run: |
+          echo "${{ steps.black.outputs.results }}"
+        if: ${{ steps.black.outcome == 'failure' }}
+

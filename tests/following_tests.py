@@ -5,18 +5,8 @@ This is the test module that tests the follow feature between users.
 """
 import pytest
 
-from service.user import (
-    create_follow,
-    get_following_count,
-    get_followers_count,
-    get_all_followers,
-    get_all_following,
-    remove_follow,
-    change_password,
-    remove_user_email,
-    get_user_email,
-    is_follower,
-)
+from service.follow_handler import FollowHandler
+from service.user_handler import UserHandler
 
 from service.errors import (
     FollowingRelationAlreadyExists,
@@ -32,6 +22,11 @@ from tests.utils import (
     create_generic_user,
 )
 
+# We create global handlers for the service layer.
+# Since the handlers are stateless, we don't care if it's global.
+handler = FollowHandler()
+user_handler = UserHandler()
+
 
 def test_user_can_follow_another_user():
     """
@@ -46,24 +41,24 @@ def test_user_can_follow_another_user():
 
     user_to_be_followed.save()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
-    create_follow(user.email, user_to_be_followed.email)
+    handler.create_follow(user.email, user_to_be_followed.email)
 
-    assert get_following_count(user.email) == 1
-    assert get_followers_count(user_to_be_followed.email) == 1
+    assert handler.get_following_count(user.email) == 1
+    assert handler.get_followers_count(user_to_be_followed.email) == 1
 
-    followers = get_all_followers(user_to_be_followed.email)
+    followers = handler.get_all_followers(user_to_be_followed.email)
 
     assert followers[0].username == user.username
 
-    following = get_all_following(user.email)
+    following = handler.get_all_following(user.email)
 
     assert following[0].username == user_to_be_followed.username
 
-    remove_follow(user.email, user_to_be_followed.email)
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    handler.remove_follow(user.email, user_to_be_followed.email)
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_user_cant_follow_the_same_user_twice():
@@ -79,24 +74,24 @@ def test_user_cant_follow_the_same_user_twice():
 
     user_to_be_followed.save()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
-    create_follow(user.email, user_to_be_followed.email)
+    handler.create_follow(user.email, user_to_be_followed.email)
 
-    assert get_following_count(user.email) == 1
-    assert get_followers_count(user_to_be_followed.email) == 1
+    assert handler.get_following_count(user.email) == 1
+    assert handler.get_followers_count(user_to_be_followed.email) == 1
 
     with pytest.raises(FollowingRelationAlreadyExists) as error:
-        create_follow(user.email, user_to_be_followed.email)
+        handler.create_follow(user.email, user_to_be_followed.email)
     assert str(error.value) == "Following relation already exists!"
 
-    remove_follow(user.email, user_to_be_followed.email)
+    handler.remove_follow(user.email, user_to_be_followed.email)
 
-    assert get_following_count(user.email) == 0
-    assert get_followers_count(user_to_be_followed.email) == 0
+    assert handler.get_following_count(user.email) == 0
+    assert handler.get_followers_count(user_to_be_followed.email) == 0
 
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_user_cant_follow_itself():
@@ -108,13 +103,13 @@ def test_user_cant_follow_itself():
 
     save_test_user_to_db()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
     with pytest.raises(UserCantFollowItself) as error:
-        create_follow(user.email, user.email)
+        handler.create_follow(user.email, user.email)
     assert str(error.value) == "User can't follow itself!"
 
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_user_cant_follow_user_that_doesnt_exist():
@@ -126,13 +121,13 @@ def test_user_cant_follow_user_that_doesnt_exist():
 
     save_test_user_to_db()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
     with pytest.raises(UserNotFound) as error:
-        create_follow(user.email, "wrong_email")
+        handler.create_follow(user.email, "wrong_email")
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_user_cant_be_followed_by_a_user_that_doesnt_exist():
@@ -144,47 +139,13 @@ def test_user_cant_be_followed_by_a_user_that_doesnt_exist():
 
     save_test_user_to_db()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
     with pytest.raises(UserNotFound) as error:
-        create_follow("wrong_email", user.email)
+        handler.create_follow("wrong_email", user.email)
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
-
-
-def test_update_user_password():
-    """
-    This function tests the update user password.
-    """
-    remove_test_user_from_db()
-    remove_test_user_from_db(EMAIL + "1")
-
-    save_test_user_to_db()
-
-    change_password(EMAIL, "new_password")
-
-    user = get_user_email(EMAIL)
-
-    assert user.password == "new_password"
-
-    remove_user_email(EMAIL)
-
-
-def test_update_user_password_wrong_email():
-    """
-    This function tests the exception user not found
-    """
-    remove_test_user_from_db()
-    remove_test_user_from_db(EMAIL + "1")
-
-    save_test_user_to_db()
-
-    with pytest.raises(UserNotFound) as error:
-        change_password("wrong_email", "new_password")
-    assert str(error.value) == "User not found"
-
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_get_following_count_wrong_username():
@@ -197,10 +158,10 @@ def test_get_following_count_wrong_username():
     save_test_user_to_db()
 
     with pytest.raises(UserNotFound) as error:
-        get_following_count("wrong_username")
+        handler.get_following_count("wrong_username")
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL)
 
 
 def test_remove_follow_wrong_username():
@@ -216,14 +177,14 @@ def test_remove_follow_wrong_username():
 
     user_to_be_followed.save()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
     with pytest.raises(UserNotFound) as error:
-        remove_follow(user.email, "wrong_username")
+        handler.remove_follow(user.email, "wrong_username")
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_get_all_following_wrong_username():
@@ -239,17 +200,17 @@ def test_get_all_following_wrong_username():
 
     user_to_be_followed.save()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
-    create_follow(user.email, user_to_be_followed.email)
+    handler.create_follow(user.email, user_to_be_followed.email)
 
     with pytest.raises(UserNotFound) as error:
-        get_all_following("wrong_username")
+        handler.get_all_following("wrong_username")
     assert str(error.value) == "User not found"
 
-    remove_follow(user.email, user_to_be_followed.email)
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    handler.remove_follow(user.email, user_to_be_followed.email)
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_get_all_followers_wrong_username():
@@ -265,22 +226,22 @@ def test_get_all_followers_wrong_username():
 
     user_to_be_followed.save()
 
-    user = get_user_email(EMAIL)
+    user = user_handler.get_user_email(EMAIL)
 
-    create_follow(user.email, user_to_be_followed.email)
+    handler.create_follow(user.email, user_to_be_followed.email)
 
     with pytest.raises(UserNotFound) as error:
-        get_all_followers("wrong_username")
+        handler.get_all_followers("wrong_username")
     assert str(error.value) == "User not found"
 
-    remove_follow(user.email, user_to_be_followed.email)
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    handler.remove_follow(user.email, user_to_be_followed.email)
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_is_follower_returns_false_if_not_following():
     """
-    This function tests the is_follower function.
+    This function tests the handler.is_follower function.
     """
     remove_test_user_from_db()
     remove_test_user_from_db(EMAIL + "1")
@@ -288,15 +249,15 @@ def test_is_follower_returns_false_if_not_following():
     save_test_user_to_db()
     save_test_user_to_db(EMAIL + "1", USERNAME + "1")
 
-    assert is_follower(EMAIL, EMAIL + "1") is False
+    assert handler.is_follower(EMAIL, EMAIL + "1") is False
 
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_is_follower_returns_true_if_following():
     """
-    This function tests the is_follower function when the user is following.
+    This function tests the handler.is_follower function when the user is following.
     """
     remove_test_user_from_db()
     remove_test_user_from_db(EMAIL + "1")
@@ -304,16 +265,16 @@ def test_is_follower_returns_true_if_following():
     save_test_user_to_db()
     save_test_user_to_db(EMAIL + "1", USERNAME + "1")
 
-    user = get_user_email(EMAIL)
-    user_to_be_followed = get_user_email(EMAIL + "1")
+    user = user_handler.get_user_email(EMAIL)
+    user_to_be_followed = user_handler.get_user_email(EMAIL + "1")
 
-    create_follow(user.email, user_to_be_followed.email)
+    handler.create_follow(user.email, user_to_be_followed.email)
 
-    assert is_follower(user_to_be_followed.email, user.email)
+    assert handler.is_follower(user_to_be_followed.email, user.email)
 
-    remove_follow(user.email, user_to_be_followed.email)
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    handler.remove_follow(user.email, user_to_be_followed.email)
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_is_follower_wrong_email():
@@ -327,11 +288,11 @@ def test_is_follower_wrong_email():
     save_test_user_to_db(EMAIL + "1", USERNAME + "1")
 
     with pytest.raises(UserNotFound) as error:
-        is_follower(EMAIL, "wrong_email")
+        handler.is_follower(EMAIL, "wrong_email")
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_is_following_wrong_email():
@@ -345,11 +306,11 @@ def test_is_following_wrong_email():
     save_test_user_to_db(EMAIL + "1", USERNAME + "1")
 
     with pytest.raises(UserNotFound) as error:
-        is_follower("wrong_email", EMAIL + "1")
+        handler.is_follower("wrong_email", EMAIL + "1")
     assert str(error.value) == "User not found"
 
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_is_following_returns_false_if_not_following():
@@ -362,10 +323,10 @@ def test_is_following_returns_false_if_not_following():
     save_test_user_to_db()
     save_test_user_to_db(EMAIL + "1", USERNAME + "1")
 
-    assert is_follower(EMAIL, EMAIL + "1") is False
+    assert handler.is_follower(EMAIL, EMAIL + "1") is False
 
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")
 
 
 def test_is_following_returns_true_if_following():
@@ -378,13 +339,13 @@ def test_is_following_returns_true_if_following():
     save_test_user_to_db()
     save_test_user_to_db(EMAIL + "1", USERNAME + "1")
 
-    user = get_user_email(EMAIL)
-    user_to_be_followed = get_user_email(EMAIL + "1")
+    user = user_handler.get_user_email(EMAIL)
+    user_to_be_followed = user_handler.get_user_email(EMAIL + "1")
 
-    create_follow(user.email, user_to_be_followed.email)
+    handler.create_follow(user.email, user_to_be_followed.email)
 
-    assert is_follower(user_to_be_followed.email, user.email)
+    assert handler.is_follower(user_to_be_followed.email, user.email)
 
-    remove_follow(user.email, user_to_be_followed.email)
-    remove_user_email(EMAIL)
-    remove_user_email(EMAIL + "1")
+    handler.remove_follow(user.email, user_to_be_followed.email)
+    user_handler.remove_user_email(EMAIL)
+    user_handler.remove_user_email(EMAIL + "1")

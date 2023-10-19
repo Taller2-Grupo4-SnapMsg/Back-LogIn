@@ -15,15 +15,16 @@ from control.models.models import (
     UserRegistration,
 )
 from service.user import User
-from service.user import (
-    get_user_email as get_user_service,
-    is_email_admin,
-)
+from service.user_handler import UserHandler
+from service.admin_handler import AdminHandler
 from service.errors import (
     UserNotFound,
     UsernameAlreadyRegistered,
     EmailAlreadyRegistered,
 )
+
+admin_handler = AdminHandler()
+user_handler = UserHandler()
 
 
 def check_for_user_token(token: str):
@@ -34,7 +35,7 @@ def check_for_user_token(token: str):
     """
     try:
         email = auth_handler.decode_token(token)
-        get_user_service(email)
+        user_handler.get_user_email(email)
     except UserNotFound as error:
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
@@ -96,7 +97,7 @@ def token_is_admin(token: str):
     """
     email = auth_handler.decode_token(token)
     try:
-        return is_email_admin(email)
+        return admin_handler.is_email_admin(email)
     # in theory, this should never happen, since the token is verified
     # We can't have a valid token that doesn't belong to a user
     except UserNotFound as error:
@@ -162,7 +163,7 @@ def handle_get_user_email(email: str):
     This function handles getting a user from the data base.
     """
     try:
-        return get_user_service(email)
+        return user_handler.get_user_email(email)
     except UserNotFound as error:
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
