@@ -4,18 +4,27 @@ Backend destinado al log in de usuarios.
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
 
 ## Para levantar el server local:
-`bash run.sh`
-Eso te va a levantar un docker que se instala las dependencias y cuando termine en `localhost:8000/docs` vas a tener la api con todos
-los endpoints y una breve descripcion.
+Primero tenes que buildear la imagen que va a usar el docker-compose (solo la primera vez o cada vez que cambies algun requirement de requirements.txt)
+```bash
+docker build -t my-fastapi-image .
+```
+Despues, una vez ya tenes eso, basta con hacer:
+```bash
+docker-compose up
+```
 ## Para correr los test:
 Instalate pytest: 
 `pip install -U pytest`
+Exporta la variable de entorno PYTHONPATH asi:
+`export PYTHONPATH=.$PYTHONPATH`
+Exporta la variable de entorno DB_URI asi:
+`export DB_URI=postgresql://admin:admin123@localhost:5432/test-back-users$DB_URI`
 y haces:
 `pytest /tests/*`
 ## Para el black:
 `pip install black`
 
-`black *`
+`bash black.sh`
 ## Para correr el coverage:
 `pip install coverage`
 

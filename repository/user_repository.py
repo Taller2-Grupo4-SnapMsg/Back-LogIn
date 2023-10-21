@@ -26,6 +26,8 @@ from repository.queries.user_queries import (
     add_user_interest,
     get_user_interests as get_user_interests_db,
     search_for_users as search_for_users_db,
+    search_for_users_admins as search_for_users_admins_db,
+    update_user_public_status as update_user_public_status_db,
 )
 
 from repository.queries.follow_queries import (
@@ -314,6 +316,19 @@ def update_user_location(email: str, new_location: str):
     update_user_location_db(session, user.id, new_location)
 
 
+def update_user_public_status(email: str, new_status: str):
+    """
+    This is used for updating a user's status.
+
+    :param email: The email used to identify the user.
+    :param new_status: The status to update.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    update_user_public_status_db(session, user.id, new_status)
+
+
 def update_user_blocked_status(email: str, blocked: bool):
     """
     This is used for updating a user's blocked status.
@@ -352,6 +367,7 @@ def get_user_interests(user_id: int):
 def search_for_users(username: str, start: int, amount: int):
     """
     This function is used for searching for users.
+    It only lists users that are not admins.
 
     :param username: The username to search for.
     :param start: The start of the search. (offset)
@@ -359,6 +375,19 @@ def search_for_users(username: str, start: int, amount: int):
     :return: A list of users.
     """
     return search_for_users_db(session, username, start, amount)
+
+
+def search_for_users_admins(username: str, start: int, amount: int):
+    """
+    This function is used for searching for users.
+    Lists all users, including those who are admins.
+
+    :param username: The username to search for.
+    :param start: The start of the search. (offset)
+    :param amount: The amount of users to return.
+    :return: A list of users.
+    """
+    return search_for_users_admins_db(session, username, start, amount)
 
 
 session.close()

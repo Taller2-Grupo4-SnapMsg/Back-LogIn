@@ -7,16 +7,7 @@ from fastapi import (
     Header,
     HTTPException,
 )
-from service.user import (
-    change_password as change_password_service,
-    change_bio as change_bio_service,
-    change_name as change_name_service,
-    change_date_of_birth as change_date_of_birth_service,
-    change_last_name as change_last_name_service,
-    change_avatar as change_avatar_service,
-    change_location as change_location_service,
-    set_user_interests as change_interests_service,
-)
+from service.user_handler import UserHandler
 from service.errors import (
     UserNotFound,
 )
@@ -27,9 +18,12 @@ from control.codes import (
     USER_NOT_FOUND,
 )
 
-router = APIRouter()
+router = APIRouter(tags=["Users"])
 origins = ["*"]
 
+# We create a global handler for the service layer.
+# Since the handler is stateless, we don't care if it's global.
+user_handler = UserHandler()
 
 # Route to update user information
 @router.put("/users/password")
@@ -44,7 +38,7 @@ def change_password(new_password: str, token: str = Header(...)):
     try:
         email = auth_handler.decode_token(token)
         new_password = auth_handler.get_password_hash(new_password)
-        change_password_service(email, new_password)
+        user_handler.change_password(email, new_password)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -61,7 +55,7 @@ def change_bio(new_bio: str, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_bio_service(email, new_bio)
+        user_handler.change_bio(email, new_bio)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -78,7 +72,7 @@ def change_avatar(new_avatar: str, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_avatar_service(email, new_avatar)
+        user_handler.change_avatar(email, new_avatar)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -95,7 +89,7 @@ def change_name(new_name: str, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_name_service(email, new_name)
+        user_handler.change_name(email, new_name)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -112,7 +106,7 @@ def change_date_of_birth(new_date_of_birth: str, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_date_of_birth_service(email, new_date_of_birth)
+        user_handler.change_date_of_birth(email, new_date_of_birth)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -129,7 +123,7 @@ def change_last_name(new_last_name: str, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_last_name_service(email, new_last_name)
+        user_handler.change_last_name(email, new_last_name)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -146,7 +140,7 @@ def change_location(new_location: str, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_location_service(email, new_location)
+        user_handler.change_location(email, new_location)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -163,7 +157,24 @@ def change_interests(new_interests: str, token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        change_interests_service(email, new_interests)
+        user_handler.set_user_interests(email, new_interests)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
+
+
+@router.put("/users/privacy")
+def change_user_privacy(is_public: bool, token: str = Header(...)):
+    """
+    This function is for changing the user's privacy
+
+    :param is_public: User's new privacy.
+    :param token: Token used to verify the user.
+    :return: Status code with a JSON message.
+    """
+    try:
+        email = auth_handler.decode_token(token)
+        user_handler.change_public_status(email, is_public)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "User privacy updated, now profle is public: " + str(is_public)}

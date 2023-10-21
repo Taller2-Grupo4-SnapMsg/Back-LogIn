@@ -7,13 +7,9 @@ from fastapi import (
     Header,
     HTTPException,
 )
-from service.user import (
-    get_all_users as get_all_users_service,
-    make_admin as make_admin_service,
-    remove_admin_status as remove_admin_service,
-    is_email_admin,
-    change_blocked_status as change_blocked_status_service,
-)
+
+from service.follow_handler import FollowHandler
+from service.admin_handler import AdminHandler
 from service.errors import UserNotFound
 
 from control.models.models import (
@@ -36,8 +32,15 @@ from control.codes import (
     USER_NOT_ADMIN,
 )
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Admins"],
+)
 origins = ["*"]
+
+# We create global handlers for the service layer.
+# Since the handlers are stateless, we don't care if it's global.
+follower_handler = FollowHandler()
+admin_handler = AdminHandler()
 
 
 @router.post("/register_admin")
@@ -67,20 +70,6 @@ def login_admin(user_data: UserLogIn):
     return handle_user_login(user_data.password, user.password, user_data.email)
 
 
-@router.post("/is_admin", status_code=200)
-def is_admin(token: str = Header(...)):
-    """
-    This function is the endpoint to check if a user is an admin.
-    """
-    try:
-        admin_email = auth_handler.decode_token(token)
-        return is_email_admin(admin_email)
-    except UserNotFound as error:
-        raise HTTPException(
-            status_code=USER_NOT_FOUND, detail="Invalid token"
-        ) from error
-
-
 @router.put("/users/block/{email}")
 def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     """
@@ -93,12 +82,12 @@ def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     """
     try:
         admin_email = auth_handler.decode_token(token)
-        if not is_email_admin(admin_email):
+        if not admin_handler.is_email_admin(admin_email):
             raise HTTPException(
                 status_code=USER_NOT_ADMIN,
                 detail="Only administrators can block users",
             )
-        change_blocked_status_service(email, blocked)
+        admin_handler.change_blocked_status(email, blocked)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is now " + ("blocked" if blocked else "unblocked")}
@@ -120,7 +109,7 @@ def make_admin(email: str, token: str = Header(...)):
             detail="Only administrators can make other users administrators",
         )
     try:
-        make_admin_service(email)
+        admin_handler.make_admin(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is now an admin"}
@@ -142,10 +131,30 @@ def remove_admin_status(email: str, token: str = Header(...)):
             detail="Only administrators can remove other users from being administrators",
         )
     try:
-        remove_admin_service(email)
+        admin_handler.remove_admin_status(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is no longer an admin"}
+
+
+@router.get("/admin/find_users/{username}")
+def find_users(username: str, start: int, ammount: int, token: str = Header(...)):
+    """
+    Searches among all users (and admins) for a given username.
+
+    :param username: The username to search for.
+    :param start: The index of the first user to return.
+    :param ammount: The ammount of users to return.
+    :param token: Token used to verify the user who is calling this is an admin.
+    :return: Status code with a JSON message.
+    """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can find users",
+        )
+    users = admin_handler.search_for_users_admins(username, start, ammount)
+    return generate_response_list(users)
 
 
 @router.get("/admin/is_admin")
@@ -179,5 +188,22 @@ def get_all_users(token: str = Header(...)):
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can get all users",
         )
-    user_list = get_all_users_service()
+    user_list = admin_handler.get_all_users()
     return generate_response_list(user_list)
+
+
+@router.get("/following")
+def get_all_following_relations(token: str = Header(...)):
+    """
+    This function is a function that returns all of the following relations in the database.
+
+    :param token: Token used to verify the user who is calling this is an admin.
+
+    :return: JSON of all users.
+    """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can get all following relations",
+        )
+    return follower_handler.get_all_following_relations()

@@ -8,7 +8,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 from control.routers import followers, admins, users, users_put
 
-app = FastAPI()
+app = FastAPI(
+    title="User's API", description="This is the API for the user's microservice."
+)
+
 origins = ["*"]
 # All the routers are here:
 app.include_router(admins.router)

@@ -64,6 +64,7 @@ class User(Base):
         admin=False,
         location="",
         blocked=False,
+        is_public=True,
     ):  # This is for the repetive nature of this code and users.save()
         # pylint: disable=R0801
         self.username = username
@@ -77,6 +78,7 @@ class User(Base):
         self.admin = admin
         self.location = location
         self.blocked = blocked
+        self.is_public = is_public
 
 
 class Following(Base):
@@ -111,9 +113,6 @@ class Interests(Base):
 
     __tablename__ = "interests"
 
-    # We disable duplicate code here since it is a table and the
-    # foreign key is the same in all tables
-    # pylint: disable=R0801
     user_id = create_users_foreign_key(True)
 
     interest = Column(String(75), nullable=False, primary_key=True)

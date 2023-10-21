@@ -12,14 +12,8 @@ from fastapi import (
     HTTPException,
     Query,
 )
-from service.user import (
-    get_user_email as get_user_service,
-    remove_user_email,
-    get_user_interests as get_user_interests_service,
-    get_user_username,
-    search_for_users,
-)
-from service.errors import UserNotFound
+from service.user_handler import UserHandler
+from service.errors import UserNotFound, MaxAmmountExceeded
 
 from control.models.models import (
     UserLogIn,
@@ -39,12 +33,22 @@ from control.utils.utils import (
     handle_user_login,
     handle_get_user_email,
 )
-from control.codes import USER_NOT_FOUND, USER_NOT_ADMIN
+from control.codes import (
+    USER_NOT_FOUND,
+    INCORRECT_CREDENTIALS,
+    USER_NOT_ADMIN,
+    BAD_REQUEST,
+)
 
-router = APIRouter()
+router = APIRouter(
+    tags=["Users"],
+)
 cred = credentials.Certificate("firebase_credentials.json")
 firebase_admin.initialize_app(cred)
 
+# We create a global handler for the service layer.
+# Since the handler is stateless, we don't care if it's global.
+user_handler = UserHandler()
 
 # Create a POST route
 @router.post("/register", status_code=201)
@@ -67,6 +71,10 @@ def login(user_data: UserLogIn):
     :return: Status code with a JSON message.
     """
     user = handle_get_user_email(user_data.email)
+    if user.admin:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        )
     # user.password has the hashed_password.
     return handle_user_login(user_data.password, user.password, user_data.email)
 
@@ -83,6 +91,10 @@ def login_with_google(firebase_id_token: str = Header(...)):
     try:
         decoded_token = auth.verify_id_token(firebase_id_token)
         user = handle_get_user_email(decoded_token["email"])
+        if user.admin:
+            raise HTTPException(
+                status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+            )
         token = auth_handler.encode_token(user.email)
         return {"message": "Login successful", "token": token}
     except InvalidIdTokenError as error:
@@ -116,7 +128,7 @@ def get_user(
 
     if email:
         try:
-            user = get_user_service(email)
+            user = user_handler.get_user_email(email)
             user = generate_response(user)
             return user
         except UserNotFound as error:
@@ -126,7 +138,7 @@ def get_user(
 
     if username:
         try:
-            user = get_user_username(username)
+            user = user_handler.get_user_username(username)
             user = generate_response(user)
             return user
         except UserNotFound as error:
@@ -147,7 +159,7 @@ def get_interests(token: str = Header(...)):
     """
     try:
         email = auth_handler.decode_token(token)
-        return get_user_interests_service(email)
+        return user_handler.get_user_interests(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -165,7 +177,7 @@ def delete_user(email: str, token: str = Header(...)):
     """
     if token_is_admin(token) or email == auth_handler.decode_token(token):
         try:
-            remove_user_email(email)
+            user_handler.remove_user_email(email)
         except UserNotFound as error:
             raise HTTPException(
                 status_code=USER_NOT_FOUND, detail=str(error)
@@ -190,9 +202,13 @@ def get_user_by_token(token: str = Header(...)):
         user_email = auth_handler.decode_token(
             token
         )  # auth_handler.auth_wrapper(token)
-        user = get_user_service(user_email)
+        user = user_handler.get_user_email(user_email)
         user = generate_response(user)
         return user
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail=str(error)
+        ) from error
     except HTTPException as error:
         raise error
 
@@ -209,16 +225,23 @@ def get_user_by_token_with_id(token: str = Header(...)):
         user_email = auth_handler.decode_token(
             token
         )  # auth_handler.auth_wrapper(token)
-        user = get_user_service(user_email)
+        user = user_handler.get_user_email(user_email)
         user = generate_response_with_id(user)
         return user
+    except UserNotFound as error:
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail=str(error)
+        ) from error
     except HTTPException as error:
         raise error
 
 
-@router.get("/user/search/{username}")
-def search_users_by_username(
-    username: str, offset: int, ammount: int, token: str = Header(...)
+@router.get("/user/search/{query}")
+def search_users(
+    query: str,
+    offset=Query(0, title="offset", description="offset for pagination"),
+    ammount=Query(10, title="ammount", description="max ammount of users to return"),
+    token: str = Header(...),
 ):
     """
     This function retrieves an user by token.
@@ -227,5 +250,8 @@ def search_users_by_username(
     :return: User details or a 401 response.
     """
     check_for_user_token(token)
-    users = search_for_users(username, offset, ammount)
+    try:
+        users = user_handler.search_for_users(query, int(offset), int(ammount))
+    except MaxAmmountExceeded as error:
+        raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     return generate_response_list(users)

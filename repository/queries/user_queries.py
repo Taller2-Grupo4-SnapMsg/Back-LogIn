@@ -3,6 +3,7 @@
 Module dedicated to the queries that the repository might need.
 """
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import and_, not_, or_
 from repository.tables.users import User, Interests
 from repository.errors import (
     UsernameAlreadyExists,
@@ -56,6 +57,7 @@ def create_user(session, email, password, username, data):
         admin=data["admin"],
         location=data["location"],
         blocked=data["blocked"],
+        is_public=data["is_public"],
     )
     try:
         session.add(user)
@@ -204,6 +206,18 @@ def update_user_blocked_status(session, user_id, blocked):
     return None
 
 
+def update_user_public_status(session, user_id, public):
+    """
+    Changes the public status of the user with the given id.
+    """
+    user = session.query(User).filter(User.id == user_id).first()
+    if user:
+        setattr(user, "is_public", public)
+        session.commit()
+        return user
+    return None
+
+
 def get_all_users(session):
     """
     Query mostly for testing, it retrieves all the users of the database.
@@ -259,7 +273,35 @@ def get_user_interests(session, user_id):
     return session.query(Interests).filter(Interests.user_id == user_id).all()
 
 
-def search_for_users(session, username, start, amount):
+def search_for_users(session, username: str, start, amount):
+    """
+    Searches for users with the given username, it doesn't list admins.
+
+    :param: session: the session to use
+    :param: username: the username to search for
+    :param: start: the start of the search (offset)
+    :param: amount: the amount of users to return
+    :returns: a list of users with the given username
+    """
+    return (
+        session.query(User)
+        .filter(
+            and_(
+                or_(
+                    User.username.ilike(f"%{username}%"),
+                    User.name.ilike(f"%{username}%"),
+                    User.surname.ilike(f"%{username}%"),
+                ),
+                not_(User.admin),
+            )
+        )
+        .offset(start)
+        .limit(amount)
+        .all()
+    )
+
+
+def search_for_users_admins(session, username, start, amount):
     """
     Searches for users with the given username.
 
@@ -271,7 +313,7 @@ def search_for_users(session, username, start, amount):
     """
     return (
         session.query(User)
-        .filter(User.username.like(f"%{username}%"))
+        .filter(User.username.ilike(f"%{username}%"))
         .offset(start)
         .limit(amount)
         .all()
