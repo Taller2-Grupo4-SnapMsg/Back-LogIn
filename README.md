@@ -223,3 +223,9 @@ Si no, tenes que cambiar el link en el docker-compose para usar el FASTAPI como 
 
 ## Si no sabes usar PgAdmin...
 La primera vez que entres vas a tener que "agregar un server" estableciendo una coneccion con nuestro postgres. Para eso preguntale a Alejo(?)
+
+
+# Comando para verificar pylint
+```
+find . -type f -name "*.py" | xargs pylint   
+```

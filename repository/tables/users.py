@@ -14,7 +14,7 @@ from sqlalchemy.orm import declarative_base
 Base = declarative_base()
 
 
-def create_users_foreign_key():
+def create_users_foreign_key(is_primary_key):
     """
     This function creates a column with user_id as a foregin key.
     """
@@ -22,7 +22,7 @@ def create_users_foreign_key():
         Integer,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
-        primary_key=True,
+        primary_key=is_primary_key,
     )
 
 
@@ -93,7 +93,7 @@ class Following(Base):
         primary_key=True,
     )
 
-    following_id = create_users_foreign_key()
+    following_id = create_users_foreign_key(True)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
     _table_args__ = (UniqueConstraint("user_id", "following_id"),)
@@ -114,7 +114,7 @@ class Interests(Base):
     # We disable duplicate code here since it is a table and the
     # foreign key is the same in all tables
     # pylint: disable=R0801
-    user_id = create_users_foreign_key()
+    user_id = create_users_foreign_key(True)
 
     interest = Column(String(75), nullable=False, primary_key=True)
 
