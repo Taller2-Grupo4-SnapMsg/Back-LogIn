@@ -212,7 +212,7 @@ class UserHandler:
         interests = get_user_interests_repo(user.id)
         return [interest.interest for interest in interests]
 
-    def search_for_users(self, username: str, start: int, ammount: int):
+    def search_for_users(self, username, options):
         """
         This function is used to search for users.
 
@@ -223,8 +223,14 @@ class UserHandler:
         it will return everything it found.
         :return: A list of users.
         """
-        if ammount > MAX_AMMOUNT:
+        if options["ammount"] > MAX_AMMOUNT:
             raise MaxAmmountExceeded(
                 "Ammount can't be greater than " + str(MAX_AMMOUNT)
             )
-        return search_for_users_repo(username, start, ammount)
+        return search_for_users_repo(
+            username,
+            options["start"],
+            options["ammount"],
+            options["email"],
+            options["in_followers"],
+        )

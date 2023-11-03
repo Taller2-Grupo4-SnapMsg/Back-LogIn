@@ -93,7 +93,9 @@ def test_admin_doesnt_appear_on_user_search():
 
     assert user_handler.get_user_email(EMAIL).admin is True
 
-    users = user_handler.search_for_users(USERNAME, START, AMMOUNT)
+    options = {"start": START, "ammount": AMMOUNT, "in_followers": False, "email": None}
+
+    users = user_handler.search_for_users(USERNAME, options)
 
     assert len(users) == 0
 

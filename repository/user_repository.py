@@ -26,6 +26,7 @@ from repository.queries.user_queries import (
     add_user_interest,
     get_user_interests as get_user_interests_db,
     search_for_users as search_for_users_db,
+    search_users_in_followers as search_users_in_followers_db,
     search_for_users_admins as search_for_users_admins_db,
     update_user_public_status as update_user_public_status_db,
 )
@@ -364,7 +365,9 @@ def get_user_interests(user_id: int):
     return get_user_interests_db(session, user_id)
 
 
-def search_for_users(username: str, start: int, amount: int):
+def search_for_users(
+    username: str, start: int, amount: int, email=None, in_followers=False
+):
     """
     This function is used for searching for users.
     It only lists users that are not admins.
@@ -374,6 +377,8 @@ def search_for_users(username: str, start: int, amount: int):
     :param amount: The amount of users to return.
     :return: A list of users.
     """
+    if in_followers:
+        return search_users_in_followers_db(session, username, start, amount, email)
     return search_for_users_db(session, username, start, amount)
 
 

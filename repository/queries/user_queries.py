@@ -4,7 +4,7 @@ Module dedicated to the queries that the repository might need.
 """
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_, not_, or_
-from repository.tables.users import User, Interests
+from repository.tables.users import User, Interests, Following
 from repository.errors import (
     UsernameAlreadyExists,
     EmailAlreadyExists,
@@ -298,6 +298,29 @@ def search_for_users(session, username: str, start, amount):
         .offset(start)
         .limit(amount)
         .all()
+    )
+
+
+def search_users_in_followers(session, username: str, start, amount, email):
+    """
+    Searches for users with the given username, it doesn't list admins.
+
+    :param: session: the session to use
+    :param: username: the username to search for
+    :param: start: the start of the search (offset)
+    :param: amount: the amount of users to return
+    :returns: a list of users with the given username who are followed by others
+    """
+    user = session.query(User).filter(User.email == email).first()
+    user_id = user.id
+    return (
+        session.query(User)
+        .join(Following, Following.user_id == User.id)
+        .filter(Following.following_id == user_id)
+        .filter(User.username.ilike(f"{username}%"))
+        .filter(not_(User.admin))
+        .offset(start)
+        .limit(amount)
     )
 
 
