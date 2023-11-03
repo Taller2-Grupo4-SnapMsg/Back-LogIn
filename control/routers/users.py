@@ -50,6 +50,7 @@ firebase_admin.initialize_app(cred)
 # Since the handler is stateless, we don't care if it's global.
 user_handler = UserHandler()
 
+
 # Create a POST route
 @router.post("/register", status_code=201)
 def register_user(user_data: UserRegistration):

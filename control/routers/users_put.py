@@ -25,6 +25,7 @@ origins = ["*"]
 # Since the handler is stateless, we don't care if it's global.
 user_handler = UserHandler()
 
+
 # Route to update user information
 @router.put("/users/password")
 def change_password(new_password: str, token: str = Header(...)):

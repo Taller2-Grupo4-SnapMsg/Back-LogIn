@@ -103,3 +103,26 @@ class Hashtag(Base):
     def __init__(self, content_id, hashtag):
         self.content_id = content_id
         self.hashtag = hashtag
+
+
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-instance-attributes
+class Mention(Base):
+    """
+    Class that represents the mention table on the db
+    """
+
+    __tablename__ = "mentions"
+
+    # We disable duplicate code here since it is a table and the
+    # foreign key is the same in all tables
+    # pylint: disable=R0801
+    content_id = create_content_foreign_key(True)
+    user_mention_id = create_users_foreign_key(True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    _table_args__ = (UniqueConstraint("content_id", "user_mention_id"),)
+
+    def __init__(self, content_id, user_mention_id):
+        self.content_id = content_id
+        self.user_mention_id = user_mention_id
