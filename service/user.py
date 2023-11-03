@@ -16,6 +16,7 @@ from service.errors import (
     EmailAlreadyRegistered,
 )
 
+
 # Pydantic model for users
 # pylint: disable=too-many-instance-attributes
 class User(BaseModel):
