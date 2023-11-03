@@ -202,6 +202,5 @@ def test_more_than_max_ammount_throws_exception():
     This function tests that if we search for more than the max ammount of users,
     we get an exception.
     """
-    pytest.raises(
-        MaxAmmountExceeded, handler.search_for_users, "Real", START, MAX_AMMOUNT + 1
-    )
+    options = create_options_for_user_search(START, MAX_AMMOUNT + 1, False, None)
+    pytest.raises(MaxAmmountExceeded, handler.search_for_users, "Real", options)
