@@ -242,6 +242,9 @@ def search_users(
     query: str,
     offset=Query(0, title="offset", description="offset for pagination"),
     ammount=Query(10, title="ammount", description="max ammount of users to return"),
+    in_followers: bool = Query(
+        False, title="in_followers", description="search in followers"
+    ),
     token: str = Header(...),
 ):
     """
@@ -250,9 +253,15 @@ def search_users(
     :param token: The authentication token.
     :return: User details or a 401 response.
     """
-    check_for_user_token(token)
     try:
-        users = user_handler.search_for_users(query, int(offset), int(ammount))
+        user_email = auth_handler.decode_token(token)
+        user_search_options = {
+            "start": int(offset),
+            "ammount": int(ammount),
+            "in_followers": in_followers,
+            "email": user_email,
+        }
+        users = user_handler.search_for_users(query, user_search_options)
     except MaxAmmountExceeded as error:
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     return generate_response_list(users)

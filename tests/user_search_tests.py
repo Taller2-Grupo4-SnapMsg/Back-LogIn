@@ -23,6 +23,18 @@ AMMOUNT = 10
 handler = UserHandler()
 
 
+def create_options_for_user_search(start, ammount, in_followers, email):
+    """
+    This function creates the options for the user search.
+    """
+    return {
+        "start": start,
+        "ammount": ammount,
+        "in_followers": in_followers,
+        "email": email,
+    }
+
+
 def test_search_for_ambiguous_term_and_only_get_ten():
     """
     This function tests that if we search a term that appears
@@ -33,7 +45,9 @@ def test_search_for_ambiguous_term_and_only_get_ten():
 
     create_multiple_generic_users(AMMOUNT)
 
-    users = handler.search_for_users("Real", START, MAX_AMMOUNT)
+    options = create_options_for_user_search(START, AMMOUNT, False, None)
+
+    users = handler.search_for_users("Real", options)
 
     assert len(users) == AMMOUNT
 
@@ -48,7 +62,9 @@ def test_search_returns_a_list_of_users():
 
     save_test_user_to_db()
 
-    users = handler.search_for_users(USERNAME, START, AMMOUNT)
+    options = create_options_for_user_search(START, AMMOUNT, False, None)
+
+    users = handler.search_for_users(USERNAME, options)
 
     assert len(users) == 1
     assert users[0].email == EMAIL
@@ -64,7 +80,9 @@ def test_search_for_a_name_partially():
 
     save_test_user_to_db()
 
-    users = handler.search_for_users(USERNAME[0:3], START, AMMOUNT)
+    options = create_options_for_user_search(START, AMMOUNT, False, None)
+
+    users = handler.search_for_users(USERNAME[0:3], options)
 
     assert len(users) == 1
     assert users[0].email == EMAIL
@@ -82,7 +100,9 @@ def test_search_for_a_name_partially_multiple_users():
     for i in range(0, AMMOUNT):
         save_test_user_to_db(email=EMAIL + str(i), username=USERNAME + str(i))
 
-    users = handler.search_for_users(USERNAME[0:3], START, AMMOUNT)
+    options = create_options_for_user_search(START, AMMOUNT, False, None)
+
+    users = handler.search_for_users(USERNAME[0:3], options)
     emails = [user.email for user in users]
 
     assert len(users) == AMMOUNT
@@ -101,7 +121,9 @@ def test_search_for_a_name_partially_multiple_users_with_start():
 
     create_multiple_generic_users(AMMOUNT)
 
-    users = handler.search_for_users(USERNAME[0:3], 5, AMMOUNT)
+    options = create_options_for_user_search(5, AMMOUNT, False, None)
+
+    users = handler.search_for_users(USERNAME[0:3], options)
 
     assert len(users) == AMMOUNT - 5
     for i in range(0, AMMOUNT - 5):
@@ -116,7 +138,9 @@ def test_search_for_users_and_there_is_none():
     """
     remove_test_user_from_db()
 
-    users = handler.search_for_users(USERNAME, START, AMMOUNT)
+    options = create_options_for_user_search(START, AMMOUNT, False, None)
+
+    users = handler.search_for_users(USERNAME, options)
 
     assert len(users) == 0
 
@@ -129,7 +153,9 @@ def test_search_for_users_and_there_is_none_with_start():
     """
     remove_test_user_from_db()
 
-    users = handler.search_for_users(USERNAME, 5, AMMOUNT)
+    options = create_options_for_user_search(5, AMMOUNT, False, None)
+
+    users = handler.search_for_users(USERNAME, options)
 
     assert len(users) == 0
 
@@ -144,7 +170,9 @@ def test_search_for_user_that_doesnt_match_and_we_get_empty_list():
 
     save_test_user_to_db()
 
-    users = handler.search_for_users("not a user", START, AMMOUNT)
+    options = create_options_for_user_search(START, AMMOUNT, False, None)
+
+    users = handler.search_for_users("not a user", options)
 
     assert len(users) == 0
 
@@ -159,7 +187,9 @@ def test_search_for_user_surname_and_get_results():
 
     save_test_user_to_db()
 
-    users = handler.search_for_users("real_surname", START, AMMOUNT)
+    options = create_options_for_user_search(START, AMMOUNT, False, None)
+
+    users = handler.search_for_users("real_surname", options)
 
     assert len(users) == 1
     assert users[0].email == EMAIL
@@ -172,6 +202,5 @@ def test_more_than_max_ammount_throws_exception():
     This function tests that if we search for more than the max ammount of users,
     we get an exception.
     """
-    pytest.raises(
-        MaxAmmountExceeded, handler.search_for_users, "Real", START, MAX_AMMOUNT + 1
-    )
+    options = create_options_for_user_search(START, MAX_AMMOUNT + 1, False, None)
+    pytest.raises(MaxAmmountExceeded, handler.search_for_users, "Real", options)
