@@ -13,22 +13,11 @@ from service.admin_handler import AdminHandler
 from service.errors import UserNotFound
 
 from control.models.models import (
-    UserLogIn,
-    UserRegistration,
     UserResponse,
 )
-from control.utils.utils import (
-    generate_response_list,
-    token_is_admin,
-    create_user_from_user_data,
-    handle_user_registration,
-    handle_user_login,
-    handle_get_user_email,
-)
-from control.utils.auth import auth_handler
+from control.utils.utils import generate_response_list, token_is_admin
 from control.codes import (
     USER_NOT_FOUND,
-    INCORRECT_CREDENTIALS,
     USER_NOT_ADMIN,
 )
 
@@ -43,33 +32,6 @@ follower_handler = FollowHandler()
 admin_handler = AdminHandler()
 
 
-@router.post("/register_admin")
-def register_admin(user_data: UserRegistration):
-    """
-    This function is the endpoint for admin registration.
-    """
-
-    user = create_user_from_user_data(user_data)
-    user.set_admin(True)
-    return handle_user_registration(user)
-
-
-@router.post("/login_admin", status_code=200, response_model=dict)
-def login_admin(user_data: UserLogIn):
-    """
-    This function is the endpoint for the web backoffice front to log in an already existing admin
-
-    :param user: The user to login.
-    :return: Status code with a JSON message.
-    """
-    user = handle_get_user_email(user_data.email)
-    if not user.admin:
-        raise HTTPException(
-            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
-        )
-    return handle_user_login(user_data.password, user.password, user_data.email)
-
-
 @router.put("/users/block/{email}")
 def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     """
@@ -81,91 +43,15 @@ def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        admin_email = auth_handler.decode_token(token)
-        if not admin_handler.is_email_admin(admin_email):
+        if not token_is_admin(token):
             raise HTTPException(
                 status_code=USER_NOT_ADMIN,
-                detail="Only administrators can block users",
+                detail="Only administrators can change a user's blocked status",
             )
         admin_handler.change_blocked_status(email, blocked)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is now " + ("blocked" if blocked else "unblocked")}
-
-
-# Route to making an admin
-@router.put("/users/{email}/make_admin")
-def make_admin(email: str, token: str = Header(...)):
-    """
-    This function changes the status of email to admin.
-
-    :param email: The email of the user to update.
-    :param token: Token used to verify the user who is calling this is an admin.
-    :return: Status code with a JSON message.
-    """
-    if not token_is_admin(token):
-        raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can make other users administrators",
-        )
-    try:
-        admin_handler.make_admin(email)
-    except UserNotFound as error:
-        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    return {"message": email + " is now an admin"}
-
-
-# Route to removing admin status
-@router.put("/users/{email}/remove_admin")
-def remove_admin_status(email: str, token: str = Header(...)):
-    """
-    This function is a test function that mocks updating user information.
-
-    :param email: The email of the user to update.
-    :param token: Token used to verify the user who is calling this is an admin.
-    :return: Status code with a JSON message.
-    """
-    if not token_is_admin(token):
-        raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can remove other users from being administrators",
-        )
-    try:
-        admin_handler.remove_admin_status(email)
-    except UserNotFound as error:
-        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    return {"message": email + " is no longer an admin"}
-
-
-@router.get("/admin/find_users/{username}")
-def find_users(username: str, start: int, ammount: int, token: str = Header(...)):
-    """
-    Searches among all users (and admins) for a given username.
-
-    :param username: The username to search for.
-    :param start: The index of the first user to return.
-    :param ammount: The ammount of users to return.
-    :param token: Token used to verify the user who is calling this is an admin.
-    :return: Status code with a JSON message.
-    """
-    if not token_is_admin(token):
-        raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can find users",
-        )
-    users = admin_handler.search_for_users_admins(username, start, ammount)
-    return generate_response_list(users)
-
-
-@router.get("/admin/is_admin")
-def validate_admin_token(token: str = Header(...)):
-    """
-    This function checks if a token is an admin or not.
-
-    :param token: The authentication token.
-    :return: User details or a 401 response.
-    """
-    return {"is_admin": token_is_admin(token)}
 
 
 @router.get(

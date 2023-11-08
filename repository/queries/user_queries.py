@@ -3,7 +3,7 @@
 Module dedicated to the queries that the repository might need.
 """
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import and_, not_, or_
+from sqlalchemy import or_
 from repository.tables.users import User, Interests, Following
 from repository.errors import (
     UsernameAlreadyExists,
@@ -54,7 +54,6 @@ def create_user(session, email, password, username, data):
         date_of_birth=data["date_of_birth"],
         bio=data["bio"],
         avatar=data["avatar"],
-        admin=data["admin"],
         location=data["location"],
         blocked=data["blocked"],
         is_public=data["is_public"],
@@ -108,18 +107,6 @@ def get_id_by_username(session, username):
     Queries the database for the id of the user with the given username.
     """
     return session.query(User).filter(User.username == username).first().id
-
-
-def update_user_admin(session, user_id, new_admin_status):
-    """
-    Changes the admin status of the user with the given id.
-    """
-    user = session.query(User).filter(User.id == user_id).first()
-    if user:
-        setattr(user, "admin", new_admin_status)
-        session.commit()
-        return user
-    return None
 
 
 def update_user_bio(session, user_id, new_bio):
@@ -275,7 +262,7 @@ def get_user_interests(session, user_id):
 
 def search_for_users(session, username: str, start, amount):
     """
-    Searches for users with the given username, it doesn't list admins.
+    Searches for users with the given username.
 
     :param: session: the session to use
     :param: username: the username to search for
@@ -286,13 +273,10 @@ def search_for_users(session, username: str, start, amount):
     return (
         session.query(User)
         .filter(
-            and_(
-                or_(
-                    User.username.ilike(f"%{username}%"),
-                    User.name.ilike(f"%{username}%"),
-                    User.surname.ilike(f"%{username}%"),
-                ),
-                not_(User.admin),
+            or_(
+                User.username.ilike(f"%{username}%"),
+                User.name.ilike(f"%{username}%"),
+                User.surname.ilike(f"%{username}%"),
             )
         )
         .offset(start)
@@ -303,7 +287,7 @@ def search_for_users(session, username: str, start, amount):
 
 def search_users_in_followers(session, username: str, start, amount, email):
     """
-    Searches for users with the given username, it doesn't list admins.
+    Searches for users with the given username.
 
     :param: session: the session to use
     :param: username: the username to search for
@@ -318,26 +302,6 @@ def search_users_in_followers(session, username: str, start, amount, email):
         .join(Following, Following.user_id == User.id)
         .filter(Following.following_id == user_id)
         .filter(User.username.ilike(f"{username}%"))
-        .filter(not_(User.admin))
         .offset(start)
         .limit(amount)
-    )
-
-
-def search_for_users_admins(session, username, start, amount):
-    """
-    Searches for users with the given username.
-
-    :param: session: the session to use
-    :param: username: the username to search for
-    :param: start: the start of the search (offset)
-    :param: amount: the amount of users to return
-    :returns: a list of users with the given username
-    """
-    return (
-        session.query(User)
-        .filter(User.username.ilike(f"%{username}%"))
-        .offset(start)
-        .limit(amount)
-        .all()
     )

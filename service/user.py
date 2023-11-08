@@ -32,7 +32,6 @@ class User(BaseModel):
     date_of_birth: str = ""
     bio: str = ""
     avatar: str = ""
-    admin: bool = False
     location: str = ""
     blocked: bool = False
     is_public: bool = True
@@ -85,12 +84,6 @@ class User(BaseModel):
         """
         self.avatar = avatar
 
-    def set_admin(self, admin):
-        """
-        This function is used to set the user's admin.
-        """
-        self.admin = admin
-
     def set_location(self, location):
         """
         This function is for saving the user's location.
@@ -120,7 +113,6 @@ class User(BaseModel):
                 "date_of_birth": self.date_of_birth,
                 "bio": self.bio,
                 "avatar": self.avatar,
-                "admin": self.admin,
                 "location": "",  # At time of registration, location is empty
                 "blocked": False,  # At time of registration, user is not blocked
                 "is_public": True,  # At time of registration, user is public

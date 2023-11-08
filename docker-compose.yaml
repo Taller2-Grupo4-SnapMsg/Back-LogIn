@@ -35,6 +35,7 @@ services:
     working_dir: /app
     environment:
       DB_URI: postgresql://admin:admin123@postgres:5432/test-back-users # Use the appropriate DB URI here
+      GATEWAY_URL: https://gateway-api-service-merok23.cloud.okteto.net
     ports:
       - "8000:8000"
     command: bash -c "pip install --no-cache-dir -r requirements.txt && uvicorn control.controller:app --host 0.0.0.0 --port 8000"
