@@ -3,7 +3,9 @@
 This module is for util functions in the controller layer.
 """
 import datetime
+from os import getenv
 from fastapi import HTTPException
+import requests
 from control.utils.auth import auth_handler
 from control.codes import (
     USER_ALREADY_REGISTERED,
@@ -22,6 +24,8 @@ from service.errors import (
     UsernameAlreadyRegistered,
     EmailAlreadyRegistered,
 )
+
+TIMEOUT = 5
 
 admin_handler = AdminHandler()
 user_handler = UserHandler()
@@ -95,15 +99,14 @@ def token_is_admin(token: str):
     """
     This function checks if the token given is an admin.
     """
-    email = auth_handler.decode_token(token)
-    try:
-        return admin_handler.is_email_admin(email)
-    # in theory, this should never happen, since the token is verified
-    # We can't have a valid token that doesn't belong to a user
-    except UserNotFound as error:
-        raise HTTPException(
-            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
-        ) from error
+    headers_request = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "token": token,
+    }
+    url = getenv("GATEWAY_URL") + "/admin/is_admin"
+    response = requests.get(url, headers=headers_request, timeout=TIMEOUT)
+    return response.status_code == 200
 
 
 def create_user_from_user_data(user_data: UserRegistration):

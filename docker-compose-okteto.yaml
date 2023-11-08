@@ -6,6 +6,7 @@ services:
     working_dir: /app
     environment:
       DB_URI: postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
+      GATEWAY_URL: https://gateway-api-service-merok23.cloud.okteto.net
     ports:
       - "8000:8000"
     command: bash -c "pip install --no-cache-dir -r requirements.txt && uvicorn control.controller:app --host 0.0.0.0 --port 8000"

@@ -36,7 +36,6 @@ def create_generic_user(email=EMAIL, username=USERNAME, password=PASSWORD):
         username=username,
         date_of_birth="666 6 6",
         bio="Real_bio",
-        admin=False,
         avatar="image.png",
         location="Real_location",
         blocked=False,

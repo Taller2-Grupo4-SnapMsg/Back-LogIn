@@ -14,7 +14,6 @@ from repository.queries.user_queries import (
     get_user_by_mail as get_user_by_mail_db,
     get_user_by_username as get_user_by_username_db,
     update_user_password as update_user_password_db,
-    update_user_admin as update_user_admin_db,
     update_user_bio as update_user_bio_db,
     update_user_last_name as update_user_last_name_db,
     update_user_name as update_user_name_db,
@@ -27,7 +26,6 @@ from repository.queries.user_queries import (
     get_user_interests as get_user_interests_db,
     search_for_users as search_for_users_db,
     search_users_in_followers as search_users_in_followers_db,
-    search_for_users_admins as search_for_users_admins_db,
     update_user_public_status as update_user_public_status_db,
 )
 
@@ -122,30 +120,6 @@ def remove_user(email: str):
     if user is None:
         raise KeyError()
     delete_user_db(session, user.id)
-
-
-def make_admin(email: str):
-    """
-    This is used for making a user admin.
-
-    :param email: The email used to identify the user.
-    """
-    user = get_user_by_mail_db(session, email)
-    if user is None:
-        raise KeyError()
-    update_user_admin_db(session, user.id, True)
-
-
-def remove_admin_status(email: str):
-    """
-    This is used for removing a user's admin status.
-
-    :param email: The email used to identify the user.
-    """
-    user = get_user_by_mail_db(session, email)
-    if user is None:
-        raise KeyError()
-    update_user_admin_db(session, user.id, False)
 
 
 def create_follow(email: str, email_to_follow: str):
@@ -370,7 +344,6 @@ def search_for_users(
 ):
     """
     This function is used for searching for users.
-    It only lists users that are not admins.
 
     :param username: The username to search for.
     :param start: The start of the search. (offset)
@@ -380,19 +353,6 @@ def search_for_users(
     if in_followers:
         return search_users_in_followers_db(session, username, start, amount, email)
     return search_for_users_db(session, username, start, amount)
-
-
-def search_for_users_admins(username: str, start: int, amount: int):
-    """
-    This function is used for searching for users.
-    Lists all users, including those who are admins.
-
-    :param username: The username to search for.
-    :param start: The start of the search. (offset)
-    :param amount: The amount of users to return.
-    :return: A list of users.
-    """
-    return search_for_users_admins_db(session, username, start, amount)
 
 
 session.close()

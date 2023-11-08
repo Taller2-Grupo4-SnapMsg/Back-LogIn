@@ -72,10 +72,6 @@ def login(user_data: UserLogIn):
     :return: Status code with a JSON message.
     """
     user = handle_get_user_email(user_data.email)
-    if user.admin:
-        raise HTTPException(
-            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
-        )
     # user.password has the hashed_password.
     return handle_user_login(user_data.password, user.password, user_data.email)
 
@@ -92,10 +88,6 @@ def login_with_google(firebase_id_token: str = Header(...)):
     try:
         decoded_token = auth.verify_id_token(firebase_id_token)
         user = handle_get_user_email(decoded_token["email"])
-        if user.admin:
-            raise HTTPException(
-                status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
-            )
         token = auth_handler.encode_token(user.email)
         return {"message": "Login successful", "token": token}
     except InvalidIdTokenError as error:

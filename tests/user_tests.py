@@ -171,7 +171,6 @@ def test_setters_work():
     user.set_date_of_birth("666 6 6")
     user.set_bio("Real_bio")
     user.set_avatar("image.png")
-    user.set_admin(True)
     user.set_location("Argentina")
     user.set_blocked(True)
 
@@ -183,7 +182,6 @@ def test_setters_work():
     assert user.date_of_birth == "666 6 6"
     assert user.bio == "Real_bio"
     assert user.avatar == "image.png"
-    assert user.admin is True
     assert user.location == "Argentina"
     assert user.blocked is True
 
