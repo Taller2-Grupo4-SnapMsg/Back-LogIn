@@ -23,7 +23,6 @@ from control.models.models import (
 )
 from control.utils.auth import auth_handler
 from control.utils.utils import (
-    check_for_user_token,
     token_is_admin,
     generate_response,
     generate_response_list,
@@ -111,7 +110,11 @@ def get_user(
     :return: User details or a 404 response.
     """
     # Checks the person requesting is a logged user:
-    check_for_user_token(token)
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Only administrators can use this endpoint",
+        )
 
     if email is None and username is None:
         raise HTTPException(
