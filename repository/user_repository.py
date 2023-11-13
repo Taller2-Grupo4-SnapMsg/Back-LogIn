@@ -205,12 +205,14 @@ def remove_follow(user_id: int, user_id_to_unfollow: int):
     remove_follow_db(session, user_id, user_id_to_unfollow)
 
 
-def get_user_collection():
+def get_user_collection(start, ammount):
     """
     This is a debug function that gets all the users from the db
+    :param: start: The start of the search. (offset)
+    :param: ammount: The amount of users to return.
     :return: A list of all the users in the db
     """
-    return get_all_users_db(session)
+    return get_all_users_db(session, start, ammount)
 
 
 def update_user_bio(email: str, bio: str):

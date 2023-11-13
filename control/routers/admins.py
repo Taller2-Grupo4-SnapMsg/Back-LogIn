@@ -6,11 +6,13 @@ from fastapi import (
     APIRouter,
     Header,
     HTTPException,
+    Query,
 )
 
 from service.follow_handler import FollowHandler
 from service.admin_handler import AdminHandler
-from service.errors import UserNotFound
+from service.user_handler import UserHandler
+from service.errors import UserNotFound, MaxAmmountExceeded
 
 from control.models.models import (
     UserResponse,
@@ -19,6 +21,7 @@ from control.utils.utils import generate_response_list, token_is_admin
 from control.codes import (
     USER_NOT_FOUND,
     USER_NOT_ADMIN,
+    BAD_REQUEST,
 )
 
 router = APIRouter(
@@ -30,6 +33,7 @@ origins = ["*"]
 # Since the handlers are stateless, we don't care if it's global.
 follower_handler = FollowHandler()
 admin_handler = AdminHandler()
+user_handler = UserHandler()
 
 
 @router.put("/users/block/{email}")
@@ -61,10 +65,18 @@ def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
         400: {"description": "Only administrators can get all users"},
     },
 )
-def get_all_users(token: str = Header(...)):
+def get_all_users(
+    start: int = Query(0, title="offset", description="offset for pagination"),
+    ammount: int = Query(
+        10, title="ammount", description="max ammount of users to return"
+    ),
+    token: str = Header(...),
+):
     """
     This function is a functon that returns all of the users in the database.
 
+    :param start: The offset for pagination.
+    :param ammount: The max ammount of users to return.
     :param token: Token used to verify the user who is calling this is an admin.
 
     :return: JSON of all users.
@@ -74,7 +86,46 @@ def get_all_users(token: str = Header(...)):
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can get all users",
         )
-    user_list = admin_handler.get_all_users()
+    try:
+        user_list = admin_handler.get_all_users(start, ammount)
+    except ValueError as error:
+        raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
+    except MaxAmmountExceeded as error:
+        raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
+    return generate_response_list(user_list)
+
+
+@router.get("/users/{query}")
+def get_users_by_query(
+    query: str,
+    start: int = Query(0, title="offset", description="offset for pagination"),
+    ammount: int = Query(
+        10, title="ammount", description="max ammount of users to return"
+    ),
+    token: str = Header(...),
+):
+    """
+    Function for admins so they can search by a query
+
+    :param query: The query to search by
+    :param start: The offset for pagination.
+    :param ammount: The max ammount of users to return.
+    """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Incorrect credentials",
+        )
+    try:
+        options = {
+            "start": start,
+            "ammount": ammount,
+            "in_followers": False,
+            "email": None,
+        }
+        user_list = user_handler.search_for_users(query, options)
+    except MaxAmmountExceeded as error:
+        raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     return generate_response_list(user_list)
 
 
