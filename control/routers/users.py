@@ -95,56 +95,6 @@ def login_with_google(firebase_id_token: str = Header(...)):
         ) from error
 
 
-@router.get("/users/find", response_model=UserResponse)
-def get_user(
-    email: str = Query(None, title="Email", description="User email"),
-    username: str = Query(None, title="Username", description="Username of the user"),
-    token: str = Header(...),
-):
-    """
-    This function retrieves a user by either email or username.
-
-    :param email: The email of the user to get.
-    :param username: The username of the user to get.
-    :param token: Token used to verify the user.
-    :return: User details or a 404 response.
-    """
-    # Checks the person requesting is a logged user:
-    if not token_is_admin(token):
-        raise HTTPException(
-            status_code=USER_NOT_ADMIN,
-            detail="Only administrators can use this endpoint",
-        )
-
-    if email is None and username is None:
-        raise HTTPException(
-            status_code=400,
-            detail="At least one of 'email' or 'username' must be provided.",
-        )
-
-    if email:
-        try:
-            user = user_handler.get_user_email(email)
-            user = generate_response(user)
-            return user
-        except UserNotFound as error:
-            raise HTTPException(
-                status_code=USER_NOT_FOUND, detail=str(error)
-            ) from error
-
-    if username:
-        try:
-            user = user_handler.get_user_username(username)
-            user = generate_response(user)
-            return user
-        except UserNotFound as error:
-            raise HTTPException(
-                status_code=USER_NOT_FOUND, detail=str(error)
-            ) from error
-    # it never reachs here, but pylint...
-    return {"message": "Something went wrong"}
-
-
 @router.get("/users/interests")
 def get_interests(token: str = Header(...)):
     """
