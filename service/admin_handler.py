@@ -7,6 +7,8 @@ from repository.user_repository import (
     update_user_blocked_status as update_user_blocked_status_repo,
 )
 from service.errors import UserNotFound
+from service.errors import MaxAmmountExceeded
+from service.user_handler import MAX_AMMOUNT
 
 
 class AdminHandler:
@@ -14,11 +16,15 @@ class AdminHandler:
     This class is for encapsulating all the admin related functions and logic.
     """
 
-    def get_all_users(self):
+    def get_all_users(self, start: int, ammount: int):
         """
-        This function is used to get all users in the database.
+        This function is used to get all users in the database in a paginated way.
         """
-        return get_user_collection()
+        if start < 0 or ammount < 0:
+            raise ValueError("start and ammount must be positive")
+        if ammount > MAX_AMMOUNT:
+            raise MaxAmmountExceeded("ammount must be less than " + str(MAX_AMMOUNT))
+        return get_user_collection(start, ammount)
 
     def change_blocked_status(self, email: str, blocked_status: bool):
         """

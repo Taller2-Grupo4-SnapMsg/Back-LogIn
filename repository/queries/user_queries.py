@@ -205,11 +205,11 @@ def update_user_public_status(session, user_id, public):
     return None
 
 
-def get_all_users(session):
+def get_all_users(session, start, ammount):
     """
     Query mostly for testing, it retrieves all the users of the database.
     """
-    return session.query(User).all()
+    return session.query(User).offset(start).limit(ammount).all()
 
 
 def delete_user_interests(session, user_id):
@@ -260,23 +260,24 @@ def get_user_interests(session, user_id):
     return session.query(Interests).filter(Interests.user_id == user_id).all()
 
 
-def search_for_users(session, username: str, start, amount):
+def search_for_users(session, query: str, start, amount):
     """
     Searches for users with the given username.
 
     :param: session: the session to use
-    :param: username: the username to search for
+    :param: query: the query to search for
     :param: start: the start of the search (offset)
     :param: amount: the amount of users to return
-    :returns: a list of users with the given username
+    :returns: a list of users with the given query
     """
     return (
         session.query(User)
         .filter(
             or_(
-                User.username.ilike(f"%{username}%"),
-                User.name.ilike(f"%{username}%"),
-                User.surname.ilike(f"%{username}%"),
+                User.email.ilike(f"%{query}%"),
+                User.username.ilike(f"%{query}%"),
+                User.name.ilike(f"%{query}%"),
+                User.surname.ilike(f"%{query}%"),
             )
         )
         .offset(start)
