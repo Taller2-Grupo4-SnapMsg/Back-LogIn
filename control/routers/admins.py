@@ -206,7 +206,8 @@ def translate_path_to_image_link(firebase_path: str, token: str = Header(...)):
     bucket = storage.bucket()
     blob = bucket.blob(firebase_path)
     expiration_time = datetime.utcnow() + timedelta(minutes=5)
-    return blob.generate_signed_url(expiration=expiration_time, method="GET")
+    url = blob.generate_signed_url(expiration=expiration_time, method="GET")
+    return {"detail": url}
 
 
 @router.get("/following")
