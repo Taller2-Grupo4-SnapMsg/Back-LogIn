@@ -43,7 +43,7 @@ router = APIRouter(
     tags=["Users"],
 )
 cred = credentials.Certificate("firebase_credentials.json")
-firebase_admin.initialize_app(cred)
+firebase_admin.initialize_app(cred, {"storageBucket": "snapmsg-a9735.appspot.com"})
 
 # We create a global handler for the service layer.
 # Since the handler is stateless, we don't care if it's global.

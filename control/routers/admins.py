@@ -2,12 +2,14 @@
 """
 This module is dedicated for all the admin routes.
 """
+from datetime import datetime, timedelta
 from fastapi import (
     APIRouter,
     Header,
     HTTPException,
     Query,
 )
+from firebase_admin import storage
 
 from service.follow_handler import FollowHandler
 from service.admin_handler import AdminHandler
@@ -181,6 +183,30 @@ def get_user(
             ) from error
     # it never reachs here, but pylint...
     return {"message": "Something went wrong"}
+
+
+@router.get("/users/admin/image")
+def translate_path_to_image_link(firebase_path: str, token: str = Header(...)):
+    """
+    This endpoint translates the image_path from firebase to
+    a normal link that can be displayed in the browser.
+
+    :param firebase_path: The path to the image in firebase.
+    :param token: Token used to verify the admin.
+
+    :return: A link to the image.
+    """
+    if not token_is_admin(token):
+        raise HTTPException(
+            status_code=USER_NOT_ADMIN,
+            detail="Incorrect Credentials",
+        )
+    # Replace "%2F" with / and %40 with @
+    firebase_path = firebase_path.replace("%2F", "/").replace("%40", "@")
+    bucket = storage.bucket()
+    blob = bucket.blob(firebase_path)
+    expiration_time = datetime.utcnow() + timedelta(minutes=5)
+    return blob.generate_signed_url(expiration=expiration_time, method="GET")
 
 
 @router.get("/following")
