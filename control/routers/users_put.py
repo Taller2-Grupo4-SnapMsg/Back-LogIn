@@ -17,6 +17,7 @@ from control.utils.auth import auth_handler
 from control.codes import (
     USER_NOT_FOUND,
 )
+from control.utils.utils import check_and_get_user_from_token
 
 router = APIRouter(tags=["Users"])
 origins = ["*"]
@@ -37,9 +38,9 @@ def change_password(new_password: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
+        user = check_and_get_user_from_token(token)
         new_password = auth_handler.get_password_hash(new_password)
-        user_handler.change_password(email, new_password)
+        user_handler.change_password(user.email, new_password)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -55,8 +56,8 @@ def change_bio(new_bio: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.change_bio(email, new_bio)
+        user = check_and_get_user_from_token(token)
+        user_handler.change_bio(user.email, new_bio)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -72,8 +73,8 @@ def change_avatar(new_avatar: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.change_avatar(email, new_avatar)
+        user = check_and_get_user_from_token(token)
+        user_handler.change_avatar(user.email, new_avatar)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -89,8 +90,8 @@ def change_name(new_name: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.change_name(email, new_name)
+        user = check_and_get_user_from_token(token)
+        user_handler.change_name(user.email, new_name)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -106,8 +107,8 @@ def change_date_of_birth(new_date_of_birth: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.change_date_of_birth(email, new_date_of_birth)
+        user = check_and_get_user_from_token(token)
+        user_handler.change_date_of_birth(user.email, new_date_of_birth)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -123,8 +124,8 @@ def change_last_name(new_last_name: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.change_last_name(email, new_last_name)
+        user = check_and_get_user_from_token(token)
+        user_handler.change_last_name(user.email, new_last_name)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -140,8 +141,8 @@ def change_location(new_location: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.change_location(email, new_location)
+        user = check_and_get_user_from_token(token)
+        user_handler.change_location(user.email, new_location)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -157,8 +158,8 @@ def change_interests(new_interests: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.set_user_interests(email, new_interests)
+        user = check_and_get_user_from_token(token)
+        user_handler.set_user_interests(user.email, new_interests)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}
@@ -174,8 +175,8 @@ def change_user_privacy(is_public: bool, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        user_handler.change_public_status(email, is_public)
+        user = check_and_get_user_from_token(token)
+        user_handler.change_public_status(user.email, is_public)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User privacy updated, now profle is public: " + str(is_public)}
