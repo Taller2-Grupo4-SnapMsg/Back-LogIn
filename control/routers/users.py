@@ -31,12 +31,14 @@ from control.utils.utils import (
     handle_user_registration,
     handle_user_login,
     handle_get_user_email,
+    check_and_get_user_from_token,
 )
 from control.codes import (
     USER_NOT_FOUND,
     INCORRECT_CREDENTIALS,
     USER_NOT_ADMIN,
     BAD_REQUEST,
+    BLOCKED_USER,
 )
 
 router = APIRouter(
@@ -72,7 +74,7 @@ def login(user_data: UserLogIn):
     """
     user = handle_get_user_email(user_data.email)
     # user.password has the hashed_password.
-    return handle_user_login(user_data.password, user.password, user_data.email)
+    return handle_user_login(user_data.password, user.password, user_data.email, user)
 
 
 @router.post("/login_with_google", status_code=200)
@@ -87,11 +89,13 @@ def login_with_google(firebase_id_token: str = Header(...)):
     try:
         decoded_token = auth.verify_id_token(firebase_id_token)
         user = handle_get_user_email(decoded_token["email"])
+        if user.blocked:
+            raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
         token = auth_handler.encode_token(user.email)
         return {"message": "Login successful", "token": token}
     except InvalidIdTokenError as error:
         raise HTTPException(
-            status_code=403, detail="Invalid Firebase ID token"
+            status_code=INCORRECT_CREDENTIALS, detail="Invalid Firebase ID token"
         ) from error
 
 
@@ -104,8 +108,8 @@ def get_interests(token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email = auth_handler.decode_token(token)
-        return user_handler.get_user_interests(email)
+        user = check_and_get_user_from_token(token)
+        return user_handler.get_user_interests(user.email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -145,10 +149,7 @@ def get_user_by_token(token: str = Header(...)):
     :return: User details or a 401 response.
     """
     try:
-        user_email = auth_handler.decode_token(
-            token
-        )  # auth_handler.auth_wrapper(token)
-        user = user_handler.get_user_email(user_email)
+        user = check_and_get_user_from_token(token)
         user = generate_response(user)
         return user
     except UserNotFound as error:
@@ -168,10 +169,7 @@ def get_user_by_token_with_id(token: str = Header(...)):
     :return: User details or a 401 response.
     """
     try:
-        user_email = auth_handler.decode_token(
-            token
-        )  # auth_handler.auth_wrapper(token)
-        user = user_handler.get_user_email(user_email)
+        user = check_and_get_user_from_token(token)
         user = generate_response_with_id(user)
         return user
     except UserNotFound as error:
@@ -199,12 +197,12 @@ def search_users(
     :return: User details or a 401 response.
     """
     try:
-        user_email = auth_handler.decode_token(token)
+        user = check_and_get_user_from_token(token)
         user_search_options = {
             "start": int(offset),
             "ammount": int(ammount),
             "in_followers": in_followers,
-            "email": user_email,
+            "email": user.email,
         }
         users = user_handler.search_for_users(query, user_search_options)
     except MaxAmmountExceeded as error:

@@ -10,6 +10,8 @@ from control.utils.auth import auth_handler
 from control.codes import (
     USER_ALREADY_REGISTERED,
     INCORRECT_CREDENTIALS,
+    BLOCKED_USER,
+    OK,
 )
 from control.models.models import (
     UserResponse,
@@ -31,7 +33,8 @@ admin_handler = AdminHandler()
 user_handler = UserHandler()
 
 
-def check_for_user_token(token: str):
+# Check and get user from token
+def check_and_get_user_from_token(token: str):
     """
     This function checks if the user is logged in.
     Used for everytime you need to check if the request
@@ -39,7 +42,10 @@ def check_for_user_token(token: str):
     """
     try:
         email = auth_handler.decode_token(token)
-        user_handler.get_user_email(email)
+        user = user_handler.get_user_email(email)
+        if user.blocked:
+            raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
+        return user
     except UserNotFound as error:
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
@@ -106,7 +112,7 @@ def token_is_admin(token: str):
     }
     url = getenv("GATEWAY_URL") + "/admin/is_admin"
     response = requests.get(url, headers=headers_request, timeout=TIMEOUT)
-    return response.status_code == 200
+    return response.status_code == OK
 
 
 def create_user_from_user_data(user_data: UserRegistration):
@@ -127,7 +133,6 @@ def create_user_from_user_data(user_data: UserRegistration):
     user.set_date_of_birth(
         datetime.datetime(int(date_time[0]), int(date_time[1]), int(date_time[2]))
     )
-    user.set_admin(False)
     user.set_blocked(False)
     return user
 
@@ -150,13 +155,17 @@ def handle_user_registration(user: User):
     return {"message": "Registration successful", "token": token}
 
 
-def handle_user_login(input_password: str, db_password: str, email: str):
+def handle_user_login(input_password: str, db_password: str, email: str, user: User):
     """
     This function handles user login, it checks if the password is correct
     and returns a token if it is.
     """
     if not auth_handler.verify_password(input_password, db_password):
-        raise HTTPException(status_code=401, detail="Incorrect credentials")
+        raise HTTPException(
+            status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
+        )
+    if user.blocked:
+        raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
     token = auth_handler.encode_token(email)
     return {"message": "Login successful", "token": token}
 
