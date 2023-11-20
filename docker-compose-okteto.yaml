@@ -16,6 +16,8 @@ services:
       - datadog_stats
     volumes:
       - .:/app
+    links:
+      - datadog_stats
 
   datadog_stats:
     image: datadog/dogstatsd
