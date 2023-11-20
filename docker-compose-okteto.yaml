@@ -1,3 +1,4 @@
+name: Users-Backend
 services:
   back-users:
     image: python:3.9  # Use the base Python image
