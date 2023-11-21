@@ -1,9 +1,8 @@
 # File: .github/workflows/workflow.yml
-# pull_request:
-#   branches:
-#     - master
 on:
-    push:
+  push:
+    branches:
+      - main
 name: Deploy-Service (Okteto + Migrations)  
 jobs:
     devflow:

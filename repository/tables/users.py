@@ -48,6 +48,7 @@ class User(Base):
     location = Column(String(100), nullable=False)
     blocked = Column(Boolean, nullable=False, default=False)
     is_public = Column(Boolean, default=True, nullable=False)
+    columna_prueba = Column(Boolean, default=True, nullable=False)
 
     # pylint: disable=too-many-arguments
     def __init__(
