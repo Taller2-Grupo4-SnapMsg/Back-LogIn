@@ -26,5 +26,5 @@ jobs:
 
       - name: Run database migration
         run: |
-            export DB_URI=${{ secrets.DB_URI }}
+            export DB_URI=postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
             alembic -c repository/alembic.ini upgrade head
