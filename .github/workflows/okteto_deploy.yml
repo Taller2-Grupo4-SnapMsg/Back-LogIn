@@ -22,8 +22,8 @@ jobs:
         - name: "Trigger the pipeline"
           uses: okteto/pipeline@latest
           with:
-            name: pr-${{ github.event.number }}
+            name: Back-Login
             timeout: 8m
-            skipIfExists: true
+            skipIfExists: false
             variables: "DB_HOST=mysql,CONFIG_PATH=/tmp/config.yaml"
   
