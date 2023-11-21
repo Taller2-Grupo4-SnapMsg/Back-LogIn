@@ -1,4 +1,3 @@
-version: '3.9'
 services:
   back-users:
     image: python:3.9  # Use the base Python image
@@ -7,8 +6,27 @@ services:
     environment:
       DB_URI: postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
       GATEWAY_URL: https://gateway-api-service-merok23.cloud.okteto.net
+      DD_AGENT_HOST: datadog_stats
+      DD_TRACE_ENABLED: "true"
+      DD_SERVICE: back-users
     ports:
       - "8000:8000"
-    command: bash -c "pip install --no-cache-dir -r requirements.txt && uvicorn control.controller:app --host 0.0.0.0 --port 8000"
+    command: bash -c "pip install --no-cache-dir -r requirements.txt && ddtrace-run uvicorn control.controller:app --host 0.0.0.0 --port 8000"
+    depends_on:
+      - datadog_stats
     volumes:
       - .:/app
+    links:
+      - datadog_stats
+
+  datadog_stats:
+    image: datadog/dogstatsd
+    container_name: datadog_stats
+    environment:
+      DD_API_KEY: a8d87779d248091bddc2f18a15467d88
+      DD_SITE: us5.datadoghq.com
+      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: "true"
+      DD_APM_ENABLED: "true"
+    ports:
+      - "8125:8125/udp"
+      - "8126:8126/tcp"
