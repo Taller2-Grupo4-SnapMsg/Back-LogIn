@@ -1,11 +1,9 @@
 name: Database Migration
 
-# on:
-#   push:
-#     branches:
-#       - main
 on:
-    push:
+  push:
+    branches:
+      - main
 jobs:
   migrate:
     runs-on: ubuntu-latest
