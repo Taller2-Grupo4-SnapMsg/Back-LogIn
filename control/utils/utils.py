@@ -39,6 +39,7 @@ from service.errors import (
     EmailAlreadyRegistered,
 )
 
+# comment
 
 TIMEOUT = 5
 
