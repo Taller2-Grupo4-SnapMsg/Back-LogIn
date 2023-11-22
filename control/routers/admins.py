@@ -225,3 +225,14 @@ def get_all_following_relations(token: str = Header(...)):
             detail="Only administrators can get all following relations",
         )
     return follower_handler.get_all_following_relations()
+
+
+@router.get("/health")
+def health_check():
+    """
+    This function returns the service status of the whole service.
+
+    :return: JSON of the health of the server.
+    """
+    # If we wanted we can add more complex checks here like checking the database.
+    return {"status": "ok"}
