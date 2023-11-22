@@ -2,10 +2,13 @@
 """
 This module is for util functions in the controller layer.
 """
+import os
+import ssl
 import datetime
 from os import getenv
 from fastapi import HTTPException
 import requests
+import pika
 from control.utils.auth import auth_handler
 from control.codes import (
     USER_ALREADY_REGISTERED,
@@ -28,7 +31,6 @@ from control.utils.metrics import (
     RegistrationMetric,
     # , LoginMetric,GeoZoneMetric
 )
-from control.routers.users import rabbitmq_channel
 
 from service.user import User
 from service.user_handler import UserHandler
@@ -39,12 +41,30 @@ from service.errors import (
     EmailAlreadyRegistered,
 )
 
-# comment
-
 TIMEOUT = 5
+
+
+def establish_rabbitmq_connection():
+    """
+    Function to establish the channel
+    for the rabbitmq queue
+    """
+    rabbitmq_url = os.environ.get("RABBITMQ_URL")
+    context = ssl.create_default_context()
+    context.check_hostname = False
+    context.verify_mode = ssl.CERT_NONE
+
+    # Create a connection to the RabbitMQ server
+    connection_params = pika.URLParameters(rabbitmq_url)
+    connection_params.ssl_options = pika.SSLOptions(context, rabbitmq_url)
+
+    connection = pika.BlockingConnection(connection_params)
+    return connection.channel()
+
 
 admin_handler = AdminHandler()
 user_handler = UserHandler()
+rabbitmq_channel = establish_rabbitmq_connection()
 
 
 # Check and get user from token

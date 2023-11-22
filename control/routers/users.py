@@ -2,13 +2,10 @@
 """
 This module is dedicated for all the users routes.
 """
-import os
-import ssl
 from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, auth
 from firebase_admin.auth import InvalidIdTokenError
-import pika
 
 from fastapi import (
     APIRouter,
@@ -50,17 +47,6 @@ from control.utils.metrics import (
     # , LoginMetric,GeoZoneMetric
 )
 
-rabbitmq_url = os.environ.get("RABBITMQ_URL")
-context = ssl.create_default_context()
-context.check_hostname = False
-context.verify_mode = ssl.CERT_NONE
-
-# Create a connection to the RabbitMQ server
-connection_params = pika.URLParameters(rabbitmq_url)
-connection_params.ssl_options = pika.SSLOptions(context, rabbitmq_url)
-
-connection = pika.BlockingConnection(connection_params)
-rabbitmq_channel = connection.channel()
 
 router = APIRouter(
     tags=["Users"],
