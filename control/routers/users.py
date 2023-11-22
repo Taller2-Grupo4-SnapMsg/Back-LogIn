@@ -2,9 +2,13 @@
 """
 This module is dedicated for all the users routes.
 """
+import os
+import ssl
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, auth
 from firebase_admin.auth import InvalidIdTokenError
+import pika
 
 from fastapi import (
     APIRouter,
@@ -41,6 +45,23 @@ from control.codes import (
     BLOCKED_USER,
 )
 
+from control.utils.metrics import (
+    RegistrationMetric,
+    # , LoginMetric,GeoZoneMetric
+)
+
+rabbitmq_url = os.environ.get("RABBITMQ_URL")
+context = ssl.create_default_context()
+context.check_hostname = False
+context.verify_mode = ssl.CERT_NONE
+
+# Create a connection to the RabbitMQ server
+connection_params = pika.URLParameters(rabbitmq_url)
+connection_params.ssl_options = pika.SSLOptions(context, rabbitmq_url)
+
+connection = pika.BlockingConnection(connection_params)
+rabbitmq_channel = connection.channel()
+
 router = APIRouter(
     tags=["Users"],
 )
@@ -58,9 +79,9 @@ def register_user(user_data: UserRegistration):
     """
     This function is the endpoint for user registration.
     """
-
+    registration_metric = RegistrationMetric(datetime.now())
     user = create_user_from_user_data(user_data)
-    return handle_user_registration(user)
+    return handle_user_registration(user, registration_metric)
 
 
 # Route to handle user login

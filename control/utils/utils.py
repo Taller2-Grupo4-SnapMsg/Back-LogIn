@@ -18,6 +18,18 @@ from control.models.models import (
     UserPostResponse,
     UserRegistration,
 )
+from control.utils.metrics import (
+    # LOGIN_EVENT,
+    # REGISTER_EVENT,
+    # GEOZONE_EVENT,
+    # EMAIL_ENTITY,
+    # GOOGLE_ENTITY,
+    QUEUE_NAME,
+    RegistrationMetric,
+    # , LoginMetric,GeoZoneMetric
+)
+from control.routers.users import rabbitmq_channel
+
 from service.user import User
 from service.user_handler import UserHandler
 from service.admin_handler import AdminHandler
@@ -26,6 +38,7 @@ from service.errors import (
     UsernameAlreadyRegistered,
     EmailAlreadyRegistered,
 )
+
 
 TIMEOUT = 5
 
@@ -137,13 +150,23 @@ def create_user_from_user_data(user_data: UserRegistration):
     return user
 
 
-def handle_user_registration(user: User):
+def handle_user_registration(user: User, registration_metric: RegistrationMetric):
     """
     This function handles user registration, it saves the user in the data base
     """
     try:
         user.save()
         token = auth_handler.encode_token(user.email)
+
+        reg_json = (
+            registration_metric.set_timestamp_finish(datetime.datetime.now())
+            .set_user_email(user.email)
+            .to_json()
+        )
+        rabbitmq_channel.basic_publish(
+            exchange="", routing_key=QUEUE_NAME, body=reg_json
+        )
+
     except UsernameAlreadyRegistered as error:
         raise HTTPException(
             status_code=USER_ALREADY_REGISTERED, detail=str(error)
