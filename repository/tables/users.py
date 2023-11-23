@@ -119,3 +119,21 @@ class Interests(Base):
     def __init__(self, user_id, interest):
         self.user_id = user_id
         self.interest = interest
+
+
+class BiometricToken(Base):
+    """
+    Class that represents the biometric tokens table on the db
+    """
+
+    __tablename__ = "biometric_tokens"
+
+    user_id = create_users_foreign_key(True)
+    biometric_token = Column(String(500), nullable=False)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+
+    _table_args__ = (UniqueConstraint("user_id", "biometric_token"),)
+
+    def __init__(self, user_id, biometric_token):
+        self.user_id = user_id
+        self.biometric_token = biometric_token

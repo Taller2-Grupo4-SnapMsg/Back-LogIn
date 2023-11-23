@@ -2,7 +2,7 @@
 """se agrega tabla de favoritos
 
 Revision ID: c8dcfc5cf795
-Revises: b46bff422020
+Revises: eb6c9fecc802
 Create Date: 2023-11-17 22:05:59.502673
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "c8dcfc5cf795"
-down_revision: Union[str, None] = "b46bff422020"
+down_revision: Union[str, None] = "eb6c9fecc802"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
