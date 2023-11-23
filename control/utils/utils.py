@@ -22,14 +22,9 @@ from control.models.models import (
     UserRegistration,
 )
 from control.utils.metrics import (
-    # LOGIN_EVENT,
-    # REGISTER_EVENT,
-    # GEOZONE_EVENT,
-    # EMAIL_ENTITY,
-    # GOOGLE_ENTITY,
     QUEUE_NAME,
     RegistrationMetric,
-    # , LoginMetric,GeoZoneMetric
+    LoginMetric,
 )
 
 from service.user import User
@@ -199,28 +194,73 @@ def handle_user_registration(user: User, registration_metric: RegistrationMetric
     return {"message": "Registration successful", "token": token}
 
 
-def handle_user_login(input_password: str, db_password: str, email: str, user: User):
+def handle_user_login(
+    input_password: str,
+    db_password: str,
+    email: str,
+    user: User,
+    login_metric: LoginMetric,
+):
     """
     This function handles user login, it checks if the password is correct
     and returns a token if it is.
     """
+    login = (
+        login_metric.set_timestamp_finish(datetime.datetime.now())
+        .set_user_email(email)
+        .set_success(False)
+    )
     if not auth_handler.verify_password(input_password, db_password):
+        login_json = login.to_json()
+        rabbitmq_channel.basic_publish(
+            exchange="", routing_key=QUEUE_NAME, body=login_json
+        )
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
         )
     if user.blocked:
+        login_json = login.to_json()
+        rabbitmq_channel.basic_publish(
+            exchange="", routing_key=QUEUE_NAME, body=login_json
+        )
         raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
+
     token = auth_handler.encode_token(email)
+
+    login_json = login = login_metric.set_success(True).to_json()
+    rabbitmq_channel.basic_publish(exchange="", routing_key=QUEUE_NAME, body=login_json)
     return {"message": "Login successful", "token": token}
 
 
-def handle_get_user_email(email: str):
+def handle_get_user_email(email: str, login_metric: LoginMetric):
     """
     This function handles getting a user from the data base.
     """
     try:
         return user_handler.get_user_email(email)
     except UserNotFound as error:
+        login_json = (
+            login_metric.set_timestamp_finish(datetime.datetime.now())
+            .set_user_email(email)
+            .set_success(False)
+            .to_json()
+        )
+        rabbitmq_channel.basic_publish(
+            exchange="", routing_key=QUEUE_NAME, body=login_json
+        )
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
         ) from error
+
+
+def push_metric(metric_json):
+    """
+    Wrapper for the publish into the rabbitmq_channel
+    In case I need to send the metric from another file,
+    with no access to the rabbitmq_channel
+
+    Helps avoiding circular imports
+    """
+    rabbitmq_channel.basic_publish(
+        exchange="", routing_key=QUEUE_NAME, body=metric_json
+    )
