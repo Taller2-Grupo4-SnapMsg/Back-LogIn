@@ -2,6 +2,7 @@
 """
 This module is for all the put methods of the users.
 """
+from datetime import datetime
 from fastapi import (
     APIRouter,
     Header,
@@ -17,7 +18,9 @@ from control.utils.auth import auth_handler
 from control.codes import (
     USER_NOT_FOUND,
 )
-from control.utils.utils import check_and_get_user_from_token
+from control.utils.utils import check_and_get_user_from_token, push_metric
+
+from control.utils.metrics import GeoZoneMetric
 
 router = APIRouter(tags=["Users"])
 origins = ["*"]
@@ -141,8 +144,17 @@ def change_location(new_location: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
+        geozone_metric = GeoZoneMetric(datetime.now())
         user = check_and_get_user_from_token(token)
+        geozone_metric.set_old_location(user.location)
         user_handler.change_location(user.email, new_location)
+        geozone_json = (
+            geozone_metric.set_timestamp_finish(datetime.now())
+            .set_user_email(user.email)
+            .set_new_location(new_location)
+            .to_json()
+        )
+        push_metric(geozone_json)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": "User information updated"}

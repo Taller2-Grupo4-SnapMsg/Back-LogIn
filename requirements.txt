@@ -11,3 +11,4 @@ psycopg2
 alembic
 firebase-admin
 ddtrace
+pika

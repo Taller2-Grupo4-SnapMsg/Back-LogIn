@@ -2,6 +2,7 @@
 """
 This module is dedicated for all the users routes.
 """
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, auth
 from firebase_admin.auth import InvalidIdTokenError
@@ -32,6 +33,7 @@ from control.utils.utils import (
     handle_user_login,
     handle_get_user_email,
     check_and_get_user_from_token,
+    push_metric,
 )
 from control.codes import (
     USER_NOT_FOUND,
@@ -40,6 +42,9 @@ from control.codes import (
     BAD_REQUEST,
     BLOCKED_USER,
 )
+
+from control.utils.metrics import GOOGLE_ENTITY, RegistrationMetric, LoginMetric
+
 
 router = APIRouter(
     tags=["Users"],
@@ -58,9 +63,9 @@ def register_user(user_data: UserRegistration):
     """
     This function is the endpoint for user registration.
     """
-
+    registration_metric = RegistrationMetric(datetime.now())
     user = create_user_from_user_data(user_data)
-    return handle_user_registration(user)
+    return handle_user_registration(user, registration_metric)
 
 
 # Route to handle user login
@@ -72,9 +77,12 @@ def login(user_data: UserLogIn):
     :param user: The user to login.
     :return: Status code with a JSON message.
     """
-    user = handle_get_user_email(user_data.email)
+    login_metric = LoginMetric(datetime.now())
+    user = handle_get_user_email(user_data.email, login_metric)
     # user.password has the hashed_password.
-    return handle_user_login(user_data.password, user.password, user_data.email, user)
+    return handle_user_login(
+        user_data.password, user.password, user_data.email, user, login_metric
+    )
 
 
 @router.post("/login_with_google", status_code=200)
@@ -87,13 +95,35 @@ def login_with_google(firebase_id_token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
+        login_metric = LoginMetric(datetime.now()).set_login_entity(GOOGLE_ENTITY)
         decoded_token = auth.verify_id_token(firebase_id_token)
-        user = handle_get_user_email(decoded_token["email"])
+        user = handle_get_user_email(decoded_token["email"], login_metric)
         if user.blocked:
+            login_metric = (
+                login_metric.set_timestamp_finish(datetime.now())
+                .set_user_email(user.email)
+                .set_success(False)
+            ).to_json()
+            push_metric(login_metric)
             raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
+
         token = auth_handler.encode_token(user.email)
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_user_email(user.email)
+            .set_success(True)
+        ).to_json()
+        push_metric(login_metric)
         return {"message": "Login successful", "token": token}
     except InvalidIdTokenError as error:
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_user_email(
+                firebase_id_token  # No me gusta, preguntarle al prof después
+            )
+            .set_success(False)
+        ).to_json()
+        push_metric(login_metric)
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Invalid Firebase ID token"
         ) from error
