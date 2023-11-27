@@ -17,13 +17,18 @@ from repository.user_repository import (
     get_user_interests as get_user_interests_repo,
     search_for_users as search_for_users_repo,
     update_user_public_status as update_user_public_status_repo,
+    add_user_biometric_token as add_user_biometric_token_repo,
+    get_biometric_token as get_biometric_token_repo,
+    remove_biometric_token as remove_biometric_token_repo,
 )
 
 from service.errors import (
     UserNotFound,
     PasswordDoesntMatch,
     MaxAmmountExceeded,
+    UserAlreadyHasBiometricToken,
 )
+from repository.errors import RelationAlreadyExists
 
 MAX_AMMOUNT = 25
 
@@ -234,3 +239,33 @@ class UserHandler:
             options["email"],
             options["in_followers"],
         )
+
+    def add_biometric_token(self, email: str, biometric_token: str):
+        """
+        This function is used to add a biometric token to the user.
+        """
+        try:
+            # Here i should create the biometric_token, so i shouldnt receive it as a parameter
+            add_user_biometric_token_repo(email, biometric_token)
+        except KeyError as error:
+            raise UserNotFound() from error
+        except RelationAlreadyExists as error:
+            raise UserAlreadyHasBiometricToken from error
+
+    def verify_biometric_token(self, biometric_token: str):
+        """
+        This function is used to verify a biometric token of the user.
+        """
+        try:
+            return get_biometric_token_repo(biometric_token)
+        except KeyError as error:
+            raise UserNotFound() from error
+
+    def remove_biometric_token(self, user_id: int, biometric_token: str):
+        """
+        This function is used to remove the biometric token of the user.
+        """
+        try:
+            remove_biometric_token_repo(user_id, biometric_token)
+        except KeyError as error:
+            raise UserNotFound() from error

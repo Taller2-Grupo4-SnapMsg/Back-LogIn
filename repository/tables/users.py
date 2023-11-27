@@ -97,7 +97,6 @@ class Following(Base):
 
     _table_args__ = (UniqueConstraint("user_id", "following_id"),)
 
-    # pylint: disable=too-many-arguments
     def __init__(self, user_id, following_id):
         self.user_id = user_id
         self.following_id = following_id

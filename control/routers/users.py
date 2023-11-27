@@ -208,3 +208,45 @@ def search_users(
     except MaxAmmountExceeded as error:
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     return generate_response_list(users)
+
+
+@router.post("/user/biometric_token")
+def add_biometric_token(token: str = Header(...)):
+    """
+    This function is used to add a biometric token to the user.
+    """
+    try:
+        user = check_and_get_user_from_token(token)
+        biometric_token = auth_handler.create_biometric_token()
+        user_handler.add_biometric_token(user.email, biometric_token)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "Biometric token added"}
+
+
+@router.delete("/user/delete_biometric_token")
+def delete_biometric_token(
+    token: str = Header(...), biometric_token: str = Header(...)
+):
+    """
+    This function is used to add a biometric token to the user.
+    """
+    try:
+        user = check_and_get_user_from_token(token)
+        user_handler.remove_biometric_token(user.id, biometric_token)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    return {"message": "Biometric token deleted"}
+
+
+@router.post("/login_with_biometrics")
+def login_with_biometrics(biometric_token: str = Header(...)):
+    """
+    This function is used to verify a biometric token of the user.
+    """
+    try:
+        user = user_handler.verify_biometric_token(biometric_token)
+        token = auth_handler.encode_token(user.email)
+        return {"message": "Login successful", "token": token}
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
