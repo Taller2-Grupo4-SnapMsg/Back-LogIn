@@ -18,7 +18,7 @@ def test_user_biometric_token():
     remove_test_user_from_db()
     save_test_user_to_db()
     handler.add_biometric_token(EMAIL, "token")
-    user = handler.verify_biometric_token("token")  
+    user = handler.verify_biometric_token("token")
     assert user.email == EMAIL
     remove_test_user_from_db()
 
@@ -30,5 +30,5 @@ def test_user_biometric_token_wrong_token():
     save_test_user_to_db()
     with pytest.raises(UserNotFound) as error:
         handler.verify_biometric_token("token")
-    assert str(error.value) == "User not found"    
+    assert str(error.value) == "User not found"
     remove_test_user_from_db()
