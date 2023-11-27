@@ -4,8 +4,6 @@ Module dedicated to the queries that the repository might need.
 """
 from sqlalchemy.exc import IntegrityError
 from repository.tables.users import BiometricToken
-from repository.errors import RelationAlreadyExists
-
 
 def add_user_biometric_token(session, user_id, biometric_token):
     """

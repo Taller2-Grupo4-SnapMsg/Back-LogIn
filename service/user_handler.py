@@ -1,6 +1,6 @@
 # user_handler.py
 """
-This module encapsulates al lthe logic of the user's backend.
+This module encapsulates all the logic of the user's backend.
 """
 from repository.user_repository import (
     update_user_password as update_user_password_repo,
@@ -21,7 +21,6 @@ from repository.user_repository import (
     get_biometric_token as get_biometric_token_repo,
     remove_biometric_token as remove_biometric_token_repo,
 )
-
 from service.errors import (
     UserNotFound,
     PasswordDoesntMatch,
@@ -31,7 +30,6 @@ from service.errors import (
 from repository.errors import RelationAlreadyExists
 
 MAX_AMMOUNT = 25
-
 
 class UserHandler:
     """
