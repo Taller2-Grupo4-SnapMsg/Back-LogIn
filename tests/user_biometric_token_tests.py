@@ -4,8 +4,8 @@ This module contains tests for the user biometric token.
 
 import pytest
 from service.user_handler import UserHandler
-from tests.utils import remove_test_user_from_db, save_test_user_to_db, EMAIL
 from service.errors import UserNotFound
+from tests.utils import remove_test_user_from_db, save_test_user_to_db, EMAIL
 
 # We create the handler that will be used in all tests.
 # Since the handler is stateless, we don't care if it's global.
