@@ -13,6 +13,7 @@ from repository.queries.user_queries import (
     get_all_users as get_all_users_db,
     get_user_by_mail as get_user_by_mail_db,
     get_user_by_username as get_user_by_username_db,
+    get_user_by_id as get_user_by_id_db,
     update_user_password as update_user_password_db,
     update_user_bio as update_user_bio_db,
     update_user_last_name as update_user_last_name_db,
@@ -38,6 +39,12 @@ from repository.queries.follow_queries import (
     get_followers_count as get_followers_count_db,
     remove_follow as remove_follow_db,
     is_following as is_following_db,
+)
+
+from repository.queries.biometric_queries import (
+    add_user_biometric_token as add_user_biometric_token_db,
+    get_biometric_token as get_biometric_token_db,
+    remove_biometric_token as remove_biometric_token_db,
 )
 
 # We connect to the database using the ORM defined in tables.py
@@ -355,6 +362,47 @@ def search_for_users(
     if in_followers:
         return search_users_in_followers_db(session, username, start, amount, email)
     return search_for_users_db(session, username, start, amount)
+
+
+def add_user_biometric_token(
+    email: str,
+    biometric_token: str,
+):
+    """
+    This function is used to add a biometric token to the user.
+
+    :param email: The email of the user to update.
+    :param biometric_token: The biometric token to add.
+    """
+    user = get_user_by_mail_db(session, email)
+    if user is None:
+        raise KeyError()
+    add_user_biometric_token_db(session, user.id, biometric_token)
+
+
+def get_biometric_token(user_id: int):
+    """
+    This function is used to get the biometric tokens of the user.
+
+    :param user_id: The id of the user to get the biometric tokens.
+    :return: A list of the user's biometric tokens.
+    """
+    user_id = get_biometric_token_db(session, user_id)
+    if user_id is None:
+        raise KeyError()
+    return get_user_by_id_db(session, user_id)
+
+
+def remove_biometric_token(user_id: int, biometric_token: str):
+    """
+    This function is used to remove a biometric token from the user.
+
+    :param user_id: The id of the user to remove the biometric token.
+    :param biometric_token: The biometric token to remove.
+    """
+    remove_biometric_token_db(session, user_id, biometric_token)
+    if user_id is None:
+        raise KeyError()
 
 
 session.close()

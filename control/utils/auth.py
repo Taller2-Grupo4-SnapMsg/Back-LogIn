@@ -79,6 +79,16 @@ class AuthHandler:
         # extra level of security
         return self.decode_token(auth.credentials)
 
+    def create_biometric_token(self):
+        """
+        Creates a biometric token for the user.
+        """
+        payload = {
+            "sub": "biometric_token",
+            "iat": datetime.utcnow(),
+        }
+        return jwt.encode(payload, self.secret, algorithm=ENCODING_ALGORITHM)
+
 
 # Singleton instance of the AuthHandler class:
 auth_handler = AuthHandler()
