@@ -234,5 +234,8 @@ def health_check():
 
     :return: JSON of the health of the server.
     """
+    description = "Microservice dedicated to the users and their relations."
+    description += " In this micro service there is the definition of all the tables"
+    description += " from the relational database."
     # If we wanted we can add more complex checks here like checking the database.
-    return {"status": "ok"}
+    return {"status": "ok", "description": description, "creation_date": "29-08-2023"}
