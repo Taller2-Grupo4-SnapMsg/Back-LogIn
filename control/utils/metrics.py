@@ -71,7 +71,7 @@ class LoginMetric:
         """
         self.timestamp_start = timestamp_start
         self.timestamp_finish = None
-        self.success = False
+        self.successful = False
         self.login_entity = EMAIL_ENTITY
         self.event_type = LOGIN_EVENT
         self.user_email = None
@@ -90,11 +90,11 @@ class LoginMetric:
         self.user_email = user_email
         return self
 
-    def set_success(self, success):
+    def set_success(self, successful):
         """
         sets up if the login was successful
         """
-        self.success = success
+        self.successful = successful
         return self
 
     def set_login_entity(self, login_entity):
@@ -111,7 +111,7 @@ class LoginMetric:
         metrics_dict = {
             "timestamp_start": self.timestamp_start.isoformat(),
             "timestamp_finish": self.timestamp_finish.isoformat(),
-            "success": self.success,
+            "successful": self.successful,
             "login_entity": self.login_entity,
             "user_email": self.user_email,
             "event_type": self.event_type,

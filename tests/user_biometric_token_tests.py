@@ -11,6 +11,7 @@ from tests.utils import remove_test_user_from_db, save_test_user_to_db, EMAIL
 # Since the handler is stateless, we don't care if it's global.
 handler = UserHandler()
 
+
 def test_user_biometric_token():
     """
     This test checks that the user biometric token is correctly set.
@@ -21,6 +22,7 @@ def test_user_biometric_token():
     user = handler.verify_biometric_token("token")
     assert user.email == EMAIL
     remove_test_user_from_db()
+
 
 def test_user_biometric_token_wrong_token():
     """

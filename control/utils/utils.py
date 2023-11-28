@@ -51,9 +51,10 @@ def establish_rabbitmq_connection():
 
     # Create a connection to the RabbitMQ server
     connection_params = pika.URLParameters(rabbitmq_url)
-    connection_params.ssl_options = pika.SSLOptions(context, rabbitmq_url)
+    # connection_params.ssl_options = pika.SSLOptions(context, rabbitmq_url)
 
     connection = pika.BlockingConnection(connection_params)
+
     return connection.channel()
 
 
