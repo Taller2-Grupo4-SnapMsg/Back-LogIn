@@ -221,7 +221,7 @@ def add_biometric_token(token: str = Header(...)):
         user_handler.add_biometric_token(user.email, biometric_token)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-    return {"message": "Biometric token added"}
+    return {"message": "Biometric token added", "biometric_token": biometric_token}
 
 
 @router.delete("/user/delete_biometric_token")
