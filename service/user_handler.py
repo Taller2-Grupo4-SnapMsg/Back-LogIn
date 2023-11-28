@@ -29,6 +29,7 @@ from service.errors import (
 
 MAX_AMMOUNT = 25
 
+
 class UserHandler:
     """
     This class encapsulates all the logic of the user's backend.
