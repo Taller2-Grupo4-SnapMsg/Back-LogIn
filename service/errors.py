@@ -58,6 +58,7 @@ class FollowingRelationAlreadyExists(Exception):
     def __init__(self):
         super().__init__("Following relation already exists!")
 
+
 class MaxAmmountExceeded(Exception):
     """
     Exception raised when searching for users and ammount is too big.

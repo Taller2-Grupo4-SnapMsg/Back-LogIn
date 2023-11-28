@@ -238,3 +238,8 @@ La primera vez que entres vas a tener que "agregar un server" estableciendo una 
 ```
 find . -type f -name "*.py" | xargs pylint   
 ```
+
+# Exportar PythonPath
+```
+export PYTHONPATH=. 
+```
