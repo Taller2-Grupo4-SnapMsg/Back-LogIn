@@ -21,7 +21,6 @@ from repository.user_repository import (
     get_biometric_token as get_biometric_token_repo,
     remove_biometric_token as remove_biometric_token_repo,
 )
-from repository.errors import RelationAlreadyExists
 from service.errors import (
     UserNotFound,
     PasswordDoesntMatch,
