@@ -21,12 +21,10 @@ from repository.user_repository import (
     get_biometric_token as get_biometric_token_repo,
     remove_biometric_token as remove_biometric_token_repo,
 )
-from repository.errors import RelationAlreadyExists
 from service.errors import (
     UserNotFound,
     PasswordDoesntMatch,
     MaxAmmountExceeded,
-    UserAlreadyHasBiometricToken,
 )
 
 MAX_AMMOUNT = 25
@@ -247,8 +245,6 @@ class UserHandler:
             add_user_biometric_token_repo(email, biometric_token)
         except KeyError as error:
             raise UserNotFound() from error
-        except RelationAlreadyExists as error:
-            raise UserAlreadyHasBiometricToken from error
 
     def verify_biometric_token(self, biometric_token: str):
         """

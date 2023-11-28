@@ -58,16 +58,6 @@ class FollowingRelationAlreadyExists(Exception):
     def __init__(self):
         super().__init__("Following relation already exists!")
 
-
-class UserAlreadyHasBiometricToken(Exception):
-    """
-    Exception raised when you try to add a biometric token to a user that already has one.
-    """
-
-    def __init__(self):
-        super().__init__("The user already has a biometric token set!")
-
-
 class MaxAmmountExceeded(Exception):
     """
     Exception raised when searching for users and ammount is too big.
