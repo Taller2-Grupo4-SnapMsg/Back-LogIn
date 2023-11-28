@@ -26,7 +26,6 @@ from service.errors import (
     UserNotFound,
     PasswordDoesntMatch,
     MaxAmmountExceeded,
-    UserAlreadyHasBiometricToken,
 )
 
 MAX_AMMOUNT = 25
@@ -247,8 +246,6 @@ class UserHandler:
             add_user_biometric_token_repo(email, biometric_token)
         except KeyError as error:
             raise UserNotFound() from error
-        except RelationAlreadyExists as error:
-            raise UserAlreadyHasBiometricToken from error
 
     def verify_biometric_token(self, biometric_token: str):
         """
