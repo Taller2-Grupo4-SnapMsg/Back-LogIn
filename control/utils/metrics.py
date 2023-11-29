@@ -4,6 +4,9 @@
 Module dedicated to classes for metrics
 """
 import json
+import os
+import ssl
+import pika
 
 LOGIN_EVENT = "login"
 REGISTER_EVENT = "registration"
@@ -11,6 +14,59 @@ GEOZONE_EVENT = "geozone"
 EMAIL_ENTITY = "email"
 GOOGLE_ENTITY = "Google"
 QUEUE_NAME = "metrics"
+
+
+class RabbitMQManager:
+    """
+    Class that manages the rabbitmq channel.
+
+    You can get the rabbitmq queue and send the message yourself
+    Or directly call push_metric, which checks the channel and then sends
+    the message.
+    """
+
+    def __init__(self):
+        """
+        Start the connection
+        """
+        self._channel = self._establish_rabbitmq_connection()
+
+    def _establish_rabbitmq_connection(self):
+        """
+        Function to establish the channel
+        for the rabbitmq queue
+        """
+        rabbitmq_url = os.environ.get("RABBITMQ_URL")
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        # Create a connection to the RabbitMQ server
+        connection_params = pika.URLParameters(rabbitmq_url)
+        connection_params.ssl_options = pika.SSLOptions(context, rabbitmq_url)
+
+        connection = pika.BlockingConnection(connection_params)
+
+        return connection.channel()
+
+    def get_channel(self):
+        """
+        Returns the channel for the connection.
+        If the channel was closed, it reestableshes the connection.
+        Then returns the valid channel
+        """
+        if not self._channel or self._channel.is_closed:
+            self._channel = self._establish_rabbitmq_connection()
+        return self._channel
+
+    def push_metric(self, json_body):
+        """
+        Gets a valid channel and publishes the metric
+        """
+        rabbitmq_channel = self.get_channel()
+        rabbitmq_channel.basic_publish(
+            exchange="", routing_key=QUEUE_NAME, body=json_body
+        )
 
 
 class RegistrationMetric:
