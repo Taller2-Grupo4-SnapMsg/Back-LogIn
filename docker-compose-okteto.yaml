@@ -7,27 +7,9 @@ services:
       DB_URI: postgresql://cwfvbvxl:jtsNDRjbVqGeBgYcYvxGps3LLlX_t-P5@berry.db.elephantsql.com:5432/cwfvbvxl
       GATEWAY_URL: https://gateway-api-service-merok23.cloud.okteto.net
       RABBITMQ_URL: amqps://skglvayb:RVulev-DurTkD_kARAFR5idNzUPqO88T@jackal.rmq.cloudamqp.com/skglvayb
-      DD_AGENT_HOST: datadog_stats
-      DD_TRACE_ENABLED: "true"
-      DD_SERVICE: back-users
+      UPTRACE_DSN: https://SAe6OtAs8ysrYmkJmM8t-Q@api.uptrace.dev?grpc=4317
     ports:
       - "8000:8000"
-    command: bash -c "pip install --no-cache-dir -r requirements.txt && ddtrace-run uvicorn control.controller:app --host 0.0.0.0 --port 8000"
-    depends_on:
-      - datadog_stats
+    command: bash -c "pip install --no-cache-dir -r requirements.txt && uvicorn control.controller:app --host 0.0.0.0 --port 8000"
     volumes:
       - .:/app
-    links:
-      - datadog_stats
-
-  datadog_stats:
-    image: gcr.io/datadoghq/agent:latest
-    container_name: datadog_stats
-    environment:
-      DD_API_KEY: a8d87779d248091bddc2f18a15467d88
-      DD_SITE: us5.datadoghq.com
-      DD_DOGSTATSD_NON_LOCAL_TRAFFIC: true
-      DD_APM_ENABLED: true
-    ports:
-      - "8125:8125/udp"
-      - "8126:8126/tcp"
