@@ -11,6 +11,7 @@ import pika
 LOGIN_EVENT = "login"
 REGISTER_EVENT = "registration"
 GEOZONE_EVENT = "geozone"
+BLOCK_EVENT = "block"
 EMAIL_ENTITY = "email"
 GOOGLE_ENTITY = "Google"
 QUEUE_NAME = "metrics"
@@ -73,7 +74,7 @@ class RegistrationMetric:
     """
     Class to represent a new Registration Metric
     It's initialized with the timestamp_start
-    and later the user calls the function that complete
+    and later the user calls the functions that complete
     the metric
     """
 
@@ -117,7 +118,7 @@ class LoginMetric:
     """
     Class to represent a new Login Metric
     It's initialized with the timestamp_start
-    and later the user calls the function that complete
+    and later the user calls the functions that complete
     the metric
     """
 
@@ -179,7 +180,7 @@ class GeoZoneMetric:
     """
     Class to represent a new GeoZone Metric
     It's initialized with the timestamp_start
-    and later the user calls the function that complete
+    and later the user calls the functions that complete
     the metric
     """
 
@@ -233,5 +234,69 @@ class GeoZoneMetric:
             "user_email": self.user_email,
             "old_location": self.old_location,
             "new_location": self.new_location,
+        }
+        return json.dumps(metrics_dict, indent=2)
+
+
+class BlockMetric:
+    """
+    Class to represent a new Block Metric
+    It's initialized with the timestamp_start
+    and later the user calls the functions that complete
+    the metric
+    """
+
+    def __init__(self, timestamp_start):
+        """
+        initialization
+        """
+        self.timestamp_start = timestamp_start
+        self.timestamp_finish = None
+        self.event_type = BLOCK_EVENT
+        self.user_email = None
+        self.admin_email = None
+        self.blocked = False
+
+    def set_timestamp_finish(self, timestamp_finish):
+        """
+        sets up the timestamp_finish
+        """
+        self.timestamp_finish = timestamp_finish
+        return self
+
+    def set_user_email(self, user_email):
+        """
+        sets up the user email
+        """
+        self.user_email = user_email
+        return self
+
+    def set_admin_email(self, admin_email):
+        """
+        sets up the admin_email of the admin
+        that blocked or unblocked the person
+        """
+        self.admin_email = admin_email
+        return self
+
+    def set_blocked(self, blocked):
+        """
+        sets up the blocked state
+        (True or False)
+        """
+        self.blocked = blocked
+        return self
+
+    def to_json(self):
+        """
+        converts to a json that can be pushed to the queue
+        """
+        metrics_dict = {
+            "timestamp_start": self.timestamp_start.isoformat(),
+            "timestamp_finish": self.timestamp_finish.isoformat(),
+            "event_type": self.event_type,
+            "user_email": self.user_email,
+            "admin_email": self.admin_email,
+            "blocked": self.blocked,
         }
         return json.dumps(metrics_dict, indent=2)
