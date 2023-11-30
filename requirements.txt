@@ -12,3 +12,5 @@ alembic
 firebase-admin
 pika
 uptrace
+opentelemetry-instrumentation-fastapi
+opentelemetry-instrumentation-requests
