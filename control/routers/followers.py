@@ -15,7 +15,7 @@ from service.errors import (
     UserCantFollowItself,
     FollowingRelationAlreadyExists,
 )
-
+from control.utils.tracer import tracer
 from control.utils.utils import (
     check_and_get_user_from_token,
     generate_response_list,
@@ -35,6 +35,7 @@ handler = FollowHandler()
 
 
 @router.post("/follow/{email_following}")
+@tracer.start_as_current_span("Create follow - Followers")
 def create_follow(email_following: str, token: str = Header(...)):
     """
     This function creates a following relation between the given users.
@@ -56,6 +57,7 @@ def create_follow(email_following: str, token: str = Header(...)):
 
 
 @router.get("/followers/{email}")
+@tracer.start_as_current_span("Get followers - Followers")
 def get_followers(email: str, token: str = Header(...)):
     """
     This function returns the users a username is followed by.
@@ -73,6 +75,7 @@ def get_followers(email: str, token: str = Header(...)):
 
 
 @router.get("/is_following/{email}")
+@tracer.start_as_current_span("Get is following - Followers")
 def get_is_following(email_following: str, token: str = Header(...)):
     """
     This function returns if the user is following the given user.
@@ -91,6 +94,7 @@ def get_is_following(email_following: str, token: str = Header(...)):
 
 
 @router.get("/is_follower/{email}")
+@tracer.start_as_current_span("Get is follower - Followers")
 def get_is_follower(email_follower: str, token: str = Header(...)):
     """
     This function returns if the user is a follower the given user.
@@ -108,6 +112,7 @@ def get_is_follower(email_follower: str, token: str = Header(...)):
 
 
 @router.get("/following/{email}")
+@tracer.start_as_current_span("Get following from email - Followers")
 def get_following(email: str, token: str = Header(...)):
     """
     This function returns the users a username is following.
@@ -127,6 +132,7 @@ def get_following(email: str, token: str = Header(...)):
 
 
 @router.get("/follow/{email}/count")
+@tracer.start_as_current_span("Get follow count - Followers")
 def get_followers_count(email: str, token: str = Header(...)):
     """
     This function returns the number of followers of a username.
@@ -144,6 +150,7 @@ def get_followers_count(email: str, token: str = Header(...)):
 
 
 @router.get("/following/{email}/count")
+@tracer.start_as_current_span("Get following count - Followers")
 def get_following_count(email: str, token: str = Header(...)):
     """
     This function returns the number of users a email is following.
@@ -162,6 +169,7 @@ def get_following_count(email: str, token: str = Header(...)):
 
 
 @router.delete("/unfollow")
+@tracer.start_as_current_span("Delete follow - Followers")
 def unfollow(email_unfollowing: str, token: str = Header(...)):
     """
     This function deletes a following relation between the given users.

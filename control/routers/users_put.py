@@ -19,6 +19,7 @@ from control.codes import (
     USER_NOT_FOUND,
 )
 from control.utils.utils import check_and_get_user_from_token, push_metric
+from control.utils.tracer import tracer
 
 from control.utils.metrics import GeoZoneMetric
 
@@ -32,6 +33,7 @@ user_handler = UserHandler()
 
 # Route to update user information
 @router.put("/users/password")
+@tracer.start_as_current_span("Change Password")
 def change_password(new_password: str, token: str = Header(...)):
     """
     This function is for changing the user's password
@@ -50,6 +52,7 @@ def change_password(new_password: str, token: str = Header(...)):
 
 
 @router.put("/users/bio")
+@tracer.start_as_current_span("Change Bio")
 def change_bio(new_bio: str, token: str = Header(...)):
     """
     This function is for changing the user's bio
@@ -67,6 +70,7 @@ def change_bio(new_bio: str, token: str = Header(...)):
 
 
 @router.put("/users/avatar")
+@tracer.start_as_current_span("Change Avatar")
 def change_avatar(new_avatar: str, token: str = Header(...)):
     """
     This function is for changing the user's avatar
@@ -84,6 +88,7 @@ def change_avatar(new_avatar: str, token: str = Header(...)):
 
 
 @router.put("/users/name")
+@tracer.start_as_current_span("Change Name")
 def change_name(new_name: str, token: str = Header(...)):
     """
     This function is for changing the user's name
@@ -101,6 +106,7 @@ def change_name(new_name: str, token: str = Header(...)):
 
 
 @router.put("/users/date_of_birth")
+@tracer.start_as_current_span("Change Date of Birth")
 def change_date_of_birth(new_date_of_birth: str, token: str = Header(...)):
     """
     This function is for changing the user's date_of_birth
@@ -118,6 +124,7 @@ def change_date_of_birth(new_date_of_birth: str, token: str = Header(...)):
 
 
 @router.put("/users/last_name")
+@tracer.start_as_current_span("Change Last Name")
 def change_last_name(new_last_name: str, token: str = Header(...)):
     """
     This function is for changing the user's last_name
@@ -135,6 +142,7 @@ def change_last_name(new_last_name: str, token: str = Header(...)):
 
 
 @router.put("/users/location")
+@tracer.start_as_current_span("Change Location")
 def change_location(new_location: str, token: str = Header(...)):
     """
     This function is for changing the user's location
@@ -161,6 +169,7 @@ def change_location(new_location: str, token: str = Header(...)):
 
 
 @router.put("/users/interests")
+@tracer.start_as_current_span("Change Interests")
 def change_interests(new_interests: str, token: str = Header(...)):
     """
     This function is for changing the user's interests
@@ -178,6 +187,7 @@ def change_interests(new_interests: str, token: str = Header(...)):
 
 
 @router.put("/users/privacy")
+@tracer.start_as_current_span("Change Privacy")
 def change_user_privacy(is_public: bool, token: str = Header(...)):
     """
     This function is for changing the user's privacy
