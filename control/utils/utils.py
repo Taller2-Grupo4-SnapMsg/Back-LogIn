@@ -19,6 +19,7 @@ from control.models.models import (
     UserPostResponse,
     UserRegistration,
 )
+from control.utils.logger import logger
 from control.utils.metrics import (
     RegistrationMetric,
     LoginMetric,
@@ -217,6 +218,7 @@ def handle_user_login(
 
     login_json = login = login_metric.set_success(True).to_json()
     push_metric(login_json)
+    logger.info(email, " logged in successfully")
     return {"message": "Login successful", "token": token}
 
 
