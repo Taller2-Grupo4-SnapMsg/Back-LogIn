@@ -24,7 +24,10 @@ from control.utils.utils import (
     generate_response_list,
     token_is_admin,
     generate_response,
+    push_metric,
 )
+from control.utils.metrics import BlockMetric
+
 from control.codes import (
     USER_NOT_FOUND,
     USER_NOT_ADMIN,
@@ -55,12 +58,23 @@ def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        if not token_is_admin(token):
+        block_metric = BlockMetric(datetime.now())
+
+        admin_email_list = [None]
+        if not token_is_admin(token, admin_email_list):
             raise HTTPException(
                 status_code=USER_NOT_ADMIN,
                 detail="Only administrators can change a user's blocked status",
             )
+
         admin_handler.change_blocked_status(email, blocked)
+
+        block_metric.set_timestamp_finish(datetime.now())
+        block_metric.set_user_email(email)
+        block_metric.set_blocked(blocked)
+        block_metric.set_admin_email(admin_email_list[0])
+
+        push_metric(block_metric.to_json())
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is now " + ("blocked" if blocked else "unblocked")}

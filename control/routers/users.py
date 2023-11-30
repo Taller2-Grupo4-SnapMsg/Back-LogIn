@@ -36,6 +36,8 @@ from control.utils.utils import (
     check_and_get_user_from_token,
     push_metric,
 )
+from control.utils.metrics import GOOGLE_ENTITY, RegistrationMetric, LoginMetric
+
 from control.codes import (
     USER_NOT_FOUND,
     INCORRECT_CREDENTIALS,
@@ -43,8 +45,6 @@ from control.codes import (
     BAD_REQUEST,
     BLOCKED_USER,
 )
-
-from control.utils.metrics import GOOGLE_ENTITY, RegistrationMetric, LoginMetric
 
 
 router = APIRouter(

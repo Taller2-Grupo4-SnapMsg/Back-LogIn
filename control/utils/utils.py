@@ -111,9 +111,17 @@ def generate_response_list(users):
     return response
 
 
-def token_is_admin(token: str):
+def token_is_admin(token: str, admin_email_list=None):
     """
     This function checks if the token given is an admin.
+
+    If the second parameter is given, the list will
+    contain the admin_email at the end of the execution.
+    Default value: None, so that other functions that don't need
+    the email don't have to send it.
+    The admin_email is a list and not an actual string because
+    strings in Python are inmutable: they can't be changed in a different
+    stackframe. But lists can.
     """
     headers_request = {
         "accept": "application/json",
@@ -122,6 +130,11 @@ def token_is_admin(token: str):
     }
     url = getenv("GATEWAY_URL") + "/admin/is_admin"
     response = requests.get(url, headers=headers_request, timeout=TIMEOUT)
+
+    if admin_email_list is not None:
+        admin_email = response.json().get("email")
+        admin_email_list[0] = admin_email
+
     return response.status_code == OK
 
 
