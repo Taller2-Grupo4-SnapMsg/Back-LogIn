@@ -19,6 +19,7 @@ from service.errors import UserNotFound, MaxAmmountExceeded
 from control.models.models import (
     UserResponse,
 )
+from control.utils.tracer import tracer
 from control.utils.utils import (
     generate_response_list,
     token_is_admin,
@@ -43,6 +44,7 @@ user_handler = UserHandler()
 
 
 @router.put("/users/block/{email}")
+@tracer.start_as_current_span("Block User - Admin")
 def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
     """
     This function is for changing a user's blocked status.
@@ -71,6 +73,7 @@ def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
         400: {"description": "Only administrators can get all users"},
     },
 )
+@tracer.start_as_current_span("Find all users - Admin")
 def get_all_users(
     start: int = Query(0, title="offset", description="offset for pagination"),
     ammount: int = Query(
@@ -102,6 +105,7 @@ def get_all_users(
 
 
 @router.get("/users/{query}")
+@tracer.start_as_current_span("Find User - Query - Admin")
 def get_users_by_query(
     query: str,
     start: int = Query(0, title="offset", description="offset for pagination"),
@@ -136,6 +140,7 @@ def get_users_by_query(
 
 
 @router.get("/users/admin/find", response_model=UserResponse)
+@tracer.start_as_current_span("Find User - email - Admin")
 def get_user(
     email: str = Query(None, title="Email", description="User email"),
     username: str = Query(None, title="Username", description="Username of the user"),
@@ -186,6 +191,7 @@ def get_user(
 
 
 @router.get("/users/admin/image")
+@tracer.start_as_current_span("Image Link")
 def translate_path_to_image_link(firebase_path: str, token: str = Header(...)):
     """
     This endpoint translates the image_path from firebase to
@@ -211,6 +217,7 @@ def translate_path_to_image_link(firebase_path: str, token: str = Header(...)):
 
 
 @router.get("/following")
+@tracer.start_as_current_span("Following")
 def get_all_following_relations(token: str = Header(...)):
     """
     This function is a function that returns all of the following relations in the database.
@@ -228,6 +235,7 @@ def get_all_following_relations(token: str = Header(...)):
 
 
 @router.get("/health")
+@tracer.start_as_current_span("Health Check")
 def health_check():
     """
     This function returns the service status of the whole service.
