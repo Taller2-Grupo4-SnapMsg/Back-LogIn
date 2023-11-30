@@ -3,17 +3,18 @@
 """
 This is the controller layer of the REST API for the user's backend.
 """
+
 # Para permitir pegarle a la API desde localhost:
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
-from ddtrace.runtime import RuntimeMetrics
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from control.routers import followers, admins, users, users_put
 
-RuntimeMetrics.enable()
 
 app = FastAPI(
     title="User's API", description="This is the API for the user's microservice."
 )
+FastAPIInstrumentor.instrument_app(app)
 
 origins = ["*"]
 # All the routers are here:

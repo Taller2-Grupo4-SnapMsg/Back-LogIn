@@ -23,6 +23,7 @@ from control.models.models import (
     UserPostResponse,
 )
 from control.utils.auth import auth_handler
+from control.utils.tracer import tracer
 from control.utils.utils import (
     token_is_admin,
     generate_response,
@@ -59,6 +60,7 @@ user_handler = UserHandler()
 
 # Create a POST route
 @router.post("/register", status_code=201)
+@tracer.start_as_current_span("Register User - Users")
 def register_user(user_data: UserRegistration):
     """
     This function is the endpoint for user registration.
@@ -70,6 +72,7 @@ def register_user(user_data: UserRegistration):
 
 # Route to handle user login
 @router.post("/login", status_code=200)
+@tracer.start_as_current_span("Login User - Users")
 def login(user_data: UserLogIn):
     """
     This function is the endpoint for the mobile front to log in an already existing user
@@ -86,6 +89,7 @@ def login(user_data: UserLogIn):
 
 
 @router.post("/login_with_google", status_code=200)
+@tracer.start_as_current_span("Login User with Google - Users")
 def login_with_google(firebase_id_token: str = Header(...)):
     """
     This function is the endpoint for logging in with a Google ID
@@ -130,6 +134,7 @@ def login_with_google(firebase_id_token: str = Header(...)):
 
 
 @router.get("/users/interests")
+@tracer.start_as_current_span("Get User Interests - Users")
 def get_interests(token: str = Header(...)):
     """
     This function is for getting the user's interests
@@ -145,6 +150,7 @@ def get_interests(token: str = Header(...)):
 
 
 @router.delete("/users/{email}")
+@tracer.start_as_current_span("Delete User - Users")
 def delete_user(email: str, token: str = Header(...)):
     """
     This function is a test function that mocks deleting a user.
@@ -171,6 +177,7 @@ def delete_user(email: str, token: str = Header(...)):
 
 
 @router.get("/get_user_by_token", response_model=UserResponse)
+@tracer.start_as_current_span("Get User by Token - Users")
 def get_user_by_token(token: str = Header(...)):
     """
     This function retrieves an user by token.
@@ -191,6 +198,7 @@ def get_user_by_token(token: str = Header(...)):
 
 
 @router.get("/user", response_model=UserPostResponse)
+@tracer.start_as_current_span("Get User by Token with ID - Users")
 def get_user_by_token_with_id(token: str = Header(...)):
     """
     This function retrieves an user by token.
@@ -211,6 +219,7 @@ def get_user_by_token_with_id(token: str = Header(...)):
 
 
 @router.get("/user/search/{query}")
+@tracer.start_as_current_span("Search User - Users")
 def search_users(
     query: str,
     offset=Query(0, title="offset", description="offset for pagination"),
@@ -241,6 +250,7 @@ def search_users(
 
 
 @router.post("/user/biometric_token")
+@tracer.start_as_current_span("Add Biometric Token - Users")
 def add_biometric_token(token: str = Header(...)):
     """
     This function is used to add a biometric token to the user.
@@ -255,6 +265,7 @@ def add_biometric_token(token: str = Header(...)):
 
 
 @router.delete("/user/delete_biometric_token")
+@tracer.start_as_current_span("Delete Biometric Token - Users")
 def delete_biometric_token(
     token: str = Header(...), biometric_token: str = Header(...)
 ):
@@ -270,6 +281,7 @@ def delete_biometric_token(
 
 
 @router.post("/login_with_biometrics")
+@tracer.start_as_current_span("Login with Biometric Token - Users")
 def login_with_biometrics(biometric_token: str = Header(...)):
     """
     This function is used to verify a biometric token of the user.
