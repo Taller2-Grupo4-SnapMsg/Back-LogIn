@@ -303,8 +303,10 @@ def login_with_biometrics(biometric_token: str = Header(...)):
         push_metric(login_metric.to_json())
         return {"message": "Login successful", "token": token}
     except UserNotFound as error:
-        login_metric.set_timestamp_finish(datetime.now()).set_success(
-            False
-        ).set_user_email(user.email)
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_success(False)
+            .set_user_email(biometric_token)
+        )
         push_metric(login_metric.to_json())
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
