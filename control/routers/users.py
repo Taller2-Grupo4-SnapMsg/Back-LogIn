@@ -36,7 +36,12 @@ from control.utils.utils import (
     check_and_get_user_from_token,
     push_metric,
 )
-from control.utils.metrics import GOOGLE_ENTITY, RegistrationMetric, LoginMetric
+from control.utils.metrics import (
+    GOOGLE_ENTITY,
+    BIOMETRICS_ENTITY,
+    RegistrationMetric,
+    LoginMetric,
+)
 
 from control.codes import (
     USER_NOT_FOUND,
@@ -287,8 +292,19 @@ def login_with_biometrics(biometric_token: str = Header(...)):
     This function is used to verify a biometric token of the user.
     """
     try:
+        login_metric = LoginMetric(datetime.now()).set_login_entity(BIOMETRICS_ENTITY)
         user = user_handler.verify_biometric_token(biometric_token)
         token = auth_handler.encode_token(user.email)
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_success(True)
+            .set_user_email(user.email)
+        )
+        push_metric(login_metric.to_json())
         return {"message": "Login successful", "token": token}
     except UserNotFound as error:
+        login_metric.set_timestamp_finish(datetime.now()).set_success(
+            False
+        ).set_user_email(user.email)
+        push_metric(login_metric.to_json())
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error

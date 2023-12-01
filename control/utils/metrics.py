@@ -14,6 +14,7 @@ GEOZONE_EVENT = "geozone"
 BLOCK_EVENT = "block"
 EMAIL_ENTITY = "email"
 GOOGLE_ENTITY = "Google"
+BIOMETRICS_ENTITY = "Biometrics"
 QUEUE_NAME = "metrics"
 
 
