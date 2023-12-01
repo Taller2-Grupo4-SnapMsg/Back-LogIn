@@ -19,6 +19,7 @@ from control.models.models import (
     UserPostResponse,
     UserRegistration,
 )
+from control.utils.logger import logger
 from control.utils.metrics import (
     RegistrationMetric,
     LoginMetric,
@@ -183,6 +184,7 @@ def handle_user_registration(user: User, registration_metric: RegistrationMetric
         raise HTTPException(
             status_code=USER_ALREADY_REGISTERED, detail=str(error)
         ) from error
+    logger.info(user.email, " registered successfully")
     return {"message": "Registration successful", "token": token}
 
 
@@ -217,6 +219,7 @@ def handle_user_login(
 
     login_json = login = login_metric.set_success(True).to_json()
     push_metric(login_json)
+    logger.info("%s logged in successfully", email)
     return {"message": "Login successful", "token": token}
 
 

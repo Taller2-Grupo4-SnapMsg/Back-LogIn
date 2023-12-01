@@ -24,6 +24,7 @@ from control.models.models import (
 )
 from control.utils.auth import auth_handler
 from control.utils.tracer import tracer
+from control.utils.logger import logger
 from control.utils.utils import (
     token_is_admin,
     generate_response,
@@ -123,6 +124,8 @@ def login_with_google(firebase_id_token: str = Header(...)):
             .set_success(True)
         ).to_json()
         push_metric(login_metric)
+
+        logger.info("User %s logged in with Google", user.email)
         return {"message": "Login successful", "token": token}
     except InvalidIdTokenError as error:
         login_metric = (
@@ -149,6 +152,7 @@ def get_interests(token: str = Header(...)):
     """
     try:
         user = check_and_get_user_from_token(token)
+        logger.info("User %s requested their interests", user.email)
         return user_handler.get_user_interests(user.email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -178,6 +182,7 @@ def delete_user(email: str, token: str = Header(...)):
             status_code=USER_NOT_ADMIN,
             detail="Insufficient Permissions",
         )
+    logger.info("User %s deleted", email)
     return {"message": "User deleted"}
 
 
@@ -193,6 +198,7 @@ def get_user_by_token(token: str = Header(...)):
     try:
         user = check_and_get_user_from_token(token)
         user = generate_response(user)
+        logger.info("User %s requested their details by token", user.email)
         return user
     except UserNotFound as error:
         raise HTTPException(
@@ -214,6 +220,7 @@ def get_user_by_token_with_id(token: str = Header(...)):
     try:
         user = check_and_get_user_from_token(token)
         user = generate_response_with_id(user)
+        logger.info("User %s requested their details by token", user.email)
         return user
     except UserNotFound as error:
         raise HTTPException(
@@ -251,6 +258,7 @@ def search_users(
         users = user_handler.search_for_users(query, user_search_options)
     except MaxAmmountExceeded as error:
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
+    logger.info("User %s searched for %s", user.email, query)
     return generate_response_list(users)
 
 
@@ -266,6 +274,7 @@ def add_biometric_token(token: str = Header(...)):
         user_handler.add_biometric_token(user.email, biometric_token)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    logger.info("User %s added a biometric token", user.email)
     return {"message": "Biometric token added", "biometric_token": biometric_token}
 
 
@@ -282,6 +291,7 @@ def delete_biometric_token(
         user_handler.remove_biometric_token(user.id, biometric_token)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    logger.info("User %s deleted one of their biometric token", user.email)
     return {"message": "Biometric token deleted"}
 
 
@@ -295,6 +305,7 @@ def login_with_biometrics(biometric_token: str = Header(...)):
         login_metric = LoginMetric(datetime.now()).set_login_entity(BIOMETRICS_ENTITY)
         user = user_handler.verify_biometric_token(biometric_token)
         token = auth_handler.encode_token(user.email)
+        logger.info("User %s logged in with biometrics", user.email)
         login_metric = (
             login_metric.set_timestamp_finish(datetime.now())
             .set_success(True)

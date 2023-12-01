@@ -16,6 +16,7 @@ from service.errors import (
     FollowingRelationAlreadyExists,
 )
 from control.utils.tracer import tracer
+from control.utils.logger import logger
 from control.utils.utils import (
     check_and_get_user_from_token,
     generate_response_list,
@@ -24,9 +25,6 @@ from control.utils.utils import (
 from control.codes import (
     USER_NOT_FOUND,
 )
-
-# Singleton instance of the AuthHandler class:
-from control.utils.auth import auth_handler
 
 router = APIRouter(tags=["Followers"])
 origins = ["*"]
@@ -47,6 +45,7 @@ def create_follow(email_following: str, token: str = Header(...)):
     try:
         user_follower = check_and_get_user_from_token(token)
         handler.create_follow(user_follower.email, email_following)
+        logger.info("User %s followed user %s", user_follower.email, email_following)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     except UserCantFollowItself as error:
@@ -66,9 +65,10 @@ def get_followers(email: str, token: str = Header(...)):
     :param token: Token used to verify you are requesting from a valid user.
     :return: Status code with a JSON message.
     """
-    check_and_get_user_from_token(token)
+    requester = check_and_get_user_from_token(token)
     try:
         user_list = handler.get_all_followers(email)
+        logger.info("User %s got all the users following %s", requester.email, email)
         return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -85,10 +85,10 @@ def get_is_following(email_following: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
 
-    email_follower = auth_handler.decode_token(token)
-    check_and_get_user_from_token(token)
+    user = check_and_get_user_from_token(token)
     try:
-        return handler.is_following(email_follower, email_following)
+        logger.info("User %s asked if is following %s", user.email, email_following)
+        return handler.is_following(user.email, email_following)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -103,10 +103,10 @@ def get_is_follower(email_follower: str, token: str = Header(...)):
     :param token: Token used to verify you are requesting from a valid user.
     :return: Status code with a JSON message.
     """
-    email = auth_handler.decode_token(token)
-    check_and_get_user_from_token(token)
+    user = check_and_get_user_from_token(token)
     try:
-        return handler.is_follower(email, email_follower)
+        logger.info("User %s asked if is a follower of %s", user.email, email_follower)
+        return handler.is_follower(user.email, email_follower)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
@@ -122,10 +122,11 @@ def get_following(email: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     # Checks the person requesting is a logged user:
-    check_and_get_user_from_token(token)
+    requester = check_and_get_user_from_token(token)
     # Does the actual request:
     try:
         user_list = handler.get_all_following(email)
+        logger.info("User %s got all the users %s is following", requester.email, email)
         return generate_response_list(user_list)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -141,9 +142,10 @@ def get_followers_count(email: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     # Checks the person requesting is a logged user:
-    check_and_get_user_from_token(token)
+    user = check_and_get_user_from_token(token)
     # Does the actual request:
     try:
+        logger.info("User %s got the number of followers of %s", user.email, email)
         return handler.get_followers_count(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -160,9 +162,12 @@ def get_following_count(email: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     # Checks the person requesting is a logged user:
-    check_and_get_user_from_token(token)
+    user = check_and_get_user_from_token(token)
     # Does the actual request:
     try:
+        logger.info(
+            "User %s got the number of users %s is following", user.email, email
+        )
         return handler.get_following_count(email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
@@ -179,7 +184,10 @@ def unfollow(email_unfollowing: str, token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
-        email_follower = auth_handler.decode_token(token)
-        return handler.remove_follow(email_follower, email_unfollowing)
+        user = check_and_get_user_from_token(token)
+        logger.info(
+            "User %s is going to unfollow user %s", user.email, email_unfollowing
+        )
+        return handler.remove_follow(user.email, email_unfollowing)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error

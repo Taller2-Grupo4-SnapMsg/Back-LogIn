@@ -19,6 +19,7 @@ from service.errors import UserNotFound, MaxAmmountExceeded
 from control.models.models import (
     UserResponse,
 )
+from control.utils.logger import logger
 from control.utils.tracer import tracer
 from control.utils.utils import (
     generate_response_list,
@@ -75,6 +76,12 @@ def set_blocked_status(email: str, blocked: bool, token: str = Header(...)):
         block_metric.set_admin_email(admin_email_list[0])
 
         push_metric(block_metric.to_json())
+        logger.info(
+            "Admin %s changed user %s's blocked status to %s",
+            admin_email_list[0],
+            email,
+            blocked,
+        )
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
     return {"message": email + " is now " + ("blocked" if blocked else "unblocked")}
@@ -104,7 +111,8 @@ def get_all_users(
 
     :return: JSON of all users.
     """
-    if not token_is_admin(token):
+    admin = [None]
+    if not token_is_admin(token, admin):
         raise HTTPException(
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can get all users",
@@ -115,6 +123,7 @@ def get_all_users(
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     except MaxAmmountExceeded as error:
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
+    logger.info("Admin %s got all users", admin[0])
     return generate_response_list(user_list)
 
 
@@ -135,7 +144,8 @@ def get_users_by_query(
     :param start: The offset for pagination.
     :param ammount: The max ammount of users to return.
     """
-    if not token_is_admin(token):
+    admin = [None]
+    if not token_is_admin(token, admin):
         raise HTTPException(
             status_code=USER_NOT_ADMIN,
             detail="Incorrect credentials",
@@ -150,6 +160,7 @@ def get_users_by_query(
         user_list = user_handler.search_for_users(query, options)
     except MaxAmmountExceeded as error:
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
+    logger.info("Admin %s used find user by query", admin[0])
     return generate_response_list(user_list)
 
 
@@ -168,8 +179,8 @@ def get_user(
     :param token: Token used to verify the user.
     :return: User details or a 404 response.
     """
-    # Checks the person requesting is a logged user:
-    if not token_is_admin(token):
+    admin = [None]
+    if not token_is_admin(token, admin):
         raise HTTPException(
             status_code=USER_NOT_ADMIN,
             detail="Only administrators can use this endpoint",
@@ -185,6 +196,7 @@ def get_user(
         try:
             user = user_handler.get_user_email(email)
             user = generate_response(user)
+            logger.info("Admin %s got user %s", admin[0], email)
             return user
         except UserNotFound as error:
             raise HTTPException(
@@ -195,6 +207,7 @@ def get_user(
         try:
             user = user_handler.get_user_username(username)
             user = generate_response(user)
+            logger.info("Admin %s got user %s", admin[0], username)
             return user
         except UserNotFound as error:
             raise HTTPException(
@@ -216,7 +229,8 @@ def translate_path_to_image_link(firebase_path: str, token: str = Header(...)):
 
     :return: A link to the image.
     """
-    if not token_is_admin(token):
+    admin = [None]
+    if not token_is_admin(token, admin):
         raise HTTPException(
             status_code=USER_NOT_ADMIN,
             detail="Incorrect Credentials",
@@ -227,6 +241,7 @@ def translate_path_to_image_link(firebase_path: str, token: str = Header(...)):
     blob = bucket.blob(firebase_path)
     expiration_time = datetime.utcnow() + timedelta(minutes=5)
     url = blob.generate_signed_url(expiration=expiration_time, method="GET")
+    logger.info("Admin %s got image %s", admin[0], url)
     return {"detail": url}
 
 
