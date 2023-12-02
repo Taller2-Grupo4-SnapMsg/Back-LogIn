@@ -257,6 +257,11 @@ def search_users(
         }
         users = user_handler.search_for_users(query, user_search_options)
     except MaxAmmountExceeded as error:
+        logger.error(
+            "User %s tried to search for too many users, ammount: %d",
+            user.email,
+            ammount,
+        )
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     logger.info("User %s searched for %s", user.email, query)
     return generate_response_list(users)

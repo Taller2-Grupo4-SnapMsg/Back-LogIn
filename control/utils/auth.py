@@ -9,6 +9,7 @@ import jwt
 from fastapi import HTTPException, Security
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
+from control.utils.logger import logger
 
 LIFE_TIME_DAYS = 30
 LIFE_TIME_MINS = 0
@@ -64,10 +65,12 @@ class AuthHandler:
             payload = jwt.decode(token, self.secret, algorithms=[ENCODING_ALGORITHM])
             return payload["sub"]
         except jwt.ExpiredSignatureError as error:
+            logger.error("Token has expired: %s", token)
             raise HTTPException(
                 status_code=ERROR_TOKEN_EXPIRED, detail="Signature has expired"
             ) from error
         except jwt.InvalidTokenError as error:
+            logger.error("Invalid token: %s", token)
             raise HTTPException(
                 status_code=ERROR_INVALID_TOKEN, detail="Invalid token"
             ) from error
