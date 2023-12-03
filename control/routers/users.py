@@ -309,6 +309,14 @@ def login_with_biometrics(biometric_token: str = Header(...)):
     try:
         login_metric = LoginMetric(datetime.now()).set_login_entity(BIOMETRICS_ENTITY)
         user = user_handler.verify_biometric_token(biometric_token)
+        if user.blocked:
+            login_metric = (
+                login_metric.set_timestamp_finish(datetime.now())
+                .set_user_email(user.email)
+                .set_success(False)
+            ).to_json()
+            push_metric(login_metric)
+            raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
         token = auth_handler.encode_token(user.email)
         logger.info("User %s logged in with biometrics", user.email)
         login_metric = (
