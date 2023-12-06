@@ -208,3 +208,15 @@ def search_users(
     except MaxAmmountExceeded as error:
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
     return generate_response_list(users)
+
+
+@router.get("/users/{username}")
+def get_user_by_username(username: str, token: str = Header(...)):
+    """
+    This function retrieves an user by username.
+    """
+    try:
+        _ = check_and_get_user_from_token(token)
+        return user_handler.get_user_username(username)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
