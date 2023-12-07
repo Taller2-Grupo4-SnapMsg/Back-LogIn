@@ -267,6 +267,18 @@ def search_users(
     return generate_response_list(users)
 
 
+@router.get("/users/{username}")
+def get_user_by_username(username: str, token: str = Header(...)):
+    """
+    This function retrieves an user by username.
+    """
+    try:
+        _ = check_and_get_user_from_token(token)
+        return user_handler.get_user_username(username)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+
+
 @router.post("/user/biometric_token")
 @tracer.start_as_current_span("Add Biometric Token - Users")
 def add_biometric_token(token: str = Header(...)):
