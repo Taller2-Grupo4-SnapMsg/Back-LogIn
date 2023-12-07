@@ -267,7 +267,7 @@ def search_users(
     return generate_response_list(users)
 
 
-@router.get("/users/{username}")
+@router.get("/users/username/{username}")
 def get_user_by_username(username: str, token: str = Header(...)):
     """
     This function retrieves an user by username.
