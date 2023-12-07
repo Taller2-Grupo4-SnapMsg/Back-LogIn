@@ -277,7 +277,8 @@ def get_user_by_username(username: str, token: str = Header(...)):
         return user_handler.get_user_username(username)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
-        
+
+
 @router.post("/user/biometric_token")
 @tracer.start_as_current_span("Add Biometric Token - Users")
 def add_biometric_token(token: str = Header(...)):
