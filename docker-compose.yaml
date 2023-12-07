@@ -36,6 +36,8 @@ services:
     environment:
       DB_URI: postgresql://admin:admin123@postgres:5432/test-back-users
       GATEWAY_URL: https://gateway-api-service-merok23.cloud.okteto.net
+      RABBITMQ_URL: amqps://skglvayb:RVulev-DurTkD_kARAFR5idNzUPqO88T@jackal.rmq.cloudamqp.com/skglvayb
+      UPTRACE_DSN: https://SAe6OtAs8ysrYmkJmM8t-Q@api.uptrace.dev?grpc=4317
     ports:
       - "8000:8000"
     command: bash -c "pip install --no-cache-dir -r requirements.txt && uvicorn control.controller:app --host 0.0.0.0 --port 8000"

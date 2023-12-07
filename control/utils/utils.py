@@ -4,6 +4,7 @@ This module is for util functions in the controller layer.
 """
 import datetime
 from os import getenv
+import pika
 from fastapi import HTTPException
 import requests
 from control.utils.auth import auth_handler
@@ -18,6 +19,13 @@ from control.models.models import (
     UserPostResponse,
     UserRegistration,
 )
+from control.utils.logger import logger
+from control.utils.metrics import (
+    RegistrationMetric,
+    LoginMetric,
+    RabbitMQManager,
+)
+
 from service.user import User
 from service.user_handler import UserHandler
 from service.admin_handler import AdminHandler
@@ -27,10 +35,13 @@ from service.errors import (
     EmailAlreadyRegistered,
 )
 
+
 TIMEOUT = 5
+
 
 admin_handler = AdminHandler()
 user_handler = UserHandler()
+rabbitmq_manager = RabbitMQManager()
 
 
 # Check and get user from token
@@ -101,9 +112,17 @@ def generate_response_list(users):
     return response
 
 
-def token_is_admin(token: str):
+def token_is_admin(token: str, admin_email_list=None):
     """
     This function checks if the token given is an admin.
+
+    If the second parameter is given, the list will
+    contain the admin_email at the end of the execution.
+    Default value: None, so that other functions that don't need
+    the email don't have to send it.
+    The admin_email is a list and not an actual string because
+    strings in Python are inmutable: they can't be changed in a different
+    stackframe. But lists can.
     """
     headers_request = {
         "accept": "application/json",
@@ -112,6 +131,11 @@ def token_is_admin(token: str):
     }
     url = getenv("GATEWAY_URL") + "/admin/is_admin"
     response = requests.get(url, headers=headers_request, timeout=TIMEOUT)
+
+    if admin_email_list is not None:
+        admin_email = response.json().get("email")
+        admin_email_list[0] = admin_email
+
     return response.status_code == OK
 
 
@@ -137,13 +161,21 @@ def create_user_from_user_data(user_data: UserRegistration):
     return user
 
 
-def handle_user_registration(user: User):
+def handle_user_registration(user: User, registration_metric: RegistrationMetric):
     """
     This function handles user registration, it saves the user in the data base
     """
     try:
         user.save()
         token = auth_handler.encode_token(user.email)
+
+        reg_json = (
+            registration_metric.set_timestamp_finish(datetime.datetime.now())
+            .set_user_email(user.email)
+            .to_json()
+        )
+        push_metric(reg_json)
+
     except UsernameAlreadyRegistered as error:
         raise HTTPException(
             status_code=USER_ALREADY_REGISTERED, detail=str(error)
@@ -152,31 +184,76 @@ def handle_user_registration(user: User):
         raise HTTPException(
             status_code=USER_ALREADY_REGISTERED, detail=str(error)
         ) from error
+    logger.info(user.email, " registered successfully")
     return {"message": "Registration successful", "token": token}
 
 
-def handle_user_login(input_password: str, db_password: str, email: str, user: User):
+def handle_user_login(
+    input_password: str,
+    db_password: str,
+    email: str,
+    user: User,
+    login_metric: LoginMetric,
+):
     """
     This function handles user login, it checks if the password is correct
     and returns a token if it is.
     """
+    login = (
+        login_metric.set_timestamp_finish(datetime.datetime.now())
+        .set_user_email(email)
+        .set_success(False)
+    )
     if not auth_handler.verify_password(input_password, db_password):
+        login_json = login.to_json()
+        push_metric(login_json)
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
         )
     if user.blocked:
+        login_json = login.to_json()
+        push_metric(login_json)
         raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
+
     token = auth_handler.encode_token(email)
+
+    login_json = login = login_metric.set_success(True).to_json()
+    push_metric(login_json)
+    logger.info("%s logged in successfully", email)
     return {"message": "Login successful", "token": token}
 
 
-def handle_get_user_email(email: str):
+def handle_get_user_email(email: str, login_metric: LoginMetric):
     """
     This function handles getting a user from the data base.
     """
     try:
         return user_handler.get_user_email(email)
     except UserNotFound as error:
+        login_json = (
+            login_metric.set_timestamp_finish(datetime.datetime.now())
+            .set_user_email(email)
+            .set_success(False)
+            .to_json()
+        )
+        push_metric(login_json)
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Incorrect credentials"
         ) from error
+
+
+def push_metric(metric_json):
+    """
+    Wrapper for the publish into the rabbitmq_channel
+    Checks if the connection is open, and sends the message
+    if it is. If it isnt, reestablishes the connection
+    and then sends the message.
+
+    Also helps avoiding circular imports.
+    """
+    try:
+        rabbitmq_manager.push_metric(metric_json)
+    except (pika.exceptions.ChannelClosed, pika.exceptions.AMQPError):
+        # Reestablish the RabbitMQ connection again
+        rabbitmq_manager.push_metric(metric_json)
+        # Add log

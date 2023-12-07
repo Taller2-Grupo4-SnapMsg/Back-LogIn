@@ -2,6 +2,7 @@
 """
 This module is dedicated for all the users routes.
 """
+from datetime import datetime
 import firebase_admin
 from firebase_admin import credentials, auth
 from firebase_admin.auth import InvalidIdTokenError
@@ -22,6 +23,8 @@ from control.models.models import (
     UserPostResponse,
 )
 from control.utils.auth import auth_handler
+from control.utils.tracer import tracer
+from control.utils.logger import logger
 from control.utils.utils import (
     token_is_admin,
     generate_response,
@@ -32,7 +35,15 @@ from control.utils.utils import (
     handle_user_login,
     handle_get_user_email,
     check_and_get_user_from_token,
+    push_metric,
 )
+from control.utils.metrics import (
+    GOOGLE_ENTITY,
+    BIOMETRICS_ENTITY,
+    RegistrationMetric,
+    LoginMetric,
+)
+
 from control.codes import (
     USER_NOT_FOUND,
     INCORRECT_CREDENTIALS,
@@ -40,6 +51,7 @@ from control.codes import (
     BAD_REQUEST,
     BLOCKED_USER,
 )
+
 
 router = APIRouter(
     tags=["Users"],
@@ -54,17 +66,19 @@ user_handler = UserHandler()
 
 # Create a POST route
 @router.post("/register", status_code=201)
+@tracer.start_as_current_span("Register User - Users")
 def register_user(user_data: UserRegistration):
     """
     This function is the endpoint for user registration.
     """
-
+    registration_metric = RegistrationMetric(datetime.now())
     user = create_user_from_user_data(user_data)
-    return handle_user_registration(user)
+    return handle_user_registration(user, registration_metric)
 
 
 # Route to handle user login
 @router.post("/login", status_code=200)
+@tracer.start_as_current_span("Login User - Users")
 def login(user_data: UserLogIn):
     """
     This function is the endpoint for the mobile front to log in an already existing user
@@ -72,12 +86,16 @@ def login(user_data: UserLogIn):
     :param user: The user to login.
     :return: Status code with a JSON message.
     """
-    user = handle_get_user_email(user_data.email)
+    login_metric = LoginMetric(datetime.now())
+    user = handle_get_user_email(user_data.email, login_metric)
     # user.password has the hashed_password.
-    return handle_user_login(user_data.password, user.password, user_data.email, user)
+    return handle_user_login(
+        user_data.password, user.password, user_data.email, user, login_metric
+    )
 
 
 @router.post("/login_with_google", status_code=200)
+@tracer.start_as_current_span("Login User with Google - Users")
 def login_with_google(firebase_id_token: str = Header(...)):
     """
     This function is the endpoint for logging in with a Google ID
@@ -87,19 +105,44 @@ def login_with_google(firebase_id_token: str = Header(...)):
     :return: Status code with a JSON message.
     """
     try:
+        login_metric = LoginMetric(datetime.now()).set_login_entity(GOOGLE_ENTITY)
         decoded_token = auth.verify_id_token(firebase_id_token)
-        user = handle_get_user_email(decoded_token["email"])
+        user = handle_get_user_email(decoded_token["email"], login_metric)
         if user.blocked:
+            login_metric = (
+                login_metric.set_timestamp_finish(datetime.now())
+                .set_user_email(user.email)
+                .set_success(False)
+            ).to_json()
+            push_metric(login_metric)
             raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
+
         token = auth_handler.encode_token(user.email)
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_user_email(user.email)
+            .set_success(True)
+        ).to_json()
+        push_metric(login_metric)
+
+        logger.info("User %s logged in with Google", user.email)
         return {"message": "Login successful", "token": token}
     except InvalidIdTokenError as error:
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_user_email(
+                firebase_id_token  # No me gusta, preguntarle al prof después
+            )
+            .set_success(False)
+        ).to_json()
+        push_metric(login_metric)
         raise HTTPException(
             status_code=INCORRECT_CREDENTIALS, detail="Invalid Firebase ID token"
         ) from error
 
 
 @router.get("/users/interests")
+@tracer.start_as_current_span("Get User Interests - Users")
 def get_interests(token: str = Header(...)):
     """
     This function is for getting the user's interests
@@ -109,12 +152,14 @@ def get_interests(token: str = Header(...)):
     """
     try:
         user = check_and_get_user_from_token(token)
+        logger.info("User %s requested their interests", user.email)
         return user_handler.get_user_interests(user.email)
     except UserNotFound as error:
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
 
 
 @router.delete("/users/{email}")
+@tracer.start_as_current_span("Delete User - Users")
 def delete_user(email: str, token: str = Header(...)):
     """
     This function is a test function that mocks deleting a user.
@@ -137,10 +182,12 @@ def delete_user(email: str, token: str = Header(...)):
             status_code=USER_NOT_ADMIN,
             detail="Insufficient Permissions",
         )
+    logger.info("User %s deleted", email)
     return {"message": "User deleted"}
 
 
 @router.get("/get_user_by_token", response_model=UserResponse)
+@tracer.start_as_current_span("Get User by Token - Users")
 def get_user_by_token(token: str = Header(...)):
     """
     This function retrieves an user by token.
@@ -151,6 +198,7 @@ def get_user_by_token(token: str = Header(...)):
     try:
         user = check_and_get_user_from_token(token)
         user = generate_response(user)
+        logger.info("User %s requested their details by token", user.email)
         return user
     except UserNotFound as error:
         raise HTTPException(
@@ -161,6 +209,7 @@ def get_user_by_token(token: str = Header(...)):
 
 
 @router.get("/user", response_model=UserPostResponse)
+@tracer.start_as_current_span("Get User by Token with ID - Users")
 def get_user_by_token_with_id(token: str = Header(...)):
     """
     This function retrieves an user by token.
@@ -171,6 +220,7 @@ def get_user_by_token_with_id(token: str = Header(...)):
     try:
         user = check_and_get_user_from_token(token)
         user = generate_response_with_id(user)
+        logger.info("User %s requested their details by token", user.email)
         return user
     except UserNotFound as error:
         raise HTTPException(
@@ -181,6 +231,7 @@ def get_user_by_token_with_id(token: str = Header(...)):
 
 
 @router.get("/user/search/{query}")
+@tracer.start_as_current_span("Search User - Users")
 def search_users(
     query: str,
     offset=Query(0, title="offset", description="offset for pagination"),
@@ -206,7 +257,13 @@ def search_users(
         }
         users = user_handler.search_for_users(query, user_search_options)
     except MaxAmmountExceeded as error:
+        logger.error(
+            "User %s tried to search for too many users, ammount: %d",
+            user.email,
+            ammount,
+        )
         raise HTTPException(status_code=BAD_REQUEST, detail=str(error)) from error
+    logger.info("User %s searched for %s", user.email, query)
     return generate_response_list(users)
 
 
@@ -219,4 +276,72 @@ def get_user_by_username(username: str, token: str = Header(...)):
         _ = check_and_get_user_from_token(token)
         return user_handler.get_user_username(username)
     except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+        
+@router.post("/user/biometric_token")
+@tracer.start_as_current_span("Add Biometric Token - Users")
+def add_biometric_token(token: str = Header(...)):
+    """
+    This function is used to add a biometric token to the user.
+    """
+    try:
+        user = check_and_get_user_from_token(token)
+        biometric_token = auth_handler.create_biometric_token()
+        user_handler.add_biometric_token(user.email, biometric_token)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    logger.info("User %s added a biometric token", user.email)
+    return {"message": "Biometric token added", "biometric_token": biometric_token}
+
+
+@router.delete("/user/delete_biometric_token")
+@tracer.start_as_current_span("Delete Biometric Token - Users")
+def delete_biometric_token(
+    token: str = Header(...), biometric_token: str = Header(...)
+):
+    """
+    This function is used to add a biometric token to the user.
+    """
+    try:
+        user = check_and_get_user_from_token(token)
+        user_handler.remove_biometric_token(user.id, biometric_token)
+    except UserNotFound as error:
+        raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
+    logger.info("User %s deleted one of their biometric token", user.email)
+    return {"message": "Biometric token deleted"}
+
+
+@router.post("/login_with_biometrics")
+@tracer.start_as_current_span("Login with Biometric Token - Users")
+def login_with_biometrics(biometric_token: str = Header(...)):
+    """
+    This function is used to verify a biometric token of the user.
+    """
+    try:
+        login_metric = LoginMetric(datetime.now()).set_login_entity(BIOMETRICS_ENTITY)
+        user = user_handler.verify_biometric_token(biometric_token)
+        if user.blocked:
+            login_metric = (
+                login_metric.set_timestamp_finish(datetime.now())
+                .set_user_email(user.email)
+                .set_success(False)
+            ).to_json()
+            push_metric(login_metric)
+            raise HTTPException(status_code=BLOCKED_USER, detail="User is blocked.")
+        token = auth_handler.encode_token(user.email)
+        logger.info("User %s logged in with biometrics", user.email)
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_success(True)
+            .set_user_email(user.email)
+        )
+        push_metric(login_metric.to_json())
+        return {"message": "Login successful", "token": token}
+    except UserNotFound as error:
+        login_metric = (
+            login_metric.set_timestamp_finish(datetime.now())
+            .set_success(False)
+            .set_user_email(biometric_token)
+        )
+        push_metric(login_metric.to_json())
         raise HTTPException(status_code=USER_NOT_FOUND, detail=str(error)) from error
