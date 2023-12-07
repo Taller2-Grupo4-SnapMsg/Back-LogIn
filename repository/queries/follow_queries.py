@@ -92,8 +92,11 @@ def remove_follow(session, user_id, user_id_to_unfollow):
         .filter(Following.following_id == user_id_to_unfollow)
         .first()
     )
-    if following:
-        session.delete(following)
-        session.commit()
-        return
+    try:
+        if following:
+            session.delete(following)
+            session.commit()
+            return
+    except IntegrityError:
+        session.rollback()
     raise KeyError("The relation doesn't exist")

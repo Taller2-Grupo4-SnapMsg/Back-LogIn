@@ -80,9 +80,12 @@ def update_user_password(session, user_id, new_password):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "password", new_password)
-        session.commit()
-        return user
+        try:
+            setattr(user, "password", new_password)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -95,9 +98,12 @@ def delete_user(session, user_id):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        session.delete(user)
-        session.commit()
-        return True
+        try:
+            session.delete(user)
+            session.commit()
+            return True
+        except IntegrityError:
+            session.rollback()
     return False
 
 
@@ -115,9 +121,12 @@ def update_user_bio(session, user_id, new_bio):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "bio", new_bio)
-        session.commit()
-        return user
+        try:
+            setattr(user, "bio", new_bio)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -127,9 +136,12 @@ def update_user_name(session, user_id, new_name):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "name", new_name)
-        session.commit()
-        return user
+        try:
+            setattr(user, "name", new_name)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -139,9 +151,12 @@ def update_user_date_of_birth(session, user_id, new_date_of_birth):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "date_of_birth", new_date_of_birth)
-        session.commit()
-        return user
+        try:
+            setattr(user, "date_of_birth", new_date_of_birth)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -151,9 +166,12 @@ def update_user_last_name(session, user_id, new_last_name):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "surname", new_last_name)
-        session.commit()
-        return user
+        try:
+            setattr(user, "surname", new_last_name)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -163,9 +181,12 @@ def update_user_avatar(session, user_id, new_avatar):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "avatar", new_avatar)
-        session.commit()
-        return user
+        try:
+            setattr(user, "avatar", new_avatar)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -175,9 +196,12 @@ def update_user_location(session, user_id, new_location):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "location", new_location)
-        session.commit()
-        return user
+        try:
+            setattr(user, "location", new_location)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -187,9 +211,12 @@ def update_user_blocked_status(session, user_id, blocked):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "blocked", blocked)
-        session.commit()
-        return user
+        try:
+            setattr(user, "blocked", blocked)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -199,9 +226,12 @@ def update_user_public_status(session, user_id, public):
     """
     user = session.query(User).filter(User.id == user_id).first()
     if user:
-        setattr(user, "is_public", public)
-        session.commit()
-        return user
+        try:
+            setattr(user, "is_public", public)
+            session.commit()
+            return user
+        except IntegrityError:
+            session.rollback()
     return None
 
 
@@ -223,10 +253,13 @@ def delete_user_interests(session, user_id):
     """
     interests = session.query(Interests).filter(Interests.user_id == user_id).all()
     if interests:
-        for interest in interests:
-            session.delete(interest)
-        session.commit()
-        return True
+        try:
+            for interest in interests:
+                session.delete(interest)
+            session.commit()
+            return True
+        except IntegrityError:
+            session.rollback()
     return False
 
 
