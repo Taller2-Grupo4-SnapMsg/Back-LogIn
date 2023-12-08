@@ -278,7 +278,7 @@ def health_check():
     return {"status": "ok", "description": description, "creation_date": "29-08-2023"}
 
 
-@router.get("/rollback", tags=["DEBUG"])
+@router.get("/rollback")
 def rollback():
     """
     This function is for testing purposes only.
