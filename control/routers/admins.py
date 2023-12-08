@@ -276,3 +276,12 @@ def health_check():
     description += " from the relational database."
     # If we wanted we can add more complex checks here like checking the database.
     return {"status": "ok", "description": description, "creation_date": "29-08-2023"}
+
+
+@router.get("/rollback", tags=["DEBUG"])
+def rollback():
+    """
+    This function is for testing purposes only.
+    """
+    admin_handler.rollback()
+    return {"message": "rollback done"}

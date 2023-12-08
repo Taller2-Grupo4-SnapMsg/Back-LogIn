@@ -405,4 +405,11 @@ def remove_biometric_token(user_id: int, biometric_token: str):
         raise KeyError()
 
 
+def manual_rollback():
+    """
+    This function is used to rollback the session.
+    """
+    session.rollback()
+
+
 session.close()

@@ -5,6 +5,7 @@ This module is for encapsulating all the admin related functions and logic.
 from repository.user_repository import (
     get_user_collection,
     update_user_blocked_status as update_user_blocked_status_repo,
+    manual_rollback,
 )
 from service.errors import UserNotFound
 from service.errors import MaxAmmountExceeded
@@ -37,3 +38,9 @@ class AdminHandler:
             update_user_blocked_status_repo(email, blocked_status)
         except KeyError as error:
             raise UserNotFound() from error
+
+    def rollback(self):
+        """
+        This function is used to rollback the session.
+        """
+        manual_rollback()
